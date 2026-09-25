@@ -1,0 +1,18 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}404 Not Found - Không tìm thấy trang{% endblock %}
+
+{% block content %}
+<div class="min-h-[75vh] flex flex-col items-center justify-center text-center px-4">
+    <div class="w-24 h-24 rounded-3xl bg-amber-100 border border-amber-200 text-amber-600 flex items-center justify-center text-5xl mb-6 shadow-xl shadow-amber-100">
+        <i class="fa-solid fa-compass-drafting"></i>
+    </div>
+    <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">404 - KHÔNG TÌM THẤY TRANG</h1>
+    <p class="text-sm text-slate-600 max-w-md mb-8">
+        Đường dẫn bạn yêu cầu không tồn tại hoặc đã bị di chuyển. Vui lòng kiểm tra lại URL.
+    </p>
+    <a href="{% url 'dashboard' %}" class="px-6 py-2.5 bg-navy-900 hover:bg-navy-800 text-white font-semibold text-sm rounded-xl shadow-lg transition-all">
+        <i class="fa-solid fa-house mr-2"></i> Về trang chủ Dashboard
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,191 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Dashboard Sinh viên - ProjectHub AI{% endblock %}
+{% block breadcrumb %}Dashboard Cá nhân{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header & Student Onboarding Status Strip -->
+    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-bold text-slate-900 tracking-tight">
+                Xin chào, {{ request.user.first_name }}
+            </h1>
+            <p class="text-xs text-slate-500 mt-0.5">
+                Theo dõi các công việc ưu tiên, tiến độ đồ án và phản hồi từ Giảng viên hướng dẫn.
+            </p>
+        </div>
+
+        <div class="flex items-center space-x-3 bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-xs">
+            <span class="font-semibold text-slate-700">Thiết lập tài khoản:</span>
+            <div class="w-32 bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div class="bg-navy-900 h-full w-[66%]"></div>
+            </div>
+            <span class="font-bold text-navy-900">4/6 bước</span>
+        </div>
+    </div>
+
+    <!-- SECTION 1: VIỆC CẦN XỬ LÝ NGAY (PRIORITY ACTION REQUIRED) -->
+    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center">
+                <i class="fa-solid fa-triangle-exclamation text-amber-600 mr-2"></i> Việc cần xử lý ưu tiên (Priority Action Required)
+            </h2>
+            <span class="text-[11px] font-semibold text-slate-500">{{ overdue_tasks_count }} task quá hạn</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Overdue or Urgent Tasks Box -->
+            <div class="p-3.5 rounded-lg border border-slate-200 bg-slate-50/50 space-y-2">
+                <span class="text-[11px] font-bold text-rose-800 uppercase tracking-wider block">Công việc quá hạn / Cận deadline</span>
+                {% if my_tasks %}
+                    {% for task in my_tasks %}
+                    {% if task.is_overdue or task.priority == 'CRITICAL' %}
+                    <div class="flex items-center justify-between text-xs p-2 bg-white rounded border border-slate-200">
+                        <div>
+                            <span class="font-semibold text-slate-900">{{ task.title }}</span>
+                            <span class="text-[10px] text-slate-400 block">{{ task.project.code }} • Hạn: {{ task.due_date|date:"d/m/Y" }}</span>
+                        </div>
+                        <a href="{% url 'project_tasks' task.project.id %}" class="px-2.5 py-1 bg-navy-900 text-white font-bold text-[10px] rounded hover:bg-navy-950">
+                            Xử lý
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <p class="text-xs text-slate-500 py-2">Không có công việc quá hạn.</p>
+                {% endif %}
+            </div>
+
+            <!-- New Mentor Feedback Box -->
+            <div class="p-3.5 rounded-lg border border-slate-200 bg-slate-50/50 space-y-2">
+                <span class="text-[11px] font-bold text-navy-900 uppercase tracking-wider block">Phản hồi mới từ Mentor</span>
+                {% if recent_notifications %}
+                    {% for notif in recent_notifications %}
+                    {% if notif.notification_type == 'MENTOR_FEEDBACK' %}
+                    <div class="text-xs p-2 bg-white rounded border border-slate-200">
+                        <span class="font-semibold text-slate-900 block">{{ notif.title }}</span>
+                        <p class="text-[11px] text-slate-600 mt-0.5">{{ notif.message }}</p>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <p class="text-xs text-slate-500 py-2">Chưa có phản hồi mới cần xử lý.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 2: ĐỒ ÁN ĐANG THỰC HIỆN (MY ACTIVE PROJECTS TABLE) -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center">
+                <i class="fa-solid fa-folder-open text-navy-900 mr-2"></i> Đồ án đang thực hiện
+            </h2>
+            <a href="{% url 'project_create' %}" class="px-3 py-1.5 bg-navy-900 text-white text-xs font-bold rounded hover:bg-navy-950">
+                + Tạo Đồ án Mới
+            </a>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 text-slate-700 font-bold uppercase text-[10px] border-b border-slate-200">
+                    <tr>
+                        <th class="p-3">Mã & Tên Đồ án</th>
+                        <th class="p-3">Mentor Hướng dẫn</th>
+                        <th class="p-3">Hạn chót (Deadline)</th>
+                        <th class="p-3">Tiến độ</th>
+                        <th class="p-3">Trạng thái</th>
+                        <th class="p-3 text-right">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for proj in my_projects %}
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3">
+                            <span class="font-mono font-bold text-[10px] text-slate-500 block">{{ proj.code }}</span>
+                            <a href="{% url 'project_detail' proj.id %}" class="font-bold text-navy-900 hover:underline">{{ proj.name }}</a>
+                        </td>
+                        <td class="p-3 font-medium">{{ proj.mentor.display_name|default:"Chưa phân công" }}</td>
+                        <td class="p-3 font-mono text-slate-600">{{ proj.end_date|date:"d/m/Y" }}</td>
+                        <td class="p-3 w-36">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                                    <div class="bg-navy-900 h-full rounded-full" style="width: {{ proj.progress_percentage }}%"></div>
+                                </div>
+                                <span class="font-bold text-[11px]">{{ proj.progress_percentage }}%</span>
+                            </div>
+                        </td>
+                        <td class="p-3">
+                            <span class="px-2 py-0.5 text-[10px] font-bold rounded
+                            {% if proj.status == 'IN_PROGRESS' %}bg-amber-100 text-amber-800 border border-amber-200
+                            {% elif proj.status == 'REVIEW' %}bg-purple-100 text-purple-800 border border-purple-200
+                            {% elif proj.status == 'COMPLETED' %}bg-emerald-100 text-emerald-800 border border-emerald-200
+                            {% else %}bg-slate-100 text-slate-700 border border-slate-200{% endif %}">
+                                {{ proj.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="p-3 text-right">
+                            <a href="{% url 'project_detail' proj.id %}" class="px-2.5 py-1 bg-slate-100 text-slate-800 font-semibold text-[11px] rounded border border-slate-200 hover:bg-slate-200">
+                                Xem chi tiết
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="p-6 text-center text-slate-400">Bạn chưa có đồ án nào. Hãy bấm "+ Tạo Đồ án Mới" để bắt đầu.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SECTION 3 & 4: UPCOMING DEADLINES & RECENT ACTIVITY -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Upcoming Milestones -->
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs space-y-3">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center border-b border-slate-100 pb-2">
+                <i class="fa-solid fa-flag text-navy-900 mr-2"></i> Lịch Milestone & Deadline sắp tới
+            </h2>
+            <div class="space-y-2.5">
+                {% for ms in upcoming_milestones %}
+                <div class="p-3 rounded-lg border border-slate-200 bg-slate-50/50 flex items-center justify-between">
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-800">{{ ms.name }}</h4>
+                        <span class="text-[10px] text-slate-500">Đồ án: {{ ms.project.code }} • Hạn: {{ ms.due_date|date:"d/m/Y" }}</span>
+                    </div>
+                    <span class="text-xs font-bold text-navy-900">{{ ms.progress_percentage }}%</span>
+                </div>
+                {% empty %}
+                <p class="text-xs text-slate-400 py-3 text-center">Chưa có milestone sắp tới.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Recent Activity Timeline -->
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs space-y-3">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center border-b border-slate-100 pb-2">
+                <i class="fa-solid fa-clock-rotate-left text-slate-600 mr-2"></i> Nhật ký hoạt động cá nhân
+            </h2>
+            <div class="space-y-2">
+                {% for act in recent_activities %}
+                <div class="flex items-start space-x-2.5 text-xs">
+                    <i class="fa-solid fa-circle-dot text-[8px] text-slate-400 mt-1"></i>
+                    <div class="flex-1">
+                        <p class="text-slate-800 font-medium line-clamp-1">{{ act.description }}</p>
+                        <span class="text-[10px] text-slate-400">{{ act.created_at|timesince }} trước</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-xs text-slate-400 py-3 text-center">Chưa có lịch sử hoạt động.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

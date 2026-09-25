@@ -1,0 +1,269 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Trợ lý AI - ProjectHub AI{% endblock %}
+{% block breadcrumb %}Trợ lý AI Assistant{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6" x-data="{ tab: 'breakdown', tasksResult: [], successModal: false, createdCount: 0 }">
+
+    <!-- Header Banner -->
+    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex items-center justify-between">
+        <div>
+            <h1 class="text-xl font-bold text-slate-900 tracking-tight flex items-center">
+                <i class="fa-solid fa-robot text-navy-900 mr-2.5"></i> Trợ lý Công cụ AI Assistant
+            </h1>
+            <p class="text-xs text-slate-500 mt-0.5">
+                Công cụ hỗ trợ phân tích yêu cầu đồ án, lập kế hoạch công việc, tổng hợp báo cáo tiến độ và kiểm tra rủi ro.
+            </p>
+        </div>
+        <span class="px-3 py-1 bg-slate-100 text-slate-700 font-bold text-xs rounded border border-slate-200">
+            Academic AI Module
+        </span>
+    </div>
+
+    {% if request.user.is_admin_user %}
+    <div class="p-3.5 bg-purple-50 border border-purple-200 rounded-xl text-xs text-purple-900 flex items-start space-x-2.5">
+        <i class="fa-solid fa-user-shield text-purple-700 mt-0.5 text-sm"></i>
+        <div>
+            <span class="font-bold block">Chế độ Quản trị viên (Admin Monitor)</span>
+            <p class="text-[11px] text-purple-800 mt-0.5 leading-relaxed">
+                Bạn đang truy cập Trợ lý AI dưới quyền Quản trị viên. Tính năng <b>AI Task Breakdown</b> được thiết kế dành riêng cho <b>Sinh viên & Mentor</b> để phân rã đồ án thành công việc Kanban. Ở vai trò Admin, bạn có thể kiểm thử trợ lý AI và kiểm tra báo cáo tiến độ trên tất cả các đồ án trong trường.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Select Project Bar -->
+    <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-xs flex items-center space-x-3">
+        <label class="text-xs font-semibold text-slate-700 whitespace-nowrap">Chọn Đồ án áp dụng:</label>
+        <select id="ai-project-select" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-navy-900 flex-1">
+            {% for p in projects %}
+            <option value="{{ p.id }}" {% if selected_project and selected_project.id == p.id %}selected{% endif %}>
+                [{{ p.code }}] {{ p.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- AI Feature Sub-Tabs -->
+    <div class="flex items-center space-x-1 border-b border-academic-border overflow-x-auto">
+        <button @click="tab = 'breakdown'" :class="tab === 'breakdown' ? 'bg-white text-navy-900 border-b-2 border-navy-900 font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'" class="px-4 py-2 text-xs rounded-t-lg transition-all">
+            <i class="fa-solid fa-list-check mr-1.5"></i> AI Task Breakdown
+        </button>
+        <button @click="tab = 'summary'" :class="tab === 'summary' ? 'bg-white text-navy-900 border-b-2 border-navy-900 font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'" class="px-4 py-2 text-xs rounded-t-lg transition-all">
+            <i class="fa-solid fa-file-lines mr-1.5"></i> AI Weekly Summary
+        </button>
+        <button @click="tab = 'risk'" :class="tab === 'risk' ? 'bg-white text-navy-900 border-b-2 border-navy-900 font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'" class="px-4 py-2 text-xs rounded-t-lg transition-all">
+            <i class="fa-solid fa-triangle-exclamation mr-1.5"></i> AI Risk Warning
+        </button>
+        <button @click="tab = 'questions'" :class="tab === 'questions' ? 'bg-white text-navy-900 border-b-2 border-navy-900 font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'" class="px-4 py-2 text-xs rounded-t-lg transition-all">
+            <i class="fa-solid fa-comments mr-1.5"></i> AI Mentor Questions
+        </button>
+    </div>
+
+    <!-- TAB 1: AI TASK BREAKDOWN -->
+    <div x-show="tab === 'breakdown'" class="bg-white rounded-xl p-6 border border-slate-200 shadow-xs space-y-4">
+        <div class="border-b border-slate-100 pb-3">
+            <h2 class="text-sm font-bold text-slate-900">Phân rã Đồ án thành Danh sách Công việc (AI Task Breakdown)</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Nhập mô tả đồ án để AI phân tích và đề xuất danh sách task Kanban tiêu chuẩn.</p>
+        </div>
+
+        <div class="space-y-3">
+            <input type="text" id="ai-breakdown-input" value="{% if selected_project %}{{ selected_project.name }}{% else %}Phát triển hệ thống phần mềm{% endif %}" 
+                   class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-navy-900">
+            
+            <button @click="runBreakdown()" class="px-4 py-2 bg-navy-900 hover:bg-navy-950 text-white font-bold text-xs rounded-lg shadow-xs transition-all">
+                Phân tích & Đề xuất Task
+            </button>
+        </div>
+
+        <div id="breakdown-results" class="space-y-3 hidden pt-3 border-t border-slate-100">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Danh sách Task AI Đề xuất</h3>
+                <button @click="acceptTasks()" class="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-lg shadow-xs">
+                    Chấp nhận & Tạo các Task vào Database
+                </button>
+            </div>
+
+            <div class="space-y-2" id="tasks-container"></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: AI WEEKLY SUMMARY -->
+    <div x-show="tab === 'summary'" class="bg-white rounded-xl p-6 border border-slate-200 shadow-xs space-y-4">
+        <div class="border-b border-slate-100 pb-3">
+            <h2 class="text-sm font-bold text-slate-900">Tổng hợp Báo cáo Tiến độ Tuần (AI Weekly Summary)</h2>
+            <p class="text-xs text-slate-500 mt-0.5">AI tự động quét dữ liệu các task đã xong, task đang làm và các vấn đề quá hạn để xuất báo cáo cho Mentor.</p>
+        </div>
+
+        <button @click="runWeeklySummary()" class="px-4 py-2 bg-navy-900 hover:bg-navy-950 text-white font-bold text-xs rounded-lg shadow-xs">
+            Xuất Báo cáo Bằng AI
+        </button>
+
+        <div id="summary-result" class="pt-2"></div>
+    </div>
+
+    <!-- TAB 3: AI RISK WARNING -->
+    <div x-show="tab === 'risk'" class="bg-white rounded-xl p-6 border border-slate-200 shadow-xs space-y-4">
+        <div class="border-b border-slate-100 pb-3">
+            <h2 class="text-sm font-bold text-slate-900">Phát hiện Rủi ro Tiến độ (AI Risk Warning)</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Phân tích dữ liệu deadline công việc và mốc thời gian Milestone thực tế.</p>
+        </div>
+
+        <button @click="runRiskDetection()" class="px-4 py-2 bg-rose-800 hover:bg-rose-900 text-white font-bold text-xs rounded-lg shadow-xs">
+            Kiểm tra Rủi ro Tiến độ
+        </button>
+
+        <div id="risk-result" class="pt-2"></div>
+    </div>
+
+    <!-- TAB 4: AI MENTOR QUESTIONS -->
+    <div x-show="tab === 'questions'" class="bg-white rounded-xl p-6 border border-slate-200 shadow-xs space-y-4">
+        <div class="border-b border-slate-100 pb-3">
+            <h2 class="text-sm font-bold text-slate-900">Gợi ý Câu hỏi Phản biện cho Mentor (AI Mentor Questions)</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Gợi ý danh sách câu hỏi kiểm tra kiến trúc hệ thống, quy trình và bảo mật dành cho Mentor.</p>
+        </div>
+
+        <button @click="runMentorQuestions()" class="px-4 py-2 bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs rounded-lg shadow-xs">
+            Gợi ý Câu hỏi Phản biện
+        </button>
+
+        <div id="questions-result" class="pt-2"></div>
+    </div>
+
+    <!-- CUSTOM UI SUCCESS MODAL FOR TASK CREATION (NO LOCALHOST BROWSER ALERT) -->
+    <div x-show="successModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-xl max-w-sm w-full p-6 shadow-xl space-y-4 border border-slate-200" @click.away="successModal = false">
+            <div class="flex items-center space-x-3 text-emerald-700">
+                <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 text-lg border border-emerald-200">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <h3 class="text-sm font-bold text-slate-900">Khởi tạo Task Thành công</h3>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">
+                Đã tự động khởi tạo thành công <span class="font-bold text-navy-900" x-text="createdCount"></span> công việc mới vào Cơ sở Dữ liệu của đồ án.
+            </p>
+            <div class="flex justify-end pt-2">
+                <button type="button" @click="goToKanban()" class="px-4 py-2 text-xs font-bold text-white bg-navy-900 hover:bg-navy-950 rounded-lg shadow-xs">
+                    Đi tới Bảng Kanban
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let globalAiTasks = [];
+
+    function getSelectedProjectId() {
+        return document.getElementById('ai-project-select').value;
+    }
+
+    function goToKanban() {
+        const projectId = getSelectedProjectId();
+        window.location.href = `/projects/${projectId}/tasks/`;
+    }
+
+    function runBreakdown() {
+        const projectId = getSelectedProjectId();
+        const inputData = document.getElementById('ai-breakdown-input').value;
+        const formData = new FormData();
+        formData.append('project_id', projectId);
+        formData.append('project_name', inputData);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        fetch('/ai/task-breakdown/', {
+            method: 'POST',
+            body: formData
+        }).then(res => res.json())
+          .then(data => {
+              if (data.status === 'success') {
+                  globalAiTasks = data.tasks;
+                  const container = document.getElementById('tasks-container');
+                  container.innerHTML = '';
+                  
+                  data.tasks.forEach((t, index) => {
+                      container.innerHTML += `
+                          <div class="p-3 rounded-lg border border-slate-200 bg-slate-50 flex items-start justify-between text-xs">
+                              <div>
+                                  <h4 class="font-bold text-slate-900">${index + 1}. ${t.title}</h4>
+                                  <p class="text-[11px] text-slate-600 mt-0.5">${t.description}</p>
+                                  <span class="inline-block mt-1 px-2 py-0.5 bg-slate-200 text-slate-700 text-[10px] font-bold rounded">${t.labels}</span>
+                              </div>
+                              <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-200 text-slate-800">${t.priority}</span>
+                          </div>
+                      `;
+                  });
+                  document.getElementById('breakdown-results').classList.remove('hidden');
+              }
+          });
+    }
+
+    function acceptTasks() {
+        const projectId = getSelectedProjectId();
+        const formData = new FormData();
+        formData.append('project_id', projectId);
+        formData.append('tasks_json', JSON.stringify(globalAiTasks));
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        fetch('/ai/accept-tasks/', {
+            method: 'POST',
+            body: formData
+        }).then(res => res.json())
+          .then(data => {
+              if (data.status === 'success') {
+                  // Custom UI modal (No native browser alert!)
+                  const alpineData = Alpine.$data(document.querySelector('[x-data]'));
+                  alpineData.createdCount = data.created_count;
+                  alpineData.successModal = true;
+              }
+          });
+    }
+
+    function runWeeklySummary() {
+        const projectId = getSelectedProjectId();
+        const formData = new FormData();
+        formData.append('project_id', projectId);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        fetch('/ai/weekly-summary/', {
+            method: 'POST',
+            body: formData
+        }).then(res => res.json())
+          .then(data => {
+              document.getElementById('summary-result').innerHTML = data.summary_html;
+          });
+    }
+
+    function runRiskDetection() {
+        const projectId = getSelectedProjectId();
+        const formData = new FormData();
+        formData.append('project_id', projectId);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        fetch('/ai/risk-detection/', {
+            method: 'POST',
+            body: formData
+        }).then(res => res.json())
+          .then(data => {
+              document.getElementById('risk-result').innerHTML = data.risk_html;
+          });
+    }
+
+    function runMentorQuestions() {
+        const projectId = getSelectedProjectId();
+        const formData = new FormData();
+        formData.append('project_id', projectId);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        fetch('/ai/mentor-questions/', {
+            method: 'POST',
+            body: formData
+        }).then(res => res.json())
+          .then(data => {
+              document.getElementById('questions-result').innerHTML = data.questions_html;
+          });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ project.name }} - ProjectHub AI{% endblock %}
+{% block breadcrumb %}{{ project.code }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="{ addMemberModal: false }">
+
+    <!-- Top Banner Summary -->
+    <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-xs space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center space-x-2.5 mb-1.5">
+                    <span class="px-2.5 py-0.5 bg-navy-900 text-white font-mono font-bold text-xs rounded">{{ project.code }}</span>
+                    <span class="px-2.5 py-0.5 text-xs font-bold rounded
+                    {% if project.status == 'IN_PROGRESS' %}bg-amber-100 text-amber-800 border border-amber-200
+                    {% elif project.status == 'REVIEW' %}bg-purple-100 text-purple-800 border border-purple-200
+                    {% elif project.status == 'COMPLETED' %}bg-emerald-100 text-emerald-800 border border-emerald-200
+                    {% else %}bg-slate-100 text-slate-700 border border-slate-200{% endif %}">
+                        {{ project.get_status_display }}
+                    </span>
+                </div>
+                <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">{{ project.name }}</h1>
+            </div>
+
+            <div class="flex items-center space-x-2.5">
+                <a href="{% url 'project_tasks' project.id %}" class="px-4 py-2 bg-navy-900 hover:bg-navy-950 text-white font-bold text-xs rounded-lg shadow-xs transition-all">
+                    <i class="fa-solid fa-square-poll-vertical mr-1"></i> Mở Kanban Board
+                </a>
+                <a href="{% url 'project_edit' project.id %}" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg border border-slate-200">
+                    Chỉnh sửa
+                </a>
+            </div>
+        </div>
+
+        <p class="text-xs text-slate-600 leading-relaxed max-w-4xl">{{ project.description }}</p>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-3 border-t border-slate-100 text-xs">
+            <div>
+                <span class="text-slate-500 block">Công nghệ:</span>
+                <span class="font-semibold text-slate-800">{{ project.technology }}</span>
+            </div>
+            <div>
+                <span class="text-slate-500 block">Mentor hướng dẫn:</span>
+                <span class="font-semibold text-navy-900">{{ project.mentor.display_name|default:"Chưa phân công" }}</span>
+            </div>
+            <div>
+                <span class="text-slate-500 block">Hạn hoàn thành:</span>
+                <span class="font-semibold text-slate-800">{{ project.end_date|date:"d/m/Y" }}</span>
+            </div>
+            <div>
+                <span class="text-slate-500 block">Tiến độ tổng thể:</span>
+                <span class="font-bold text-navy-900">{{ project.progress_percentage }}%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Sub-Tabs -->
+    <div class="flex items-center space-x-1 border-b border-academic-border overflow-x-auto">
+        <a href="{% url 'project_detail' project.id %}" class="px-4 py-2 bg-white text-navy-900 border-b-2 border-navy-900 font-bold text-xs rounded-t-lg">
+            Tổng quan (Overview)
+        </a>
+        <a href="{% url 'project_tasks' project.id %}" class="px-4 py-2 text-slate-600 hover:text-slate-900 font-medium text-xs">
+            Công việc Kanban (Tasks)
+        </a>
+        <a href="{% url 'project_milestones' project.id %}" class="px-4 py-2 text-slate-600 hover:text-slate-900 font-medium text-xs">
+            Milestones & Giai đoạn
+        </a>
+        <a href="{% url 'project_documents' project.id %}" class="px-4 py-2 text-slate-600 hover:text-slate-900 font-medium text-xs">
+            Kho Tài liệu (Documents)
+        </a>
+    </div>
+
+    <!-- Grid Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left 2 Cols: Milestones & Mentor Reviews -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Milestones Progress Section -->
+            <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center">
+                        <i class="fa-solid fa-flag text-navy-900 mr-2"></i> Tiến độ các Milestone
+                    </h2>
+                    <a href="{% url 'project_milestones' project.id %}" class="text-xs font-semibold text-navy-900 hover:underline">Quản lý Milestone</a>
+                </div>
+
+                <div class="space-y-2.5">
+                    {% for ms in milestones %}
+                    <div class="p-3.5 rounded-lg border border-slate-200 bg-slate-50/50 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-xs font-bold text-slate-900">{{ ms.name }}</h4>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded
+                            {% if ms.status == 'COMPLETED' %}bg-emerald-100 text-emerald-800 border border-emerald-200
+                            {% elif ms.status == 'IN_PROGRESS' %}bg-amber-100 text-amber-800 border border-amber-200
+                            {% else %}bg-slate-100 text-slate-700 border border-slate-200{% endif %}">
+                                {{ ms.get_status_display }}
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-500">{{ ms.description }}</p>
+                        <div class="pt-1 flex items-center justify-between text-[10px] text-slate-500">
+                            <span>Thời gian: {{ ms.due_date|date:"d/m/Y" }}</span>
+                            <span class="font-bold text-slate-800">{{ ms.progress_percentage }}% Hoàn thành</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-xs text-slate-400 py-3 text-center">Chưa tạo milestone nào trong đồ án này.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Mentor Reviews Feedback Section -->
+            <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center">
+                        <i class="fa-solid fa-clipboard-check text-navy-900 mr-2"></i> Phản hồi Đánh giá từ Mentor
+                    </h2>
+                </div>
+
+                <div class="space-y-3">
+                    {% for fb in feedbacks %}
+                    <div class="p-3.5 rounded-lg border border-slate-200 bg-slate-50/50 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-900">Giảng viên: {{ fb.mentor.display_name }}</span>
+                            <span class="text-xs text-amber-600 font-bold">Rating: {{ fb.rating }}/5 sao</span>
+                        </div>
+                        <p class="text-xs text-slate-700 leading-relaxed">{{ fb.content }}</p>
+                        <span class="text-[10px] text-slate-400 block text-right">Ngày đánh giá: {{ fb.created_at|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-xs text-slate-400 py-3 text-center">Chưa có nhận xét nào từ Mentor.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Col: Members & AI Tool Box -->
+        <div class="space-y-6">
+            
+            <!-- Members Card -->
+            <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center">
+                        <i class="fa-solid fa-users text-navy-900 mr-2"></i> Thành viên Nhóm
+                    </h2>
+                    <button @click="addMemberModal = true" class="text-xs font-semibold text-navy-900 hover:underline">+ Mời thành viên</button>
+                </div>
+
+                <div class="space-y-2">
+                    {% for m in members %}
+                    <div class="flex items-center justify-between p-2 rounded-lg border border-slate-200">
+                        <div class="flex items-center space-x-2">
+                            <img src="{{ m.user.get_avatar_url }}" class="w-7 h-7 rounded-full border border-slate-300 object-cover">
+                            <div>
+                                <p class="text-xs font-bold text-slate-900">{{ m.user.display_name }}</p>
+                                <span class="text-[10px] text-slate-500">{{ m.user.email }}</span>
+                            </div>
+                        </div>
+                        <span class="px-2 py-0.5 text-[9px] font-bold rounded uppercase
+                        {% if m.role == 'LEADER' %}bg-navy-900 text-white{% else %}bg-slate-100 text-slate-700 border border-slate-200{% endif %}">
+                            {{ m.get_role_display }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- AI Tool Box -->
+            <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs space-y-3">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-navy-900 flex items-center border-b border-slate-100 pb-2">
+                    <i class="fa-solid fa-robot mr-2"></i> Trợ lý Công cụ AI Assistant
+                </h2>
+                <p class="text-xs text-slate-600 leading-relaxed">Sử dụng công cụ AI hỗ trợ lập phân rã công việc, tổng hợp báo cáo tuần và kiểm tra rủi ro tiến độ.</p>
+                <a href="{% url 'ai_assistant_page' %}?project_id={{ project.id }}" class="block w-full py-2 bg-navy-900 hover:bg-navy-950 text-white font-bold text-xs text-center rounded-lg transition-all">
+                    Mở Trợ lý AI cho Đồ án này
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Add Member Modal -->
+    <div x-show="addMemberModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-lg space-y-4" @click.away="addMemberModal = false">
+            <h3 class="text-sm font-bold text-slate-900">Mời Sinh viên vào Đồ án</h3>
+            <form method="post" action="{% url 'project_add_member' project.id %}" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Chọn Sinh viên</label>
+                    <select name="user_id" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs">
+                        {% for st in available_students %}
+                        <option value="{{ st.id }}">{{ st.display_name }} ({{ st.email }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" @click="addMemberModal = false" class="px-3 py-1.5 text-xs font-bold text-slate-500">Hủy</button>
+                    <button type="submit" class="px-4 py-1.5 bg-navy-900 text-white font-bold text-xs rounded-lg">Thêm vào nhóm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

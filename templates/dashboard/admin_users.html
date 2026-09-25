@@ -1,0 +1,100 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Quản lý Tài khoản - ProjectHub AI{% endblock %}
+{% block breadcrumb %}Quản lý User{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-bold text-slate-900 tracking-tight">Quản lý Tài khoản & Phân quyền</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Danh sách tài khoản người dùng, vai trò phân quyền và thao tác khóa/mở khóa tài khoản.</p>
+        </div>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-xs">
+        <form method="get" class="flex flex-wrap items-center gap-3">
+            <input type="text" name="q" value="{{ query }}" placeholder="Tìm theo tên, username, email..." 
+                   class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-navy-900 w-64">
+            
+            <select name="role" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-navy-900">
+                <option value="">-- Tất cả Role --</option>
+                <option value="STUDENT" {% if role_filter == 'STUDENT' %}selected{% endif %}>Sinh viên (Student)</option>
+                <option value="MENTOR" {% if role_filter == 'MENTOR' %}selected{% endif %}>Giảng viên (Mentor)</option>
+                <option value="ADMIN" {% if role_filter == 'ADMIN' %}selected{% endif %}>Quản trị (Admin)</option>
+            </select>
+
+            <button type="submit" class="px-4 py-1.5 bg-navy-900 text-white font-bold text-xs rounded-lg hover:bg-navy-950">
+                Lọc dữ liệu
+            </button>
+        </form>
+    </div>
+
+    <!-- Users Table -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 text-slate-700 font-bold uppercase text-[10px] border-b border-slate-200">
+                    <tr>
+                        <th class="p-3">Họ và Tên</th>
+                        <th class="p-3">Username / Email</th>
+                        <th class="p-3">Mã số</th>
+                        <th class="p-3">Vai trò</th>
+                        <th class="p-3">Trạng thái</th>
+                        <th class="p-3 text-right">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for u in users_list %}
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 font-bold text-slate-900 flex items-center space-x-2.5">
+                            <img src="{{ u.get_avatar_url }}" class="w-7 h-7 rounded-full border border-slate-300 object-cover">
+                            <span>{{ u.display_name }}</span>
+                        </td>
+                        <td class="p-3">
+                            <p class="font-semibold text-slate-900">{{ u.username }}</p>
+                            <p class="text-[11px] text-slate-500">{{ u.email }}</p>
+                        </td>
+                        <td class="p-3 font-mono text-slate-600">{{ u.student_id|default:"-" }}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-0.5 text-[10px] font-bold rounded uppercase
+                            {% if u.role == 'ADMIN' %}bg-purple-100 text-purple-800 border border-purple-200
+                            {% elif u.role == 'MENTOR' %}bg-amber-100 text-amber-800 border border-amber-200
+                            {% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}">
+                                {{ u.get_role_display }}
+                            </span>
+                        </td>
+                        <td class="p-3">
+                            {% if u.status == 'ACTIVE' %}
+                            <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold text-[10px] rounded">Hoạt động</span>
+                            {% else %}
+                            <span class="px-2 py-0.5 bg-rose-100 text-rose-800 border border-rose-200 font-bold text-[10px] rounded">Đã khóa</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-3 text-right">
+                            {% if not u.is_superuser %}
+                            <form method="post" action="{% url 'admin_toggle_user_status' u.id %}" class="inline">
+                                {% csrf_token %}
+                                {% if u.status == 'ACTIVE' %}
+                                <button type="submit" onclick="return confirm('Bạn có chắc muốn KHÓA tài khoản này?')" class="px-2.5 py-1 bg-rose-50 text-rose-800 hover:bg-rose-100 font-bold text-[11px] rounded border border-rose-200">
+                                    Khóa tài khoản
+                                </button>
+                                {% else %}
+                                <button type="submit" class="px-2.5 py-1 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-bold text-[11px] rounded border border-emerald-200">
+                                    Mở khóa
+                                </button>
+                                {% endif %}
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
