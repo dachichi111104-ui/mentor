@@ -16,6 +16,13 @@ DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost,*,.onrender.com').split(',')
 
+CSRF_TRUSTED_ORIGINS = os.getenv(
+    'DJANGO_CSRF_TRUSTED_ORIGINS',
+    'https://*.onrender.com,http://*.onrender.com,https://projecthub-ai-web.onrender.com,http://127.0.0.1,http://localhost'
+).split(',')
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -79,7 +86,11 @@ WSGI_APPLICATION = 'projecthub_config.wsgi.application'
 try:
     import dj_database_url
     DATABASES = {
-        'default': dj_database_url.config(default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
+        'default': dj_database_url.config(
+            default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
 except ImportError:
     DATABASES = {
@@ -88,6 +99,8 @@ except ImportError:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
+WHITENOISE_MANIFEST_STRICT = False
 
 AUTH_USER_MODEL = 'accounts.User'
 
