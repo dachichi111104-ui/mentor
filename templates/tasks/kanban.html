@@ -1,55 +1,74 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Kanban Board - {{ project.name }}{% endblock %}
-{% block breadcrumb %}{{ project.code }} / Kanban{% endblock %}
+{% block title %}Bảng Kanban - {{ project.name }}{% endblock %}
+{% block breadcrumb %}{{ project.code }} / Kanban Board{% endblock %}
 
 {% block content %}
 <div class="space-y-6" x-data="{ createTaskModal: false }">
 
-    <!-- Header & Action Bar -->
+    <!-- Header Bar -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <span class="px-2 py-0.5 bg-navy-900 text-white font-mono font-bold text-[10px] rounded">{{ project.code }}</span>
-            <h1 class="text-xl font-bold text-slate-900 tracking-tight mt-1">Bảng công việc Kanban</h1>
-            <p class="text-xs text-slate-500">Kéo và thả các thẻ công việc giữa các cột để cập nhật trạng thái thực hiện.</p>
+            <div class="flex items-center space-x-2">
+                <span class="px-2 py-0.5 bg-[#173F91] text-white font-mono font-bold text-[10px] rounded">{{ project.code }}</span>
+                <span class="text-xs text-[#667085] font-semibold">{{ project.name }}</span>
+            </div>
+            <h1 class="text-xl font-bold text-[#172033] tracking-tight mt-1">Bảng công việc Kanban</h1>
+            <p class="text-xs text-[#667085]">Kéo thả các thẻ công việc giữa các cột để cập nhật trạng thái thực hiện.</p>
         </div>
 
         <div class="flex items-center space-x-2.5">
-            <a href="{% url 'project_detail' project.id %}" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg border border-slate-200">
+            <a href="{% url 'project_detail' project.id %}" class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs rounded border border-[#D9DEE8]">
                 ← Về trang Đồ án
             </a>
-            <button @click="createTaskModal = true" class="px-4 py-2 bg-navy-900 hover:bg-navy-950 text-white font-bold text-xs rounded-lg shadow-xs transition-all">
+            <button @click="createTaskModal = true" class="px-4 py-2 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded uppercase tracking-wider transition-colors">
                 + Tạo Task Mới
             </button>
         </div>
+    </div>
+
+    <!-- Navigation Sub-Tabs -->
+    <div class="flex items-center space-x-1 border-b border-[#D9DEE8] overflow-x-auto text-xs font-semibold uppercase tracking-wider">
+        <a href="{% url 'project_detail' project.id %}" class="px-4 py-2.5 text-[#667085] hover:text-[#173F91] hover:bg-white">
+            Tổng quan (Overview)
+        </a>
+        <a href="{% url 'project_tasks' project.id %}" class="px-4 py-2.5 bg-[#173F91] text-white border-b-2 border-[#F2B705]">
+            Công việc Kanban
+        </a>
+        <a href="{% url 'project_milestones' project.id %}" class="px-4 py-2.5 text-[#667085] hover:text-[#173F91] hover:bg-white">
+            Milestones & Giai đoạn
+        </a>
+        <a href="{% url 'project_documents' project.id %}" class="px-4 py-2.5 text-[#667085] hover:text-[#173F91] hover:bg-white">
+            Kho Tài liệu
+        </a>
     </div>
 
     <!-- KANBAN BOARD COLUMNS -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start overflow-x-auto pb-6">
         
         <!-- COLUMN 1: TODO -->
-        <div class="bg-slate-100/70 rounded-xl p-3 border border-slate-200 min-h-[480px]"
+        <div class="bg-[#F5F7FA] rounded p-3 border border-[#D9DEE8] min-h-[480px]"
              ondragover="event.preventDefault()" 
              ondrop="dropTask(event, 'TODO')">
-            <div class="flex items-center justify-between mb-2.5 px-1">
-                <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Cần làm (TODO)</span>
-                <span class="px-2 py-0.5 bg-slate-200 text-slate-800 font-bold text-[10px] rounded">{{ todo_tasks.count }}</span>
+            <div class="flex items-center justify-between mb-2.5 px-1 border-b border-slate-200 pb-2">
+                <span class="text-xs font-bold text-[#172033] uppercase tracking-wider">Cần làm (TODO)</span>
+                <span class="px-2 py-0.5 bg-slate-200 text-[#172033] font-bold text-[10px] rounded border border-slate-300">{{ todo_tasks.count }}</span>
             </div>
 
             <div class="space-y-2.5" id="col-TODO">
                 {% for task in todo_tasks %}
                 {% include "tasks/task_card.html" with task=task %}
                 {% empty %}
-                <div class="p-6 text-center text-xs text-slate-400 border border-dashed border-slate-300 rounded-lg">Trống</div>
+                <div class="p-6 text-center text-xs text-[#667085] border border-dashed border-[#D9DEE8] rounded bg-white">Trống</div>
                 {% endfor %}
             </div>
         </div>
 
         <!-- COLUMN 2: IN_PROGRESS -->
-        <div class="bg-slate-100/70 rounded-xl p-3 border border-slate-200 min-h-[480px]"
+        <div class="bg-[#F5F7FA] rounded p-3 border border-[#D9DEE8] min-h-[480px]"
              ondragover="event.preventDefault()" 
              ondrop="dropTask(event, 'IN_PROGRESS')">
-            <div class="flex items-center justify-between mb-2.5 px-1">
+            <div class="flex items-center justify-between mb-2.5 px-1 border-b border-slate-200 pb-2">
                 <span class="text-xs font-bold text-amber-800 uppercase tracking-wider">Đang làm (IN PROGRESS)</span>
                 <span class="px-2 py-0.5 bg-amber-100 text-amber-900 font-bold text-[10px] rounded border border-amber-200">{{ in_progress_tasks.count }}</span>
             </div>
@@ -58,16 +77,16 @@
                 {% for task in in_progress_tasks %}
                 {% include "tasks/task_card.html" with task=task %}
                 {% empty %}
-                <div class="p-6 text-center text-xs text-slate-400 border border-dashed border-slate-300 rounded-lg">Trống</div>
+                <div class="p-6 text-center text-xs text-[#667085] border border-dashed border-[#D9DEE8] rounded bg-white">Trống</div>
                 {% endfor %}
             </div>
         </div>
 
         <!-- COLUMN 3: REVIEW -->
-        <div class="bg-slate-100/70 rounded-xl p-3 border border-slate-200 min-h-[480px]"
+        <div class="bg-[#F5F7FA] rounded p-3 border border-[#D9DEE8] min-h-[480px]"
              ondragover="event.preventDefault()" 
              ondrop="dropTask(event, 'REVIEW')">
-            <div class="flex items-center justify-between mb-2.5 px-1">
+            <div class="flex items-center justify-between mb-2.5 px-1 border-b border-slate-200 pb-2">
                 <span class="text-xs font-bold text-purple-800 uppercase tracking-wider">Chờ Review</span>
                 <span class="px-2 py-0.5 bg-purple-100 text-purple-900 font-bold text-[10px] rounded border border-purple-200">{{ review_tasks.count }}</span>
             </div>
@@ -76,16 +95,16 @@
                 {% for task in review_tasks %}
                 {% include "tasks/task_card.html" with task=task %}
                 {% empty %}
-                <div class="p-6 text-center text-xs text-slate-400 border border-dashed border-slate-300 rounded-lg">Trống</div>
+                <div class="p-6 text-center text-xs text-[#667085] border border-dashed border-[#D9DEE8] rounded bg-white">Trống</div>
                 {% endfor %}
             </div>
         </div>
 
         <!-- COLUMN 4: DONE -->
-        <div class="bg-slate-100/70 rounded-xl p-3 border border-slate-200 min-h-[480px]"
+        <div class="bg-[#F5F7FA] rounded p-3 border border-[#D9DEE8] min-h-[480px]"
              ondragover="event.preventDefault()" 
              ondrop="dropTask(event, 'DONE')">
-            <div class="flex items-center justify-between mb-2.5 px-1">
+            <div class="flex items-center justify-between mb-2.5 px-1 border-b border-slate-200 pb-2">
                 <span class="text-xs font-bold text-emerald-800 uppercase tracking-wider">Hoàn thành (DONE)</span>
                 <span class="px-2 py-0.5 bg-emerald-100 text-emerald-900 font-bold text-[10px] rounded border border-emerald-200">{{ done_tasks.count }}</span>
             </div>
@@ -94,7 +113,7 @@
                 {% for task in done_tasks %}
                 {% include "tasks/task_card.html" with task=task %}
                 {% empty %}
-                <div class="p-6 text-center text-xs text-slate-400 border border-dashed border-slate-300 rounded-lg">Trống</div>
+                <div class="p-6 text-center text-xs text-[#667085] border border-dashed border-[#D9DEE8] rounded bg-white">Trống</div>
                 {% endfor %}
             </div>
         </div>
@@ -103,24 +122,24 @@
 
     <!-- Create Task Modal -->
     <div x-show="createTaskModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-        <div class="bg-white rounded-xl max-w-lg w-full p-6 shadow-lg space-y-4" @click.away="createTaskModal = false">
-            <h3 class="text-base font-bold text-slate-900">Tạo Công việc Mới</h3>
+        <div class="bg-white rounded max-w-lg w-full p-6 shadow-md border border-[#D9DEE8] space-y-4" @click.away="createTaskModal = false">
+            <h3 class="text-base font-bold text-[#172033]">Tạo Công việc Mới</h3>
             <form method="post" action="{% url 'task_create' project.id %}" class="space-y-3.5">
                 {% csrf_token %}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Tiêu đề Công việc (*)</label>
-                    <input type="text" name="title" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs">
+                    <label class="block text-xs font-semibold text-[#172033] mb-1">Tiêu đề Công việc *</label>
+                    <input type="text" name="title" required class="w-full px-3 py-2 rounded border border-[#D9DEE8] text-xs">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Chi tiết / Yêu cầu</label>
-                    <textarea name="description" rows="3" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs"></textarea>
+                    <label class="block text-xs font-semibold text-[#172033] mb-1">Chi tiết / Yêu cầu</label>
+                    <textarea name="description" rows="3" class="w-full px-3 py-2 rounded border border-[#D9DEE8] text-xs"></textarea>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Độ ưu tiên</label>
-                        <select name="priority" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs">
+                        <label class="block text-xs font-semibold text-[#172033] mb-1">Độ ưu tiên</label>
+                        <select name="priority" class="w-full px-3 py-2 rounded border border-[#D9DEE8] text-xs">
                             <option value="LOW">Thấp</option>
                             <option value="MEDIUM" selected>Trung bình</option>
                             <option value="HIGH">Cao</option>
@@ -129,9 +148,9 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Người thực hiện</label>
-                        <select name="assignee_id" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs">
-                            <option value="">-- Chưa giao --</option>
+                        <label class="block text-xs font-semibold text-[#172033] mb-1">Người thực hiện</label>
+                        <select name="assignee_id" class="w-full px-3 py-2 rounded border border-[#D9DEE8] text-xs">
+                            <option value="">-- Chưa phân công --</option>
                             {% for m in members %}
                             <option value="{{ m.user.id }}">{{ m.user.display_name }}</option>
                             {% endfor %}
@@ -141,8 +160,8 @@
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Giai đoạn (Milestone)</label>
-                        <select name="milestone_id" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs">
+                        <label class="block text-xs font-semibold text-[#172033] mb-1">Giai đoạn (Milestone)</label>
+                        <select name="milestone_id" class="w-full px-3 py-2 rounded border border-[#D9DEE8] text-xs">
                             <option value="">-- Không chọn --</option>
                             {% for ms in milestones %}
                             <option value="{{ ms.id }}">{{ ms.name }}</option>
@@ -151,14 +170,14 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Hạn hoàn thành</label>
-                        <input type="date" name="due_date" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs">
+                        <label class="block text-xs font-semibold text-[#172033] mb-1">Hạn hoàn thành</label>
+                        <input type="date" name="due_date" class="w-full px-3 py-2 rounded border border-[#D9DEE8] text-xs">
                     </div>
                 </div>
 
-                <div class="flex justify-end space-x-2 pt-2">
+                <div class="flex justify-end space-x-2 pt-2 border-t border-slate-100">
                     <button type="button" @click="createTaskModal = false" class="px-3 py-1.5 text-xs font-bold text-slate-500">Hủy</button>
-                    <button type="submit" class="px-4 py-1.5 bg-navy-900 text-white font-bold text-xs rounded-lg shadow-xs">Tạo Task</button>
+                    <button type="submit" class="px-4 py-1.5 bg-[#173F91] text-white font-bold text-xs rounded uppercase tracking-wider">Tạo Task</button>
                 </div>
             </form>
         </div>

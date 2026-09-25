@@ -1,42 +1,96 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Quản lý Tài khoản - ProjectHub AI{% endblock %}
-{% block breadcrumb %}Quản lý User{% endblock %}
+{% block title %}Quản lý Tài khoản - ProjectHub{% endblock %}
+{% block breadcrumb %}Quản lý Tài khoản{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="space-y-6" x-data="{ createUserModal: false }">
 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-xl font-bold text-slate-900 tracking-tight">Quản lý Tài khoản & Phân quyền</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Danh sách tài khoản người dùng, vai trò phân quyền và thao tác khóa/mở khóa tài khoản.</p>
+            <h1 class="text-xl font-bold text-[#172033] tracking-tight">Quản lý Tài khoản & Phân quyền</h1>
+            <p class="text-xs text-[#667085] mt-1">Danh sách tài khoản người dùng, vai trò phân quyền và thao tác khóa/mở khóa tài khoản.</p>
+        </div>
+        <button @click="createUserModal = true" class="px-4 py-2 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded uppercase tracking-wider shadow-xs transition-colors">
+            + Tạo Tài khoản Mới
+        </button>
+    </div>
+
+    <!-- CREATE USER MODAL -->
+    <div x-show="createUserModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+        <div class="bg-white rounded max-w-lg w-full p-6 shadow-md border border-[#D9DEE8] space-y-4" @click.away="createUserModal = false">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 class="text-sm font-bold text-[#172033]"><i class="fa-solid fa-user-plus text-[#173F91] mr-2"></i>Tạo Tài khoản Người dùng Mới</h3>
+                <button @click="createUserModal = false" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form method="post" action="{% url 'admin_user_create' %}" class="space-y-3">
+                {% csrf_token %}
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-[#172033] mb-1">Họ & Tên đệm</label>
+                        <input type="text" name="last_name" class="w-full px-3 py-1.5 text-xs bg-slate-50 border border-[#D9DEE8] rounded focus:outline-none focus:ring-1 focus:ring-[#173F91]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-[#172033] mb-1">Tên chính *</label>
+                        <input type="text" name="first_name" required class="w-full px-3 py-1.5 text-xs bg-slate-50 border border-[#D9DEE8] rounded focus:outline-none focus:ring-1 focus:ring-[#173F91]">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-[#172033] mb-1">Tên đăng nhập *</label>
+                        <input type="text" name="username" required class="w-full px-3 py-1.5 text-xs bg-slate-50 border border-[#D9DEE8] rounded focus:outline-none focus:ring-1 focus:ring-[#173F91]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-[#172033] mb-1">Email</label>
+                        <input type="email" name="email" class="w-full px-3 py-1.5 text-xs bg-slate-50 border border-[#D9DEE8] rounded focus:outline-none focus:ring-1 focus:ring-[#173F91]">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-[#172033] mb-1">Mật khẩu *</label>
+                        <input type="password" name="password" required class="w-full px-3 py-1.5 text-xs bg-slate-50 border border-[#D9DEE8] rounded focus:outline-none focus:ring-1 focus:ring-[#173F91]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-[#172033] mb-1">Vai trò *</label>
+                        <select name="role" class="w-full px-3 py-1.5 text-xs bg-slate-50 border border-[#D9DEE8] rounded focus:outline-none focus:ring-1 focus:ring-[#173F91]">
+                            <option value="STUDENT">Sinh viên (Student)</option>
+                            <option value="MENTOR">Giảng viên (Mentor)</option>
+                            <option value="ADMIN">Quản trị viên (Admin)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2 pt-3 border-t border-slate-100">
+                    <button type="button" @click="createUserModal = false" class="px-4 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded border border-[#D9DEE8]">Hủy bỏ</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-bold text-white bg-[#173F91] hover:bg-[#123477] rounded uppercase tracking-wider">Tạo tài khoản</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <!-- Search & Filter Bar -->
-    <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-xs">
+    <div class="bg-white rounded p-3.5 border border-[#D9DEE8]">
         <form method="get" class="flex flex-wrap items-center gap-3">
             <input type="text" name="q" value="{{ query }}" placeholder="Tìm theo tên, username, email..." 
-                   class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-navy-900 w-64">
+                   class="px-3 py-1.5 text-xs bg-slate-50 border border-[#D9DEE8] rounded focus:outline-none focus:ring-1 focus:ring-[#173F91] w-64">
             
-            <select name="role" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-navy-900">
+            <select name="role" class="px-3 py-1.5 text-xs bg-slate-50 border border-[#D9DEE8] rounded focus:outline-none focus:ring-1 focus:ring-[#173F91]">
                 <option value="">-- Tất cả Role --</option>
                 <option value="STUDENT" {% if role_filter == 'STUDENT' %}selected{% endif %}>Sinh viên (Student)</option>
                 <option value="MENTOR" {% if role_filter == 'MENTOR' %}selected{% endif %}>Giảng viên (Mentor)</option>
                 <option value="ADMIN" {% if role_filter == 'ADMIN' %}selected{% endif %}>Quản trị (Admin)</option>
             </select>
 
-            <button type="submit" class="px-4 py-1.5 bg-navy-900 text-white font-bold text-xs rounded-lg hover:bg-navy-950">
+            <button type="submit" class="px-4 py-1.5 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded uppercase tracking-wider">
                 Lọc dữ liệu
             </button>
         </form>
     </div>
 
     <!-- Users Table -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+    <div class="bg-white rounded border border-[#D9DEE8] overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs text-slate-700">
-                <thead class="bg-slate-50 text-slate-700 font-bold uppercase text-[10px] border-b border-slate-200">
+            <table class="w-full text-left text-xs text-[#172033]">
+                <thead class="bg-[#F5F7FA] text-[#172033] font-bold uppercase text-[10px] border-b border-[#D9DEE8]">
                     <tr>
                         <th class="p-3">Họ và Tên</th>
                         <th class="p-3">Username / Email</th>
@@ -46,49 +100,65 @@
                         <th class="p-3 text-right">Thao tác</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-[#D9DEE8]">
                     {% for u in users_list %}
                     <tr class="hover:bg-slate-50">
-                        <td class="p-3 font-bold text-slate-900 flex items-center space-x-2.5">
-                            <img src="{{ u.get_avatar_url }}" class="w-7 h-7 rounded-full border border-slate-300 object-cover">
+                        <td class="p-3 font-bold text-[#172033] flex items-center space-x-2.5">
+                            <img src="{{ u.get_avatar_url }}" class="w-7 h-7 rounded-full border border-[#D9DEE8] object-cover">
                             <span>{{ u.display_name }}</span>
                         </td>
                         <td class="p-3">
-                            <p class="font-semibold text-slate-900">{{ u.username }}</p>
-                            <p class="text-[11px] text-slate-500">{{ u.email }}</p>
+                            <p class="font-bold text-[#172033]">{{ u.username }}</p>
+                            <p class="text-[11px] text-[#667085]">{{ u.email }}</p>
                         </td>
-                        <td class="p-3 font-mono text-slate-600">{{ u.student_id|default:"-" }}</td>
+                        <td class="p-3 font-mono text-[#667085]">{{ u.student_id|default:"-" }}</td>
                         <td class="p-3">
-                            <span class="px-2 py-0.5 text-[10px] font-bold rounded uppercase
-                            {% if u.role == 'ADMIN' %}bg-purple-100 text-purple-800 border border-purple-200
-                            {% elif u.role == 'MENTOR' %}bg-amber-100 text-amber-800 border border-amber-200
-                            {% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}">
+                            <span class="px-2 py-0.5 text-[10px] font-bold rounded uppercase border
+                            {% if u.role == 'ADMIN' %}bg-purple-50 text-purple-800 border-purple-200
+                            {% elif u.role == 'MENTOR' %}bg-amber-50 text-amber-800 border-amber-200
+                            {% else %}bg-blue-50 text-blue-800 border-blue-200{% endif %}">
                                 {{ u.get_role_display }}
                             </span>
                         </td>
                         <td class="p-3">
                             {% if u.status == 'ACTIVE' %}
-                            <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold text-[10px] rounded">Hoạt động</span>
+                            <span class="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-[10px] rounded">Hoạt động</span>
                             {% else %}
-                            <span class="px-2 py-0.5 bg-rose-100 text-rose-800 border border-rose-200 font-bold text-[10px] rounded">Đã khóa</span>
+                            <span class="px-2 py-0.5 bg-rose-50 text-rose-800 border border-rose-200 font-bold text-[10px] rounded">Đã khóa</span>
                             {% endif %}
                         </td>
                         <td class="p-3 text-right">
                             {% if not u.is_superuser %}
-                            <form method="post" action="{% url 'admin_toggle_user_status' u.id %}" class="inline">
-                                {% csrf_token %}
-                                {% if u.status == 'ACTIVE' %}
-                                <button type="submit" onclick="return confirm('Bạn có chắc muốn KHÓA tài khoản này?')" class="px-2.5 py-1 bg-rose-50 text-rose-800 hover:bg-rose-100 font-bold text-[11px] rounded border border-rose-200">
-                                    Khóa tài khoản
-                                </button>
-                                {% else %}
-                                <button type="submit" class="px-2.5 py-1 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-bold text-[11px] rounded border border-emerald-200">
-                                    Mở khóa
-                                </button>
-                                {% endif %}
-                            </form>
+                            <div class="inline-flex items-center space-x-1">
+                                <!-- Change Role Dropdown / Form -->
+                                <form method="post" action="{% url 'admin_change_user_role' u.id %}" class="inline">
+                                    {% csrf_token %}
+                                    <select name="role" onchange="this.form.submit()" class="text-[10px] font-bold px-1.5 py-0.5 bg-slate-100 border border-[#D9DEE8] rounded">
+                                        <option value="STUDENT" {% if u.role == 'STUDENT' %}selected{% endif %}>Sinh viên</option>
+                                        <option value="MENTOR" {% if u.role == 'MENTOR' %}selected{% endif %}>Mentor</option>
+                                        <option value="ADMIN" {% if u.role == 'ADMIN' %}selected{% endif %}>Admin</option>
+                                    </select>
+                                </form>
+
+                                <form method="post" action="{% url 'admin_toggle_user_status' u.id %}" class="inline">
+                                    {% csrf_token %}
+                                    {% if u.status == 'ACTIVE' %}
+                                    <button type="submit" onclick="return confirm('Bạn có chắc muốn KHÓA tài khoản này?')" class="px-2.5 py-1 bg-rose-50 text-rose-800 hover:bg-rose-100 font-bold text-[11px] rounded border border-rose-200">
+                                        Khóa
+                                    </button>
+                                    {% else %}
+                                    <button type="submit" class="px-2.5 py-1 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-bold text-[11px] rounded border border-emerald-200">
+                                        Mở khóa
+                                    </button>
+                                    {% endif %}
+                                </form>
+                            </div>
                             {% endif %}
                         </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="p-6 text-center text-[#667085]">Không tìm thấy người dùng phù hợp.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

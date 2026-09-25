@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi" class="h-full bg-[#F7F8FA] text-slate-800">
+<html lang="vi" class="h-full bg-[#F5F7FA]">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProjectHub AI - Cổng Quản lý Đồ án Sinh viên & Hỗ trợ Mentor</title>
+    <title>ProjectHub - Cổng Thông tin & Quản lý Đồ án Sinh viên</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -12,172 +12,156 @@
             theme: {
                 extend: {
                     colors: {
-                        navy: { 900: '#163B65', 950: '#0f2643' },
-                        academic: { bg: '#F7F8FA', text: '#172033', muted: '#667085', border: '#E4E7EC', gold: '#B58A3A' }
+                        brand: {
+                            primary: '#173F91',
+                            dark: '#123477',
+                            accent: '#F2B705',
+                            bg: '#F5F7FA',
+                            text: '#172033',
+                            muted: '#667085',
+                            border: '#D9DEE8'
+                        }
                     }
                 }
             }
         }
     </script>
 </head>
-<body class="font-sans antialiased bg-[#F7F8FA] text-slate-800">
+<body class="font-sans antialiased bg-[#F5F7FA] text-[#172033] min-h-screen flex flex-col">
 
-    <!-- Header / Top Navigation -->
-    <header class="h-16 bg-white border-b border-academic-border sticky top-0 left-0 right-0 z-50 flex items-center justify-between px-6 lg:px-12 shadow-xs">
-        <a href="/" class="flex items-center space-x-2.5">
-            <div class="w-8 h-8 rounded-lg bg-navy-900 flex items-center justify-center text-white font-bold text-sm">
-                <i class="fa-solid fa-graduation-cap"></i>
-            </div>
-            <div>
-                <span class="font-bold text-navy-900 text-base tracking-tight block">ProjectHub <span class="text-academic-gold">AI</span></span>
-                <span class="text-[9px] text-slate-500 font-medium uppercase tracking-wider block -mt-1">Cổng thông tin Đồ án Sinh viên</span>
-            </div>
-        </a>
-
-        <div class="hidden md:flex items-center space-x-6 text-xs font-medium text-slate-600">
-            <a href="#features" class="hover:text-navy-900">Tính năng hệ thống</a>
-            <a href="#workflow" class="hover:text-navy-900">Quy trình sử dụng</a>
-            <a href="#about" class="hover:text-navy-900">Giới thiệu</a>
-        </div>
-
-        <div class="flex items-center space-x-3">
-            <a href="{% url 'login' %}" class="px-4 py-2 text-xs font-bold text-navy-900 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">Đăng nhập</a>
-            <a href="{% url 'register' %}" class="px-4 py-2 bg-navy-900 text-white font-bold text-xs rounded-lg hover:bg-navy-950 transition-colors">
-                Đăng ký tài khoản
+    <!-- Header 2 Tầng Academic Style -->
+    <header class="w-full bg-white border-b border-[#D9DEE8] sticky top-0 z-50 shadow-xs">
+        <!-- Tầng 1: Branding -->
+        <div class="max-w-[1400px] mx-auto px-4 sm:px-6 h-[72px] flex items-center justify-between">
+            <a href="/" class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded bg-[#173F91] flex items-center justify-center text-white font-bold text-lg">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-[#173F91] text-lg sm:text-xl tracking-tight block leading-tight">PROJECTHUB</span>
+                    <span class="text-[10px] sm:text-[11px] text-[#667085] font-semibold tracking-wider uppercase block">HỆ THỐNG QUẢN LÝ ĐỒ ÁN SINH VIÊN</span>
+                </div>
             </a>
+
+            <div class="flex items-center space-x-3">
+                <a href="{% url 'login' %}" class="px-4 py-2 text-xs font-bold text-[#173F91] border border-[#D9DEE8] rounded hover:bg-slate-50 transition-colors">
+                    Đăng nhập
+                </a>
+                <a href="{% url 'register' %}" class="px-4 py-2 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded transition-colors uppercase tracking-wider">
+                    Đăng ký tài khoản
+                </a>
+            </div>
         </div>
+
+        <!-- Tầng 2: Navigation Bar -->
+        <nav class="bg-[#173F91] text-white border-t border-[#123477]">
+            <div class="max-w-[1400px] mx-auto px-4 sm:px-6 flex items-center space-x-6 py-2.5 text-xs font-semibold uppercase tracking-wider">
+                <a href="#about" class="text-white hover:text-[#F2B705] transition-colors">Giới thiệu Hệ thống</a>
+                <a href="#features" class="text-white hover:text-[#F2B705] transition-colors">Chức năng Nghiệp vụ</a>
+                <a href="#workflow" class="text-white hover:text-[#F2B705] transition-colors">Quy trình Đồ án</a>
+            </div>
+        </nav>
     </header>
 
     <!-- Hero Section -->
-    <section class="py-16 px-6 lg:px-12 max-w-6xl mx-auto text-center">
-        <span class="inline-block px-3 py-1 bg-blue-50 border border-blue-200 text-navy-900 text-xs font-semibold rounded-full mb-4">
-            Nền tảng Quản lý Đồ án & Đồng hành cùng Mentor
-        </span>
-        <h1 class="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight max-w-3xl mx-auto">
-            Quản lý đồ án rõ ràng.<br>
-            <span class="text-navy-900">Theo dõi tiến độ dễ dàng. Mentor đồng hành hiệu quả.</span>
+    <section class="py-16 px-4 sm:px-6 max-w-[1400px] mx-auto text-center">
+        <div class="inline-block px-3 py-1 bg-blue-50 border border-blue-200 text-[#173F91] text-xs font-bold rounded mb-4 uppercase tracking-wider">
+            Khoa Công nghệ Thông tin — Cổng Quản lý Học vụ
+        </div>
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#172033] tracking-tight leading-tight max-w-4xl mx-auto">
+            Hệ thống Quản lý Đồ án Sinh viên
         </h1>
-        <p class="text-slate-600 text-sm sm:text-base max-w-2xl mx-auto mt-4 leading-relaxed font-normal">
-            ProjectHub AI cung cấp giải pháp quản lý toàn bộ vòng đời đồ án sinh viên: từ lập kế hoạch, chia nhỏ công việc, quản lý mốc giai đoạn (Milestones) đến nhận phản hồi và đánh giá từ Giảng viên hướng dẫn.
+        <p class="text-[#667085] text-sm sm:text-base max-w-2xl mx-auto mt-4 leading-relaxed font-normal">
+            Quản lý đồ án, công việc, kho tài liệu và quá trình đánh giá từ Giảng viên hướng dẫn trên một nền tảng thống nhất chuẩn quy trình học thuật.
         </p>
 
         <div class="mt-8 flex flex-wrap justify-center gap-3">
-            <a href="{% url 'login' %}" class="px-6 py-3 bg-navy-900 hover:bg-navy-950 text-white font-bold text-xs rounded-lg shadow-sm transition-all">
-                Đăng nhập Hệ thống <i class="fa-solid fa-arrow-right ml-1"></i>
+            <a href="{% url 'login' %}" class="px-6 py-3 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded shadow-xs uppercase tracking-wider transition-all">
+                Đăng nhập hệ thống <i class="fa-solid fa-arrow-right ml-1"></i>
             </a>
-            <a href="#workflow" class="px-6 py-3 bg-white border border-slate-300 text-slate-700 font-bold text-xs rounded-lg hover:bg-slate-50 transition-all">
-                Xem Quy trình sử dụng
+            <a href="{% url 'register' %}" class="px-6 py-3 bg-white border border-[#D9DEE8] text-[#172033] font-bold text-xs rounded hover:bg-slate-50 uppercase tracking-wider transition-all">
+                Đăng ký tài khoản mới
             </a>
         </div>
     </section>
 
-    <!-- 4 Main Features Section -->
-    <section id="features" class="py-16 px-6 lg:px-12 bg-white border-y border-academic-border">
-        <div class="max-w-6xl mx-auto">
-            <div class="text-center max-w-xl mx-auto mb-12">
-                <h2 class="text-2xl font-bold text-slate-900">Tính năng Nghiệp vụ Quản lý Đồ án</h2>
-                <p class="text-xs text-slate-500 mt-2">Hệ thống hỗ trợ sinh viên và giảng viên làm việc minh bạch, đúng quy trình học thuật.</p>
+    <!-- 6 Core Modules Section -->
+    <section id="features" class="py-14 px-4 sm:px-6 bg-white border-y border-[#D9DEE8]">
+        <div class="max-w-[1400px] mx-auto">
+            <div class="text-center max-w-xl mx-auto mb-10">
+                <h2 class="text-2xl font-bold text-[#172033]">Các Chức năng Nghiệp vụ Cốt lõi</h2>
+                <p class="text-xs text-[#667085] mt-1">Chuẩn hóa toàn bộ quy trình làm việc giữa Sinh viên và Giảng viên hướng dẫn.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 
-                <div class="p-5 rounded-xl border border-slate-200 bg-[#F7F8FA]">
-                    <div class="w-9 h-9 rounded-lg bg-navy-900 text-white flex items-center justify-center text-sm mb-4">
+                <div class="p-5 rounded border border-[#D9DEE8] bg-[#F5F7FA]">
+                    <div class="w-10 h-10 rounded bg-[#173F91] text-white flex items-center justify-center text-base mb-3">
                         <i class="fa-solid fa-folder-tree"></i>
                     </div>
-                    <h3 class="text-sm font-bold text-slate-900 mb-1">Quản lý Đồ án</h3>
-                    <p class="text-xs text-slate-600 leading-relaxed">Tạo lập đồ án, quản lý danh sách thành viên nhóm, phân công vai trò Trưởng nhóm và đăng ký Giảng viên hướng dẫn.</p>
+                    <h3 class="text-sm font-bold text-[#172033] mb-1">Quản lý Đồ án</h3>
+                    <p class="text-xs text-[#667085] leading-relaxed">Tạo lập đồ án, phân công nhóm sinh viên, lựa chọn Giảng viên hướng dẫn và thiết lập trạng thái đồ án.</p>
                 </div>
 
-                <div class="p-5 rounded-xl border border-slate-200 bg-[#F7F8FA]">
-                    <div class="w-9 h-9 rounded-lg bg-navy-900 text-white flex items-center justify-center text-sm mb-4">
+                <div class="p-5 rounded border border-[#D9DEE8] bg-[#F5F7FA]">
+                    <div class="w-10 h-10 rounded bg-[#173F91] text-white flex items-center justify-center text-base mb-3">
                         <i class="fa-solid fa-list-check"></i>
                     </div>
-                    <h3 class="text-sm font-bold text-slate-900 mb-1">Theo dõi Tiến độ</h3>
-                    <p class="text-xs text-slate-600 leading-relaxed">Bảng Kanban kéo-thả trực quan, theo dõi mốc Milestone từng giai đoạn và cảnh báo công việc quá hạn deadline.</p>
+                    <h3 class="text-sm font-bold text-[#172033] mb-1">Theo dõi Tiến độ</h3>
+                    <p class="text-xs text-[#667085] leading-relaxed">Bảng Kanban công việc kéo thả, chia nhỏ danh sách việc cần làm và thiết lập mốc giai đoạn Milestone.</p>
                 </div>
 
-                <div class="p-5 rounded-xl border border-slate-200 bg-[#F7F8FA]">
-                    <div class="w-9 h-9 rounded-lg bg-navy-900 text-white flex items-center justify-center text-sm mb-4">
+                <div class="p-5 rounded border border-[#D9DEE8] bg-[#F5F7FA]">
+                    <div class="w-10 h-10 rounded bg-[#173F91] text-white flex items-center justify-center text-base mb-3">
+                        <i class="fa-solid fa-comments"></i>
+                    </div>
+                    <h3 class="text-sm font-bold text-[#172033] mb-1">Trao đổi với Giảng viên</h3>
+                    <p class="text-xs text-[#667085] leading-relaxed">Tương tác trực tiếp trên từng công việc, nhận xét thảo luận và nhận góp ý kịp thời từ Giảng viên.</p>
+                </div>
+
+                <div class="p-5 rounded border border-[#D9DEE8] bg-[#F5F7FA]">
+                    <div class="w-10 h-10 rounded bg-[#173F91] text-white flex items-center justify-center text-base mb-3">
+                        <i class="fa-solid fa-file-lines"></i>
+                    </div>
+                    <h3 class="text-sm font-bold text-[#172033] mb-1">Quản lý Tài liệu</h3>
+                    <p class="text-xs text-[#667085] leading-relaxed">Lưu trữ bản thảo báo cáo, mã nguồn đồ án, theo dõi lịch sử phiên bản file v1, v2 và phân quyền truy cập file.</p>
+                </div>
+
+                <div class="p-5 rounded border border-[#D9DEE8] bg-[#F5F7FA]">
+                    <div class="w-10 h-10 rounded bg-[#173F91] text-white flex items-center justify-center text-base mb-3">
                         <i class="fa-solid fa-clipboard-check"></i>
                     </div>
-                    <h3 class="text-sm font-bold text-slate-900 mb-1">Mentor Review</h3>
-                    <p class="text-xs text-slate-600 leading-relaxed">Giảng viên hướng dẫn duyệt sản phẩm, chấm điểm đánh giá và gửi phản hồi yêu cầu sinh viên chỉnh sửa kịp thời.</p>
+                    <h3 class="text-sm font-bold text-[#172033] mb-1">Đánh giá & Phản hồi</h3>
+                    <p class="text-xs text-[#667085] leading-relaxed">Giảng viên hướng dẫn ghi nhận review, đánh giá tiến độ từng mốc milestone và duyệt bài nộp.</p>
                 </div>
 
-                <div class="p-5 rounded-xl border border-slate-200 bg-[#F7F8FA]">
-                    <div class="w-9 h-9 rounded-lg bg-navy-900 text-white flex items-center justify-center text-sm mb-4">
+                <div class="p-5 rounded border border-[#D9DEE8] bg-[#F5F7FA]">
+                    <div class="w-10 h-10 rounded bg-[#173F91] text-white flex items-center justify-center text-base mb-3">
                         <i class="fa-solid fa-robot"></i>
                     </div>
-                    <h3 class="text-sm font-bold text-slate-900 mb-1">Trợ lý AI Hỗ trợ</h3>
-                    <p class="text-xs text-slate-600 leading-relaxed">Công cụ AI hỗ trợ phân tích yêu cầu đồ án thành danh sách công việc, tổng hợp báo cáo tuần và gợi ý rủi ro tiến độ.</p>
+                    <h3 class="text-sm font-bold text-[#172033] mb-1">Trợ lý AI Hỗ trợ</h3>
+                    <p class="text-xs text-[#667085] leading-relaxed">Module công cụ AI hỗ trợ gợi ý chia nhỏ task, tóm tắt tiến độ tuần và phát hiện rủi ro trễ hạn.</p>
                 </div>
 
             </div>
         </div>
     </section>
 
-    <!-- 6-Step Workflow Section -->
-    <section id="workflow" class="py-16 px-6 lg:px-12 max-w-6xl mx-auto">
-        <div class="text-center max-w-xl mx-auto mb-12">
-            <h2 class="text-2xl font-bold text-slate-900">Quy trình Quản lý Đồ án 6 Bước</h2>
-            <p class="text-xs text-slate-500 mt-2">Đồng bộ công việc xuyên suốt từ khi bắt đầu cho đến lúc nghiệm thu hoàn thành.</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="p-4 bg-white rounded-xl border border-slate-200 flex items-start space-x-3">
-                <span class="w-6 h-6 rounded bg-navy-900 text-white font-bold text-xs flex items-center justify-center shrink-0">1</span>
-                <div>
-                    <h4 class="text-xs font-bold text-slate-900">Tạo Đồ án & Thêm thành viên</h4>
-                    <p class="text-[11px] text-slate-500 mt-0.5">Sinh viên khởi tạo thông tin đồ án, mời các thành viên nhóm và đăng ký Mentor.</p>
+    <!-- Academic Footer -->
+    <footer class="bg-[#172033] text-white border-t border-[#D9DEE8] mt-auto text-xs py-6">
+        <div class="max-w-[1400px] mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center space-x-2">
+                    <span class="font-bold text-[#F2B705] text-sm">PROJECTHUB</span>
+                    <span class="text-slate-400">|</span>
+                    <span class="text-slate-300 font-medium">Hệ thống Quản lý Đồ án Sinh viên</span>
                 </div>
+                <p class="text-slate-400 text-[11px] mt-1">Khoa Công nghệ Thông tin — Học viện Hàng không Việt Nam</p>
             </div>
-
-            <div class="p-4 bg-white rounded-xl border border-slate-200 flex items-start space-x-3">
-                <span class="w-6 h-6 rounded bg-navy-900 text-white font-bold text-xs flex items-center justify-center shrink-0">2</span>
-                <div>
-                    <h4 class="text-xs font-bold text-slate-900">Lập Kế hoạch Milestone</h4>
-                    <p class="text-[11px] text-slate-500 mt-0.5">Xác định các mốc giai đoạn quan trọng và thiết lập thời hạn hoàn thành.</p>
-                </div>
-            </div>
-
-            <div class="p-4 bg-white rounded-xl border border-slate-200 flex items-start space-x-3">
-                <span class="w-6 h-6 rounded bg-navy-900 text-white font-bold text-xs flex items-center justify-center shrink-0">3</span>
-                <div>
-                    <h4 class="text-xs font-bold text-slate-900">Phân công Công việc Kanban</h4>
-                    <p class="text-[11px] text-slate-500 mt-0.5">Sử dụng AI hỗ trợ phân rã việc hoặc tự tạo task và phân công cho thành viên.</p>
-                </div>
-            </div>
-
-            <div class="p-4 bg-white rounded-xl border border-slate-200 flex items-start space-x-3">
-                <span class="w-6 h-6 rounded bg-navy-900 text-white font-bold text-xs flex items-center justify-center shrink-0">4</span>
-                <div>
-                    <h4 class="text-xs font-bold text-slate-900">Thực hiện & Upload Tài liệu</h4>
-                    <p class="text-[11px] text-slate-500 mt-0.5">Cập nhật trạng thái công việc và tải lên các bản thảo báo cáo, mã nguồn.</p>
-                </div>
-            </div>
-
-            <div class="p-4 bg-white rounded-xl border border-slate-200 flex items-start space-x-3">
-                <span class="w-6 h-6 rounded bg-navy-900 text-white font-bold text-xs flex items-center justify-center shrink-0">5</span>
-                <div>
-                    <h4 class="text-xs font-bold text-slate-900">Mentor Review & Feedback</h4>
-                    <p class="text-[11px] text-slate-500 mt-0.5">Giảng viên hướng dẫn xem xét kết quả, gửi phản hồi và yêu cầu chỉnh sửa.</p>
-                </div>
-            </div>
-
-            <div class="p-4 bg-white rounded-xl border border-slate-200 flex items-start space-x-3">
-                <span class="w-6 h-6 rounded bg-navy-900 text-white font-bold text-xs flex items-center justify-center shrink-0">6</span>
-                <div>
-                    <h4 class="text-xs font-bold text-slate-900">Nghiệm thu & Hoàn thành</h4>
-                    <p class="text-[11px] text-slate-500 mt-0.5">Hoàn thiện toàn bộ các mốc giai đoạn và chuẩn bị báo cáo trước hội đồng.</p>
-                </div>
+            <div class="text-slate-400 text-[11px] text-center md:text-right">
+                <p>© 2026 ProjectHub Platform. Tất cả quyền được bảo lưu.</p>
             </div>
         </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="py-8 px-6 border-t border-academic-border bg-white text-center text-xs text-slate-500">
-        <p>© 2026 ProjectHub AI - Cổng Quản lý Đồ án Sinh viên & Hỗ trợ Mentor. Đồ án Môn học Web 1.</p>
     </footer>
 
 </body>

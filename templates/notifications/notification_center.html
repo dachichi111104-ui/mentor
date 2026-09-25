@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Trung tâm Thông báo - ProjectHub AI{% endblock %}
+{% block title %}Trung tâm Thông báo - ProjectHub{% endblock %}
 {% block breadcrumb %}Thông báo{% endblock %}
 
 {% block content %}
@@ -8,42 +8,42 @@
 
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-xl font-bold text-slate-900 tracking-tight">Trung tâm Thông báo</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Cập nhật tin tức phân công công việc, nhận xét từ Mentor và nhắc nhở mốc thời gian.</p>
+            <h1 class="text-xl font-bold text-[#172033] tracking-tight">Trung tâm Thông báo</h1>
+            <p class="text-xs text-[#667085] mt-1">Cập nhật tin tức phân công công việc, nhận xét từ Giảng viên và nhắc nhở mốc thời gian.</p>
         </div>
 
-        <a href="{% url 'notification_mark_all_read' %}" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200">
+        <a href="{% url 'notification_mark_all_read' %}" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded border border-[#D9DEE8]">
             Đánh dấu tất cả đã đọc
         </a>
     </div>
 
-    <div class="bg-white rounded-xl border border-slate-200 shadow-xs divide-y divide-slate-100 overflow-hidden">
+    <div class="bg-white rounded border border-[#D9DEE8] divide-y divide-slate-100 overflow-hidden">
         {% for n in notifications %}
         <div class="p-4 flex items-start justify-between space-x-3 transition-colors {% if not n.is_read %}bg-slate-50{% endif %}">
             <div class="flex items-start space-x-3">
-                <div class="w-8 h-8 rounded-lg bg-navy-900 text-white flex items-center justify-center text-xs shrink-0 mt-0.5">
+                <div class="w-8 h-8 rounded bg-[#173F91] text-white flex items-center justify-center text-xs shrink-0 mt-0.5">
                     <i class="fa-solid fa-bell"></i>
                 </div>
                 <div>
                     <div class="flex items-center space-x-2">
-                        <h4 class="text-xs font-bold text-slate-900">{{ n.title }}</h4>
+                        <h4 class="text-xs font-bold text-[#172033]">{{ n.title }}</h4>
                         {% if not n.is_read %}
-                        <span class="w-1.5 h-1.5 rounded-full bg-rose-600"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#C62828]"></span>
                         {% endif %}
                     </div>
-                    <p class="text-xs text-slate-600 mt-1 leading-relaxed">{{ n.message }}</p>
-                    <span class="text-[10px] text-slate-400 mt-1.5 block">{{ n.created_at|date:"d/m/Y H:i" }}</span>
+                    <p class="text-xs text-[#172033] mt-1 leading-relaxed">{{ n.message }}</p>
+                    <span class="text-[10px] text-[#667085] mt-1.5 block font-mono">{{ n.created_at|date:"d/m/Y H:i" }}</span>
                 </div>
             </div>
 
             {% if n.link %}
-            <a href="{% url 'notification_mark_read' n.id %}" class="px-3 py-1 bg-navy-900 text-white font-semibold text-xs rounded hover:bg-navy-950 shrink-0">
+            <a href="{% url 'notification_mark_read' n.id %}" class="px-3 py-1 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded uppercase tracking-wider shrink-0">
                 Xem chi tiết
             </a>
             {% endif %}
         </div>
         {% empty %}
-        <div class="p-8 text-center text-slate-400 text-xs">Bạn chưa có thông báo nào.</div>
+        <div class="p-8 text-center text-[#667085] text-xs">Bạn chưa có thông báo nào.</div>
         {% endfor %}
     </div>
 

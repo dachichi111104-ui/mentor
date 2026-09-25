@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="vi" class="h-full bg-[#F7F8FA]">
+<html lang="vi" class="h-full bg-[#F5F7FA]">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}ProjectHub AI - Cổng Quản lý Đồ án Sinh viên{% endblock %}</title>
+    <title>{% block title %}ProjectHub - Cổng Quản lý Đồ án Sinh viên{% endblock %}</title>
     <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Tailwind CSS -->
@@ -17,18 +17,20 @@
             theme: {
                 extend: {
                     colors: {
-                        navy: {
-                            800: '#1e3a5f',
-                            900: '#163B65',
-                            950: '#0f2643',
-                        },
-                        academic: {
-                            bg: '#F7F8FA',
-                            surface: '#FFFFFF',
+                        brand: {
+                            primary: '#173F91',
+                            dark: '#123477',
+                            academic: '#1E4FA3',
+                            accent: '#F2B705',
+                            lightYellow: '#FFF7D6',
+                            bg: '#F5F7FA',
+                            card: '#FFFFFF',
                             text: '#172033',
                             muted: '#667085',
-                            border: '#E4E7EC',
-                            gold: '#B58A3A',
+                            border: '#D9DEE8',
+                            success: '#198754',
+                            warning: '#D99A00',
+                            danger: '#C62828'
                         }
                     },
                     fontFamily: {
@@ -42,25 +44,25 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
-        body { font-family: 'Inter', sans-serif; color: #172033; background-color: #F7F8FA; }
+        body { font-family: 'Inter', sans-serif; color: #172033; background-color: #F5F7FA; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #F7F8FA; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 2px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #F5F7FA; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="h-full antialiased flex flex-col font-sans" x-data="{ sidebarOpen: false, logoutModal: false, customAlert: { show: false, title: '', message: '' } }">
+<body class="min-h-screen flex flex-col antialiased font-sans text-[#172033] bg-[#F5F7FA]" x-data="{ mobileMenuOpen: false, logoutModal: false, customAlert: { show: false, title: '', message: '' } }">
 
     <!-- TOAST NOTIFICATIONS CONTAINER -->
     {% if messages %}
     <div class="fixed top-4 right-4 z-50 flex flex-col space-y-2 max-w-sm w-full">
         {% for message in messages %}
         <div x-data="{ show: true }" x-show="show" x-transition
-             class="p-3.5 rounded-lg shadow-md border text-xs font-medium flex items-center justify-between space-x-3 
-             {% if message.tags == 'success' %}bg-emerald-50 border-emerald-200 text-emerald-900
-             {% elif message.tags == 'error' %}bg-rose-50 border-rose-200 text-rose-900
-             {% elif message.tags == 'warning' %}bg-amber-50 border-amber-200 text-amber-900
-             {% else %}bg-slate-50 border-slate-200 text-slate-800{% endif %}">
+             class="p-3.5 rounded-xl border text-xs font-medium flex items-center justify-between space-x-3 shadow-md 
+             {% if message.tags == 'success' %}bg-emerald-50 border-emerald-300 text-emerald-900
+             {% elif message.tags == 'error' %}bg-rose-50 border-rose-300 text-rose-900
+             {% elif message.tags == 'warning' %}bg-amber-50 border-amber-300 text-amber-900
+             {% else %}bg-slate-50 border-slate-300 text-slate-800{% endif %}">
             <div class="flex items-center space-x-2.5">
                 <i class="fa-solid 
                 {% if message.tags == 'success' %}fa-circle-check text-emerald-600
@@ -75,275 +77,300 @@
     </div>
     {% endif %}
 
-    <!-- GLOBAL CUSTOM LOGOUT CONFIRMATION MODAL -->
+    <!-- GLOBAL LOGOUT CONFIRMATION MODAL -->
     <div x-show="logoutModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-        <div class="bg-white rounded-xl max-w-sm w-full p-6 shadow-xl space-y-4 border border-slate-200" @click.away="logoutModal = false">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl space-y-4 border border-[#D9DEE8]" @click.away="logoutModal = false">
             <div class="flex items-center space-x-3 text-rose-700">
-                <div class="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center text-rose-600 text-lg border border-rose-200">
+                <div class="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 text-lg border border-rose-200">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </div>
-                <h3 class="text-sm font-bold text-slate-900">Xác nhận Đăng xuất</h3>
+                <h3 class="text-sm font-bold text-[#172033]">Xác nhận Đăng xuất</h3>
             </div>
-            <p class="text-xs text-slate-600 leading-relaxed">
-                Bạn có chắc chắn muốn đăng xuất khỏi phiên làm việc ProjectHub AI không?
+            <p class="text-xs text-[#667085] leading-relaxed">
+                Bạn có chắc chắn muốn đăng xuất khỏi Cổng Quản lý Đồ án ProjectHub không?
             </p>
             <div class="flex justify-end space-x-2 pt-2">
-                <button type="button" @click="logoutModal = false" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg border border-slate-200">
+                <button type="button" @click="logoutModal = false" class="px-4 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl border border-[#D9DEE8] transition-all">
                     Hủy bỏ
                 </button>
-                <a href="{% url 'logout' %}" class="px-4 py-2 text-xs font-bold text-white bg-rose-700 hover:bg-rose-800 rounded-lg shadow-xs">
+                <a href="{% url 'logout' %}" class="px-4 py-2 text-xs font-bold text-white bg-[#C62828] hover:bg-rose-800 rounded-xl shadow-xs transition-all">
                     Xác nhận Đăng xuất
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- GLOBAL CUSTOM ALERT MODAL (REPLACES BROWSER ALERT) -->
+    <!-- GLOBAL ALERT MODAL -->
     <div x-show="customAlert.show" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-        <div class="bg-white rounded-xl max-w-sm w-full p-6 shadow-xl space-y-4 border border-slate-200" @click.away="customAlert.show = false">
-            <div class="flex items-center space-x-3 text-navy-900">
-                <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-navy-900 text-lg border border-blue-200">
-                    <i class="fa-solid fa-circle-check"></i>
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl space-y-4 border border-[#D9DEE8]" @click.away="customAlert.show = false">
+            <div class="flex items-center space-x-3 text-[#173F91]">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#173F91] text-lg border border-blue-200">
+                    <i class="fa-solid fa-circle-info"></i>
                 </div>
-                <h3 class="text-sm font-bold text-slate-900" x-text="customAlert.title || 'Thông báo Hệ thống'"></h3>
+                <h3 class="text-sm font-bold text-[#172033]" x-text="customAlert.title || 'Thông báo Hệ thống'"></h3>
             </div>
-            <p class="text-xs text-slate-600 leading-relaxed" x-text="customAlert.message"></p>
+            <p class="text-xs text-[#667085] leading-relaxed" x-text="customAlert.message"></p>
             <div class="flex justify-end pt-2">
-                <button type="button" @click="customAlert.show = false" class="px-4 py-2 text-xs font-bold text-white bg-navy-900 hover:bg-navy-950 rounded-lg">
+                <button type="button" @click="customAlert.show = false" class="px-4 py-2 text-xs font-bold text-white bg-[#173F91] hover:bg-[#123477] rounded-xl shadow-xs transition-all">
                     Đóng cửa sổ
                 </button>
             </div>
         </div>
     </div>
 
-    <div class="flex h-screen overflow-hidden">
+    <!-- SITE HEADER: 2 TẦNG (UNIVERSITY PORTAL STYLE) -->
+    <header class="w-full bg-white border-b border-[#D9DEE8] sticky top-0 z-40 shadow-xs">
         
-        <!-- SIDEBAR - ACADEMIC PORTAL STYLE -->
-        <aside class="fixed inset-y-0 left-0 z-40 w-60 bg-white text-slate-700 transform transition-transform duration-200 ease-in-out md:translate-x-0 flex flex-col border-r border-academic-border"
-               :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'">
+        <!-- TẦNG 1 — BRANDING HEADER -->
+        <div class="max-w-[1400px] mx-auto px-4 sm:px-6 h-[72px] flex items-center justify-between">
             
-            <!-- Logo Brand Section -->
-            <div class="h-16 flex items-center px-5 border-b border-academic-border bg-white justify-between">
-                <a href="{% url 'dashboard' %}" class="flex items-center space-x-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-navy-900 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                        <i class="fa-solid fa-graduation-cap"></i>
-                    </div>
-                    <div>
-                        <span class="font-bold text-navy-900 text-sm tracking-tight block">ProjectHub <span class="text-academic-gold">AI</span></span>
-                        <span class="text-[9px] text-slate-500 font-medium tracking-wider uppercase block">Cổng Quản lý Đồ án</span>
-                    </div>
-                </a>
-                <button @click="sidebarOpen = false" class="md:hidden text-slate-400 hover:text-slate-600">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
+            <!-- Branding Left -->
+            <a href="{% url 'dashboard' %}" class="flex items-center space-x-3 group">
+                <div class="w-10 h-10 rounded-xl bg-[#173F91] flex items-center justify-center text-white font-bold text-lg shadow-xs group-hover:bg-[#123477] transition-colors">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-[#173F91] text-lg sm:text-xl tracking-tight block leading-tight">PROJECTHUB</span>
+                    <span class="text-[10px] sm:text-[11px] text-[#667085] font-semibold tracking-wider uppercase block">HỆ THỐNG QUẢN LÝ ĐỒ ÁN SINH VIÊN</span>
+                </div>
+            </a>
 
-            <!-- User Info Summary Strip -->
-            <div class="px-5 py-3 border-b border-academic-border bg-slate-50/70">
-                <div class="flex items-center space-x-2.5">
-                    <img src="{{ request.user.get_avatar_url }}" class="w-8 h-8 rounded-full border border-slate-300 object-cover">
-                    <div class="flex-1 min-w-0">
-                        <p class="text-xs font-semibold text-slate-900 truncate">{{ request.user.display_name }}</p>
-                        <span class="inline-block px-1.5 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider
-                        {% if request.user.is_admin_user %}bg-purple-100 text-purple-800 border border-purple-200
-                        {% elif request.user.is_mentor %}bg-amber-100 text-amber-800 border border-amber-200
-                        {% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}">
-                            {{ request.user.get_role_display }}
+            <!-- Right Actions (Desktop Search, Notification, Profile, Mobile Toggle) -->
+            <div class="flex items-center space-x-3 sm:space-x-4">
+                
+                <!-- Global Search -->
+                <div class="relative hidden sm:block" x-data="{ query: '' }">
+                    <form action="{% url 'global_search' %}" method="GET" class="relative">
+                        <input type="text" name="q" 
+                               placeholder="Tìm đồ án, công việc, tài liệu..." 
+                               class="w-48 lg:w-64 pl-8 pr-3 py-1.5 text-xs bg-slate-50 text-[#172033] rounded-xl border border-[#D9DEE8] focus:outline-none focus:ring-1 focus:ring-[#173F91] focus:bg-white transition-all">
+                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-[#667085] text-xs"></i>
+                    </form>
+                </div>
+
+                <!-- Notifications -->
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" class="relative p-2 text-[#667085] hover:text-[#173F91] rounded-xl hover:bg-slate-100 transition-colors">
+                        <i class="fa-solid fa-bell text-base"></i>
+                        {% if unread_notifications_count > 0 %}
+                        <span class="notification-badge-count absolute top-1 right-1 px-1.5 py-0.5 bg-[#C62828] text-white rounded-full font-bold text-[9px] min-w-[14px] text-center">
+                            {{ unread_notifications_count }}
                         </span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Navigation Links -->
-            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar text-xs">
-                
-                <a href="{% url 'dashboard' %}" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg font-medium transition-all
-                {% if request.resolver_match.url_name == 'dashboard' %}bg-navy-900 text-white font-semibold shadow-sm border-l-4 border-academic-gold{% else %}hover:bg-slate-100 text-slate-700{% endif %}">
-                    <i class="fa-solid fa-chart-line w-4 text-center"></i>
-                    <span>Tổng quan (Dashboard)</span>
-                </a>
-
-                {% if request.user.is_admin_user %}
-                <div class="pt-3 pb-1 px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Quản trị Hệ thống</div>
-                <a href="{% url 'admin_users' %}" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg font-medium hover:bg-slate-100 text-slate-700">
-                    <i class="fa-solid fa-users-gear w-4 text-center"></i>
-                    <span>Quản lý Tài khoản</span>
-                </a>
-                <a href="{% url 'project_list' %}" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg font-medium hover:bg-slate-100 text-slate-700">
-                    <i class="fa-solid fa-folder-tree w-4 text-center"></i>
-                    <span>Quản lý Tất cả Đồ án</span>
-                </a>
-                <a href="{% url 'admin_audit_log' %}" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg font-medium hover:bg-slate-100 text-slate-700">
-                    <i class="fa-solid fa-shield-halved w-4 text-center"></i>
-                    <span>Nhật ký Audit Log</span>
-                </a>
-                {% endif %}
-
-                {% if request.user.is_student or request.user.is_mentor %}
-                <div class="pt-3 pb-1 px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Quản lý Đồ án</div>
-                <a href="{% url 'project_list' %}" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg font-medium hover:bg-slate-100 text-slate-700">
-                    <i class="fa-solid fa-folder-open w-4 text-center"></i>
-                    <span>{% if request.user.is_student %}Đồ án của tôi{% else %}Đồ án Hướng dẫn{% endif %}</span>
-                </a>
-                <a href="{% url 'my_tasks' %}" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg font-medium hover:bg-slate-100 text-slate-700">
-                    <i class="fa-solid fa-list-check w-4 text-center"></i>
-                    <span>Công việc & Kanban</span>
-                </a>
-                <a href="{% url 'document_list' %}" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg font-medium hover:bg-slate-100 text-slate-700">
-                    <i class="fa-solid fa-file-lines w-4 text-center"></i>
-                    <span>Kho Tài liệu</span>
-                </a>
-                {% endif %}
-
-                {% if request.user.is_mentor %}
-                <a href="{% url 'mentor_reviews' %}" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg font-medium hover:bg-slate-100 text-slate-700">
-                    <i class="fa-solid fa-clipboard-check w-4 text-center"></i>
-                    <span>Đánh giá & Review</span>
-                </a>
-                {% endif %}
-
-                {% if not request.user.is_admin_user %}
-                <div class="pt-3 pb-1 px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Trợ lý Công cụ</div>
-                <a href="{% url 'ai_assistant_page' %}" class="flex items-center space-x-2.5 px-3 py-2 rounded-lg font-medium hover:bg-slate-100 text-slate-700">
-                    <i class="fa-solid fa-robot w-4 text-center text-navy-900"></i>
-                    <span>Trợ lý AI (AI Assistant)</span>
-                </a>
-                {% endif %}
-
-                <div class="pt-3 pb-1 px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cá nhân</div>
-                <a href="{% url 'notification_center' %}" class="flex items-center justify-between px-3 py-2 rounded-lg font-medium hover:bg-slate-100 text-slate-700">
-                    <div class="flex items-center space-x-2.5">
-                        <i class="fa-solid fa-bell w-4 text-center"></i>
-                        <span>Thông báo</span>
-                    </div>
-                    {% if unread_notifications_count > 0 %}
-                    <span class="px-1.5 py-0.2 bg-rose-600 text-white rounded font-bold text-[10px]">{{ unread_notifications_count }}</span>
-                    {% endif %}
-                </a>
-                <a href="{% url 'profile' %}" class="flex items-center justify-between px-3 py-2 rounded-lg font-medium transition-all
-                {% if request.resolver_match.url_name == 'profile' %}bg-navy-900 text-white font-semibold shadow-sm border-l-4 border-academic-gold{% else %}hover:bg-slate-100 text-slate-700{% endif %}">
-                    <div class="flex items-center space-x-2.5">
-                        <i class="fa-solid fa-user-gear w-4 text-center"></i>
-                        <span>Thiết lập tài khoản</span>
-                    </div>
-                    <span class="px-1.5 py-0.5 {% if request.user.profile_completion.is_fully_completed %}bg-emerald-100 text-emerald-800{% else %}bg-amber-100 text-amber-800{% endif %} font-bold text-[10px] rounded border border-slate-200">
-                        {{ request.user.profile_completion.completed }}/{{ request.user.profile_completion.total }}
-                    </span>
-                </a>
-
-            </nav>
-
-            <!-- Bottom Logout with Confirmation Modal Trigger -->
-            <div class="p-3 border-t border-academic-border bg-white">
-                <button @click="logoutModal = true" class="flex items-center justify-center space-x-2 w-full py-2 px-3 rounded-lg text-xs font-semibold text-rose-700 hover:bg-rose-50 border border-rose-200 transition-colors">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    <span>Đăng xuất</span>
-                </button>
-            </div>
-
-        </aside>
-
-        <!-- MAIN CONTAINER -->
-        <div class="flex-1 flex flex-col min-w-0 overflow-hidden md:pl-60">
-            
-            <!-- HEADER BAR -->
-            <header class="h-16 bg-white border-b border-academic-border flex items-center justify-between px-4 sm:px-6 z-30 sticky top-0 shadow-xs">
-                
-                <!-- Breadcrumb Navigation -->
-                <div class="flex items-center space-x-3">
-                    <button @click="sidebarOpen = !sidebarOpen" class="md:hidden text-slate-600 hover:text-slate-900">
-                        <i class="fa-solid fa-bars text-base"></i>
+                        {% endif %}
                     </button>
-                    <nav class="hidden sm:flex items-center text-xs text-slate-500 space-x-2 font-medium">
-                        <a href="{% url 'dashboard' %}" class="hover:text-navy-900">ProjectHub AI</a>
-                        <i class="fa-solid fa-chevron-right text-[9px] text-slate-300"></i>
-                        <span class="text-slate-900 font-semibold">{% block breadcrumb %}Trang chính{% endblock %}</span>
-                    </nav>
-                </div>
-
-                <!-- Right Actions -->
-                <div class="flex items-center space-x-3">
-
-                    <!-- Global Search -->
-                    <div class="relative" x-data="{ query: '', open: false }">
-                        <div class="relative">
-                            <input type="text" 
-                                   x-model="query" 
-                                   placeholder="Tìm đồ án, task, file..." 
-                                   class="w-44 sm:w-56 pl-8 pr-3 py-1.5 text-xs bg-slate-50 text-slate-800 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-navy-900 focus:bg-white transition-all">
-                            <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-slate-400 text-xs"></i>
+                    
+                    <div x-show="open" @click.away="open = false" x-cloak
+                         class="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-lg border border-[#D9DEE8] py-2 z-50 overflow-hidden">
+                        <div class="flex items-center justify-between px-4 pb-2 border-b border-slate-100 pt-1">
+                            <h4 class="text-[11px] font-bold text-[#172033] uppercase tracking-wider">Thông báo ({{ unread_notifications_count }})</h4>
+                            <a href="{% url 'notification_center' %}" class="text-[11px] font-semibold text-[#173F91] hover:underline">Xem tất cả</a>
                         </div>
-                    </div>
-
-                    <!-- Notification Bell -->
-                    <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open" class="relative p-2 text-slate-600 hover:text-navy-900 rounded-lg hover:bg-slate-100 transition-colors">
-                            <i class="fa-solid fa-bell text-sm"></i>
-                            {% if unread_notifications_count > 0 %}
-                            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-600 rounded-full"></span>
+                        <div class="max-h-64 overflow-y-auto divide-y divide-slate-100">
+                            {% if recent_notifications %}
+                                {% for notif in recent_notifications %}
+                                <a href="{% url 'notification_center' %}" class="block p-3 hover:bg-slate-50 transition-colors">
+                                    <p class="text-xs font-bold text-[#172033] truncate">{{ notif.title }}</p>
+                                    <p class="text-[11px] text-[#667085] line-clamp-2 mt-0.5">{{ notif.message }}</p>
+                                    <span class="text-[10px] text-slate-400 mt-1 block">{{ notif.created_at|date:"d/m/Y H:i" }}</span>
+                                </a>
+                                {% endfor %}
+                            {% else %}
+                                <div class="p-4 text-center text-[#667085] text-xs">Không có thông báo mới.</div>
                             {% endif %}
-                        </button>
-                        
-                        <div x-show="open" @click.away="open = false" x-cloak
-                             class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50">
-                            <div class="flex items-center justify-between px-3 pb-2 border-b border-slate-100">
-                                <h4 class="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Thông báo ({{ unread_notifications_count }})</h4>
-                                <a href="{% url 'notification_center' %}" class="text-[11px] font-semibold text-navy-900 hover:underline">Xem tất cả</a>
-                            </div>
-                            <div class="max-h-64 overflow-y-auto divide-y divide-slate-50">
-                                {% if recent_notifications %}
-                                    {% for notif in recent_notifications %}
-                                    <a href="{% url 'notification_center' %}" class="block p-3 hover:bg-slate-50 transition-colors">
-                                        <p class="text-xs font-bold text-slate-800 truncate">{{ notif.title }}</p>
-                                        <p class="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{{ notif.message }}</p>
-                                        <span class="text-[10px] text-slate-400 mt-1 block">{{ notif.created_at|date:"d/m/Y H:i" }}</span>
-                                    </a>
-                                    {% endfor %}
-                                {% else %}
-                                    <div class="p-4 text-center text-slate-400 text-xs">Không có thông báo mới.</div>
-                                {% endif %}
-                            </div>
                         </div>
                     </div>
-
-                    <!-- Profile Avatar -->
-                    <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open" class="flex items-center space-x-2 focus:outline-none">
-                            <img src="{{ request.user.get_avatar_url }}" class="w-7 h-7 rounded-full border border-slate-300 object-cover">
-                            <span class="hidden md:inline-block text-xs font-semibold text-slate-800">{{ request.user.first_name }}</span>
-                            <i class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
-                        </button>
-                        
-                        <div x-show="open" @click.away="open = false" x-cloak
-                             class="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-50">
-                            <div class="px-3 py-2 border-b border-slate-100">
-                                <p class="text-xs font-bold text-slate-900">{{ request.user.display_name }}</p>
-                                <p class="text-[10px] text-slate-500 truncate">{{ request.user.email }}</p>
-                            </div>
-                            <a href="{% url 'profile' %}" class="flex items-center justify-between px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 font-medium">
-                                <span>Thiết lập tài khoản</span>
-                                <span class="px-1.5 py-0.5 {% if request.user.profile_completion.is_fully_completed %}bg-emerald-100 text-emerald-800{% else %}bg-amber-100 text-amber-800{% endif %} text-[9px] font-bold rounded border border-slate-200">
-                                    {{ request.user.profile_completion.completed }}/{{ request.user.profile_completion.total }}
-                                </span>
-                            </a>
-                            <button @click="open = false; logoutModal = true" class="w-full text-left px-3 py-1.5 text-xs text-rose-700 hover:bg-rose-50 border-t border-slate-100 font-semibold">
-                                Đăng xuất
-                            </button>
-                        </div>
-                    </div>
-
                 </div>
 
-            </header>
+                <!-- User Profile & Dropdown -->
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" class="flex items-center space-x-2.5 p-1 rounded-xl hover:bg-slate-100 transition-colors focus:outline-none">
+                        <img src="{{ request.user.get_avatar_url }}" class="w-8 h-8 rounded-full border border-[#D9DEE8] object-cover">
+                        <div class="hidden md:block text-left">
+                            <span class="text-xs font-bold text-[#172033] block leading-none">{{ request.user.display_name }}</span>
+                            <span class="text-[10px] text-[#667085] font-semibold block mt-0.5">
+                                {{ request.user.get_role_display }}
+                            </span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-[#667085]"></i>
+                    </button>
+                    
+                    <div x-show="open" @click.away="open = false" x-cloak
+                         class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-lg border border-[#D9DEE8] py-1.5 z-50 overflow-hidden">
+                        <div class="px-4 py-2.5 border-b border-slate-100">
+                            <p class="text-xs font-bold text-[#172033]">{{ request.user.display_name }}</p>
+                            <p class="text-[10px] text-[#667085] truncate">{{ request.user.email }}</p>
+                            <span class="inline-block px-2 py-0.5 text-[9px] font-bold rounded-full uppercase mt-1.5
+                            {% if request.user.is_admin_user %}bg-purple-100 text-purple-800 border border-purple-200
+                            {% elif request.user.is_mentor %}bg-amber-100 text-amber-800 border border-amber-200
+                            {% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}">
+                                {{ request.user.get_role_display }}
+                            </span>
+                        </div>
+                        <a href="{% url 'profile' %}" class="flex items-center justify-between px-4 py-2.5 text-xs text-[#172033] hover:bg-slate-50 font-medium">
+                            <span><i class="fa-solid fa-user-gear w-4 text-[#173F91]"></i> Thiết lập tài khoản</span>
+                            <span class="px-2 py-0.5 {% if request.user.profile_completion.is_fully_completed %}bg-emerald-100 text-emerald-800{% else %}bg-amber-100 text-amber-800{% endif %} text-[9px] font-bold rounded-full border border-slate-200">
+                                {{ request.user.profile_completion.completed }}/{{ request.user.profile_completion.total }}
+                            </span>
+                        </a>
+                        <button @click="open = false; logoutModal = true" class="w-full text-left px-4 py-2.5 text-xs text-[#C62828] hover:bg-rose-50 border-t border-slate-100 font-semibold">
+                            <i class="fa-solid fa-right-from-bracket w-4"></i> Đăng xuất
+                        </button>
+                    </div>
+                </div>
 
-            <!-- MAIN BODY CONTENT -->
-            <main class="flex-1 overflow-y-auto p-4 sm:p-6 bg-academic-bg custom-scrollbar">
-                {% block content %}{% endblock %}
-            </main>
+                <!-- Mobile Navigation Toggle Button -->
+                <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden text-[#173F91] p-2 hover:bg-slate-100 rounded-xl">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+
+            </div>
 
         </div>
 
-    </div>
+        <!-- TẦNG 2 — NAVIGATION BAR (NAVIGATION NGANG XANH ĐẬM VAA STYLE) -->
+        <nav class="bg-[#173F91] text-white border-t border-[#123477]">
+            <div class="max-w-[1400px] mx-auto px-4 sm:px-6">
+                
+                <!-- Desktop Horizontal Menu Links -->
+                <div class="hidden md:flex items-center space-x-1 py-0 text-xs font-semibold uppercase tracking-wider overflow-x-auto custom-scrollbar">
+                    
+                    <a href="{% url 'dashboard' %}" 
+                       class="px-4 py-3 flex items-center space-x-2 border-b-2 transition-colors 
+                       {% if request.resolver_match.url_name == 'dashboard' %}bg-[#123477] border-[#F2B705] text-[#F2B705]{% else %}border-transparent text-slate-100 hover:bg-[#123477]/80 hover:text-white{% endif %}">
+                        <i class="fa-solid fa-chart-line text-xs"></i>
+                        <span>Tổng quan</span>
+                    </a>
+
+                    {% if request.user.is_admin_user %}
+                    <a href="{% url 'admin_users' %}" 
+                       class="px-4 py-3 flex items-center space-x-2 border-b-2 transition-colors 
+                       {% if request.resolver_match.url_name == 'admin_users' %}bg-[#123477] border-[#F2B705] text-[#F2B705]{% else %}border-transparent text-slate-100 hover:bg-[#123477]/80 hover:text-white{% endif %}">
+                        <i class="fa-solid fa-users-gear text-xs"></i>
+                        <span>Quản lý Tài khoản</span>
+                    </a>
+                    <a href="{% url 'project_list' %}" 
+                       class="px-4 py-3 flex items-center space-x-2 border-b-2 transition-colors 
+                       {% if request.resolver_match.url_name == 'project_list' %}bg-[#123477] border-[#F2B705] text-[#F2B705]{% else %}border-transparent text-slate-100 hover:bg-[#123477]/80 hover:text-white{% endif %}">
+                        <i class="fa-solid fa-folder-tree text-xs"></i>
+                        <span>Quản lý Đồ án</span>
+                    </a>
+                    <a href="{% url 'admin_audit_log' %}" 
+                       class="px-4 py-3 flex items-center space-x-2 border-b-2 transition-colors 
+                       {% if request.resolver_match.url_name == 'admin_audit_log' %}bg-[#123477] border-[#F2B705] text-[#F2B705]{% else %}border-transparent text-slate-100 hover:bg-[#123477]/80 hover:text-white{% endif %}">
+                        <i class="fa-solid fa-shield-halved text-xs"></i>
+                        <span>Nhật ký Hệ thống</span>
+                    </a>
+                    {% endif %}
+
+                    {% if request.user.is_student or request.user.is_mentor %}
+                    <a href="{% url 'project_list' %}" 
+                       class="px-4 py-3 flex items-center space-x-2 border-b-2 transition-colors 
+                       {% if request.resolver_match.url_name == 'project_list' or request.resolver_match.url_name == 'project_detail' or request.resolver_match.url_name == 'project_create' %}bg-[#123477] border-[#F2B705] text-[#F2B705]{% else %}border-transparent text-slate-100 hover:bg-[#123477]/80 hover:text-white{% endif %}">
+                        <i class="fa-solid fa-folder-open text-xs"></i>
+                        <span>{% if request.user.is_student %}Đồ án của tôi{% else %}Đồ án Hướng dẫn{% endif %}</span>
+                    </a>
+                    <a href="{% url 'my_tasks' %}" 
+                       class="px-4 py-3 flex items-center space-x-2 border-b-2 transition-colors 
+                       {% if request.resolver_match.url_name == 'my_tasks' or request.resolver_match.url_name == 'project_tasks' %}bg-[#123477] border-[#F2B705] text-[#F2B705]{% else %}border-transparent text-slate-100 hover:bg-[#123477]/80 hover:text-white{% endif %}">
+                        <i class="fa-solid fa-list-check text-xs"></i>
+                        <span>Công việc</span>
+                    </a>
+                    <a href="{% url 'document_list' %}" 
+                       class="px-4 py-3 flex items-center space-x-2 border-b-2 transition-colors 
+                       {% if request.resolver_match.url_name == 'document_list' or request.resolver_match.url_name == 'project_documents' %}bg-[#123477] border-[#F2B705] text-[#F2B705]{% else %}border-transparent text-slate-100 hover:bg-[#123477]/80 hover:text-white{% endif %}">
+                        <i class="fa-solid fa-file-lines text-xs"></i>
+                        <span>Kho Tài liệu</span>
+                    </a>
+                    {% endif %}
+
+                    {% if request.user.is_mentor %}
+                    <a href="{% url 'mentor_reviews' %}" 
+                       class="px-4 py-3 flex items-center space-x-2 border-b-2 transition-colors 
+                       {% if request.resolver_match.url_name == 'mentor_reviews' %}bg-[#123477] border-[#F2B705] text-[#F2B705]{% else %}border-transparent text-slate-100 hover:bg-[#123477]/80 hover:text-white{% endif %}">
+                        <i class="fa-solid fa-clipboard-check text-xs"></i>
+                        <span>Review & Đánh giá</span>
+                    </a>
+                    {% endif %}
+
+                    {% if not request.user.is_admin_user %}
+                    <a href="{% url 'ai_assistant_page' %}" 
+                       class="px-4 py-3 flex items-center space-x-2 border-b-2 transition-colors 
+                       {% if request.resolver_match.url_name == 'ai_assistant_page' %}bg-[#123477] border-[#F2B705] text-[#F2B705]{% else %}border-transparent text-slate-100 hover:bg-[#123477]/80 hover:text-white{% endif %}">
+                        <i class="fa-solid fa-robot text-xs"></i>
+                        <span>Trợ lý AI</span>
+                    </a>
+                    {% endif %}
+
+                    <a href="{% url 'notification_center' %}" 
+                       class="px-4 py-3 flex items-center space-x-2 border-b-2 transition-colors 
+                       {% if request.resolver_match.url_name == 'notification_center' %}bg-[#123477] border-[#F2B705] text-[#F2B705]{% else %}border-transparent text-slate-100 hover:bg-[#123477]/80 hover:text-white{% endif %}">
+                        <i class="fa-solid fa-bell text-xs"></i>
+                        <span>Thông báo</span>
+                    </a>
+
+                </div>
+
+                <!-- Mobile Collapsible Menu -->
+                <div x-show="mobileMenuOpen" x-cloak class="md:hidden py-3 border-t border-[#123477] space-y-1 text-xs font-semibold uppercase tracking-wider">
+                    <a href="{% url 'dashboard' %}" class="block px-3 py-2 rounded-lg hover:bg-[#123477]">Tổng quan</a>
+                    {% if request.user.is_admin_user %}
+                    <a href="{% url 'admin_users' %}" class="block px-3 py-2 rounded-lg hover:bg-[#123477]">Quản lý Tài khoản</a>
+                    <a href="{% url 'project_list' %}" class="block px-3 py-2 rounded-lg hover:bg-[#123477]">Quản lý Đồ án</a>
+                    <a href="{% url 'admin_audit_log' %}" class="block px-3 py-2 rounded-lg hover:bg-[#123477]">Nhật ký Hệ thống</a>
+                    {% endif %}
+                    {% if request.user.is_student or request.user.is_mentor %}
+                    <a href="{% url 'project_list' %}" class="block px-3 py-2 rounded-lg hover:bg-[#123477]">{% if request.user.is_student %}Đồ án của tôi{% else %}Đồ án Hướng dẫn{% endif %}</a>
+                    <a href="{% url 'my_tasks' %}" class="block px-3 py-2 rounded-lg hover:bg-[#123477]">Công việc</a>
+                    <a href="{% url 'document_list' %}" class="block px-3 py-2 rounded-lg hover:bg-[#123477]">Kho Tài liệu</a>
+                    {% endif %}
+                    {% if request.user.is_mentor %}
+                    <a href="{% url 'mentor_reviews' %}" class="block px-3 py-2 rounded-lg hover:bg-[#123477]">Review & Đánh giá</a>
+                    {% endif %}
+                    {% if not request.user.is_admin_user %}
+                    <a href="{% url 'ai_assistant_page' %}" class="block px-3 py-2 rounded-lg hover:bg-[#123477]">Trợ lý AI</a>
+                    {% endif %}
+                    <a href="{% url 'notification_center' %}" class="block px-3 py-2 rounded-lg hover:bg-[#123477]">Thông báo</a>
+                    <a href="{% url 'profile' %}" class="block px-3 py-2 rounded-lg hover:bg-[#123477]">Thiết lập tài khoản</a>
+                    <button @click="mobileMenuOpen = false; logoutModal = true" class="w-full text-left px-3 py-2 rounded-lg hover:bg-rose-900 text-rose-300">Đăng xuất</button>
+                </div>
+
+            </div>
+        </nav>
+
+    </header>
+
+    <!-- MAIN BODY CONTAINER WITH BREADCRUMB -->
+    <main class="flex-1 bg-[#F5F7FA]">
+        <div class="max-w-[1400px] mx-auto px-4 sm:px-6 py-5">
+            
+            <!-- BREADCRUMB NAVIGATION -->
+            <nav class="flex items-center text-xs text-[#667085] space-x-2 font-medium mb-4">
+                <a href="{% url 'dashboard' %}" class="hover:text-[#173F91] transition-colors">Trang chủ</a>
+                <i class="fa-solid fa-chevron-right text-[9px] text-slate-300"></i>
+                <span class="text-[#172033] font-semibold">{% block breadcrumb %}Cổng thông tin{% endblock %}</span>
+            </nav>
+
+            {% block content %}{% endblock %}
+
+        </div>
+    </main>
+
+    <!-- ACADEMIC FOOTER -->
+    <footer class="bg-[#172033] text-white border-t border-[#D9DEE8] mt-auto text-xs py-6">
+        <div class="max-w-[1400px] mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center space-x-2">
+                    <span class="font-bold text-[#F2B705] text-sm">PROJECTHUB</span>
+                    <span class="text-slate-400">|</span>
+                    <span class="text-slate-300 font-medium">Hệ thống Quản lý Đồ án Sinh viên</span>
+                </div>
+                <p class="text-slate-400 text-[11px] mt-1">Khoa Công nghệ Thông tin — Học viện Hàng không Việt Nam</p>
+            </div>
+            <div class="text-slate-400 text-[11px] text-center md:text-right">
+                <p>© 2026 ProjectHub Platform. Tất cả quyền được bảo lưu.</p>
+            </div>
+        </div>
+    </footer>
 
     {% block extra_scripts %}{% endblock %}
 

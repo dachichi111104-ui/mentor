@@ -1,67 +1,67 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Admin Dashboard - ProjectHub AI{% endblock %}
+{% block title %}Admin Dashboard - ProjectHub{% endblock %}
 {% block breadcrumb %}Quản trị Hệ thống{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
 
     <!-- Admin Header Banner -->
-    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex items-center justify-between">
+    <div class="bg-white rounded p-5 border border-[#D9DEE8] flex items-center justify-between">
         <div>
-            <h1 class="text-xl font-bold text-slate-900 tracking-tight">
+            <h1 class="text-xl font-bold text-[#172033] tracking-tight">
                 Cổng Quản trị Hệ thống (Admin Portal)
             </h1>
-            <p class="text-xs text-slate-500 mt-0.5">
-                Thống kê người dùng, đồ án, nhật ký truy cập và cấu hình phân quyền hệ thống.
+            <p class="text-xs text-[#667085] mt-1">
+                Thống kê người dùng, danh sách đồ án toàn trường và giám sát nhật ký hệ thống.
             </p>
         </div>
-        <span class="px-3 py-1 bg-purple-50 text-purple-900 border border-purple-200 font-bold text-xs rounded">
+        <span class="px-3 py-1 bg-purple-50 text-purple-900 border border-purple-200 font-bold text-xs rounded uppercase tracking-wider">
             System Administration
         </span>
     </div>
 
     <!-- Admin Metric Cards -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-xs">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tổng Người dùng</p>
-            <p class="text-2xl font-bold text-slate-900 mt-0.5">{{ total_users }}</p>
-            <span class="text-[10px] text-slate-500 mt-1 block">{{ students_count }} Sinh viên • {{ mentors_count }} Mentor</span>
+        <div class="bg-white rounded p-4 border border-[#D9DEE8]">
+            <p class="text-[10px] font-bold text-[#667085] uppercase tracking-wider">Tổng Người dùng</p>
+            <p class="text-2xl font-bold text-[#172033] mt-0.5">{{ total_users }}</p>
+            <span class="text-[10px] text-[#667085] mt-1 block">{{ students_count }} Sinh viên • {{ mentors_count }} Mentor</span>
         </div>
 
-        <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-xs">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tổng Đồ án</p>
-            <p class="text-2xl font-bold text-navy-900 mt-0.5">{{ total_projects }}</p>
+        <div class="bg-white rounded p-4 border border-[#D9DEE8]">
+            <p class="text-[10px] font-bold text-[#667085] uppercase tracking-wider">Tổng Đồ án</p>
+            <p class="text-2xl font-bold text-[#173F91] mt-0.5">{{ total_projects }}</p>
             <span class="text-[10px] text-amber-700 font-semibold mt-1 block">{{ active_projects }} Đồ án đang thực hiện</span>
         </div>
 
-        <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-xs">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Đồ án Hoàn thành</p>
-            <p class="text-2xl font-bold text-emerald-700 mt-0.5">{{ completed_projects }}</p>
-            <span class="text-[10px] text-slate-500 mt-1 block">Tốt nghiệp</span>
+        <div class="bg-white rounded p-4 border border-[#D9DEE8]">
+            <p class="text-[10px] font-bold text-[#667085] uppercase tracking-wider">Đồ án Hoàn thành</p>
+            <p class="text-2xl font-bold text-[#198754] mt-0.5">{{ completed_projects }}</p>
+            <span class="text-[10px] text-[#667085] mt-1 block">Nghiệm thu tốt nghiệp</span>
         </div>
 
-        <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-xs">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nhật ký Hoạt động</p>
-            <p class="text-2xl font-bold text-slate-900 mt-0.5">Audit Log</p>
-            <a href="{% url 'admin_audit_log' %}" class="text-[10px] text-navy-900 font-bold hover:underline mt-1 block">Xem Log chi tiết →</a>
+        <div class="bg-white rounded p-4 border border-[#D9DEE8]">
+            <p class="text-[10px] font-bold text-[#667085] uppercase tracking-wider">Nhật ký Audit Log</p>
+            <p class="text-2xl font-bold text-[#172033] mt-0.5">Audit Log</p>
+            <a href="{% url 'admin_audit_log' %}" class="text-[10px] text-[#173F91] font-bold hover:underline mt-1 block">Xem Log chi tiết →</a>
         </div>
     </div>
 
     <!-- Audit Log Preview & Administrative Quick Links -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-            <div class="p-4 border-b border-slate-100 flex items-center justify-between">
-                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center">
-                    <i class="fa-solid fa-clock-rotate-left text-slate-600 mr-2"></i> Nhật ký Audit Log gần nhất
+        <div class="lg:col-span-2 bg-white rounded border border-[#D9DEE8] overflow-hidden">
+            <div class="p-4 border-b border-[#D9DEE8] flex items-center justify-between bg-slate-50">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-[#172033] flex items-center">
+                    <i class="fa-solid fa-clock-rotate-left text-[#667085] mr-2"></i> Nhật ký Audit Log gần nhất
                 </h2>
-                <a href="{% url 'admin_audit_log' %}" class="text-xs font-semibold text-navy-900 hover:underline">Xem tất cả</a>
+                <a href="{% url 'admin_audit_log' %}" class="text-xs font-semibold text-[#173F91] hover:underline">Xem tất cả</a>
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs text-slate-700">
-                    <thead class="bg-slate-50 text-slate-700 font-bold uppercase text-[10px] border-b border-slate-200">
+                <table class="w-full text-left text-xs text-[#172033]">
+                    <thead class="bg-[#F5F7FA] text-[#172033] font-bold uppercase text-[10px] border-b border-[#D9DEE8]">
                         <tr>
                             <th class="p-3">Thời gian</th>
                             <th class="p-3">Người dùng</th>
@@ -69,13 +69,13 @@
                             <th class="p-3">Mô tả</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-[#D9DEE8]">
                         {% for log in audit_logs %}
                         <tr class="hover:bg-slate-50">
-                            <td class="p-3 text-slate-500 font-mono text-[11px] whitespace-nowrap">{{ log.created_at|date:"d/m H:i" }}</td>
-                            <td class="p-3 font-bold text-slate-900">{{ log.user.display_name|default:"Hệ thống" }}</td>
-                            <td class="p-3"><span class="px-2 py-0.5 bg-slate-100 text-slate-700 rounded font-semibold text-[10px] border border-slate-200">{{ log.get_action_display }}</span></td>
-                            <td class="p-3 text-slate-600 truncate max-w-xs">{{ log.description }}</td>
+                            <td class="p-3 text-[#667085] font-mono text-[11px] whitespace-nowrap">{{ log.created_at|date:"d/m H:i" }}</td>
+                            <td class="p-3 font-bold text-[#172033]">{{ log.user.display_name|default:"Hệ thống" }}</td>
+                            <td class="p-3"><span class="px-2 py-0.5 bg-slate-100 text-[#172033] rounded font-semibold text-[10px] border border-slate-200">{{ log.get_action_display }}</span></td>
+                            <td class="p-3 text-[#667085] truncate max-w-xs">{{ log.description }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -83,19 +83,19 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs space-y-3">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-2">
-                <i class="fa-solid fa-sliders text-slate-600 mr-2"></i> Thao tác Quản trị
+        <div class="bg-white rounded p-5 border border-[#D9DEE8] space-y-3">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-[#172033] border-b border-slate-200 pb-2">
+                <i class="fa-solid fa-sliders text-[#667085] mr-2"></i> Thao tác Quản trị
             </h2>
             <div class="space-y-2">
-                <a href="{% url 'admin_users' %}" class="block p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-all">
-                    <p class="text-xs font-bold text-slate-900">Quản lý Tài khoản & Khóa người dùng</p>
-                    <p class="text-[10px] text-slate-500 mt-0.5">Khóa/Mở khóa tài khoản, xem phân quyền role</p>
+                <a href="{% url 'admin_users' %}" class="block p-3 rounded border border-[#D9DEE8] hover:bg-slate-50 transition-all">
+                    <p class="text-xs font-bold text-[#172033]">Quản lý Tài khoản & Phân quyền</p>
+                    <p class="text-[10px] text-[#667085] mt-0.5">Tạo tài khoản, đổi vai trò, khóa/mở khóa</p>
                 </a>
 
-                <a href="{% url 'project_list' %}" class="block p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-all">
-                    <p class="text-xs font-bold text-slate-900">Quản lý Danh sách Đồ án</p>
-                    <p class="text-[10px] text-slate-500 mt-0.5">Theo dõi tất cả đồ án trên hệ thống</p>
+                <a href="{% url 'project_list' %}" class="block p-3 rounded border border-[#D9DEE8] hover:bg-slate-50 transition-all">
+                    <p class="text-xs font-bold text-[#172033]">Quản lý Danh sách Đồ án toàn trường</p>
+                    <p class="text-[10px] text-[#667085] mt-0.5">Theo dõi và quản lý tất cả đồ án sinh viên</p>
                 </a>
             </div>
         </div>

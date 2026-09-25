@@ -50,7 +50,8 @@
             <div class="flex flex-wrap gap-2 pt-1">
                 {% for m in request.user.profile_completion.missing %}
                 <a href="{{ m.anchor }}" class="px-2 py-1 bg-white hover:bg-amber-100 text-amber-900 font-semibold text-[11px] rounded border border-amber-300 transition-colors flex items-center space-x-1">
-                    <span>⚠ {{ m.label }}</span>
+                    <i class="fa-solid fa-triangle-exclamation text-amber-600 text-[10px]"></i>
+                    <span>{{ m.label }}</span>
                     <i class="fa-solid fa-arrow-down text-[9px]"></i>
                 </a>
                 {% endfor %}

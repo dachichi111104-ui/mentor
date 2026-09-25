@@ -1,38 +1,38 @@
 <div id="task-card-{{ task.id }}" 
      draggable="true" 
      ondragstart="dragTask(event, {{ task.id }})"
-     class="p-3.5 bg-white rounded-lg border border-slate-200 shadow-xs hover:border-slate-300 transition-all cursor-grab active:cursor-grabbing space-y-2">
+     class="p-3 bg-white rounded border border-[#D9DEE8] hover:border-slate-400 transition-all cursor-grab active:cursor-grabbing space-y-2">
     
     <div class="flex items-center justify-between">
-        <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider
-        {% if task.priority == 'CRITICAL' %}bg-rose-100 text-rose-800 border border-rose-200
-        {% elif task.priority == 'HIGH' %}bg-amber-100 text-amber-800 border border-amber-200
-        {% elif task.priority == 'MEDIUM' %}bg-blue-100 text-blue-800 border border-blue-200
-        {% else %}bg-slate-100 text-slate-700 border border-slate-200{% endif %}">
+        <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border
+        {% if task.priority == 'CRITICAL' %}bg-rose-50 text-rose-800 border-rose-200
+        {% elif task.priority == 'HIGH' %}bg-amber-50 text-amber-800 border-amber-200
+        {% elif task.priority == 'MEDIUM' %}bg-blue-50 text-blue-800 border-blue-200
+        {% else %}bg-slate-100 text-slate-700 border-slate-200{% endif %}">
             {{ task.get_priority_display }}
         </span>
 
         {% if task.is_overdue %}
-        <span class="text-[9px] font-bold text-rose-800 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">Quá hạn</span>
+        <span class="text-[9px] font-bold text-[#C62828] bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">Quá hạn</span>
         {% endif %}
     </div>
 
-    <h4 class="text-xs font-bold text-slate-900 leading-snug">{{ task.title }}</h4>
+    <h4 class="text-xs font-bold text-[#172033] leading-snug">{{ task.title }}</h4>
 
     {% if task.description %}
-    <p class="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">{{ task.description }}</p>
+    <p class="text-[11px] text-[#667085] line-clamp-2 leading-relaxed">{{ task.description }}</p>
     {% endif %}
 
-    <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500">
+    <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-[#667085]">
         <div class="flex items-center space-x-1.5">
             {% if task.assignee %}
             <img src="{{ task.assignee.get_avatar_url }}" class="w-4 h-4 rounded-full object-cover border border-slate-300">
-            <span class="font-medium text-slate-700">{{ task.assignee.first_name }}</span>
+            <span class="font-medium text-[#172033]">{{ task.assignee.display_name }}</span>
             {% else %}
-            <span class="text-slate-400 font-italic">Chưa giao</span>
+            <span class="text-[#667085]">Chưa phân công</span>
             {% endif %}
         </div>
 
-        <span>{{ task.due_date|date:"d/m"|default:"-" }}</span>
+        <span class="font-mono">{{ task.due_date|date:"d/m"|default:"-" }}</span>
     </div>
 </div>
