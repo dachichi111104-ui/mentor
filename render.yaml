@@ -1,18 +1,12 @@
 services:
-  # 1. Redis Instance (Cache, Celery Broker & Channels WebSocket Layer)
-  - type: redis
-    name: projecthub-redis
-    plan: free
-    ipAllowList: []
-
-  # 2. Main Web Application Service
+  # 1. Main Web Application Service (Render Free Plan compatible)
   - type: web
     name: projecthub-ai-web
     env: python
     plan: free
     buildCommand: "./build.sh"
-    startCommand: "gunicorn projecthub_config.wsgi:application --log-file -"
-    envVars: &commonEnvVars
+    startCommand: "bash start.sh"
+    envVars:
       - key: DJANGO_SECRET_KEY
         generateValue: true
       - key: DJANGO_DEBUG
@@ -29,26 +23,14 @@ services:
           name: projecthub-redis
           property: connectionString
 
-  # 3. Celery Worker Service
-  - type: worker
-    name: projecthub-ai-worker
-    env: python
+  # 2. Redis Instance (Cache, Celery Broker & Channels Layer)
+  - type: redis
+    name: projecthub-redis
     plan: free
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "celery -A projecthub_config worker --loglevel=info"
-    envVars: *commonEnvVars
-
-  # 4. Celery Beat Scheduler Service
-  - type: worker
-    name: projecthub-ai-beat
-    env: python
-    plan: free
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "celery -A projecthub_config beat --loglevel=info"
-    envVars: *commonEnvVars
+    ipAllowList: []
 
 databases:
-  # Production PostgreSQL Instance
+  # 3. Production PostgreSQL Instance
   - name: projecthub-db
     plan: free
     databaseName: projecthub_db
