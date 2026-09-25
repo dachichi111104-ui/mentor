@@ -152,6 +152,65 @@ def admin_toggle_user_status_view(request, user_id):
     return redirect('admin_users')
 
 @login_required
+def admin_user_change_role_view(request, user_id):
+    if not request.user.is_admin_user:
+        return render(request, 'errors/403.html', status=403)
+    if request.method == 'POST':
+        user_obj = get_object_or_404(User, id=user_id)
+        new_role = request.POST.get('role')
+        if new_role in [UserRole.STUDENT, UserRole.MENTOR, UserRole.ADMIN]:
+            old_role_display = user_obj.get_role_display()
+            user_obj.role = new_role
+            user_obj.save()
+            messages.success(request, f'Đã đổi vai trò tài khoản {user_obj.username} từ {old_role_display} sang {user_obj.get_role_display()}.')
+            ActivityLog.objects.create(
+                user=request.user,
+                action=ActionType.UPDATE_TASK,
+                entity_type='UserRole',
+                entity_id=str(user_obj.id),
+                description=f'Cập nhật vai trò người dùng {user_obj.username} thành {user_obj.get_role_display()}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+    return redirect('admin_users')
+
+@login_required
+def admin_user_create_view(request):
+    if not request.user.is_admin_user:
+        return render(request, 'errors/403.html', status=403)
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        role = request.POST.get('role', UserRole.STUDENT)
+        first_name = request.POST.get('first_name', '')
+        last_name = request.POST.get('last_name', '')
+
+        if User.objects.filter(username=username).exists():
+            messages.error(request, f'Tên đăng nhập "{username}" đã tồn tại.')
+        elif not password or len(password) < 6:
+            messages.error(request, 'Mật khẩu phải chứa ít nhất 6 ký tự.')
+        else:
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                role=role,
+                status=UserStatus.ACTIVE
+            )
+            messages.success(request, f'Tạo tài khoản {user.display_name} thành công!')
+            ActivityLog.objects.create(
+                user=request.user,
+                action=ActionType.CREATE_TASK,
+                entity_type='User',
+                entity_id=str(user.id),
+                description=f'Quản trị viên tạo tài khoản {user.get_role_display()} mới: {user.username}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+    return redirect('admin_users')
+
+@login_required
 def admin_audit_log_view(request):
     if not request.user.is_admin_user:
         return render(request, 'errors/403.html', status=403)

@@ -92,6 +92,9 @@ class ProjectMember(models.Model):
 
     class Meta:
         unique_together = ('project', 'user')
+        indexes = [
+            models.Index(fields=['user', 'status']),
+        ]
         verbose_name = "Thành viên đồ án"
         verbose_name_plural = "Danh sách Thành viên đồ án"
 

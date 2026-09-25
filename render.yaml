@@ -1,0 +1,68 @@
+services:
+  # 1. Main Web Application Service
+  - type: web
+    name: projecthub-ai-web
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn projecthub_config.wsgi:application --log-file -"
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: projecthub-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: projecthub-redis
+          property: connectionString
+
+  # 2. Celery Worker Service
+  - type: worker
+    name: projecthub-ai-worker
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "celery -A projecthub_config worker --loglevel=info"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: projecthub-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: projecthub-redis
+          property: connectionString
+
+  # 3. Celery Beat Scheduler Service
+  - type: worker
+    name: projecthub-ai-beat
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "celery -A projecthub_config beat --loglevel=info"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: projecthub-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: projecthub-redis
+          property: connectionString
+
+databases:
+  # Production PostgreSQL Instance
+  - name: projecthub-db
+    databaseName: projecthub_db
+    user: projecthub_user
+
+# Redis Instance (Cache, Celery Broker & Channels WebSocket Layer)
+redisInstances:
+  - name: projecthub-redis
+    ipAllowList: []

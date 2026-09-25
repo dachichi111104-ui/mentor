@@ -14,7 +14,7 @@ class Milestone(models.Model):
     description = models.TextField(blank=True, null=True, verbose_name="Mô tả công việc")
     start_date = models.DateField(verbose_name="Ngày bắt đầu")
     due_date = models.DateField(verbose_name="Hạn hoàn thành")
-    status = models.CharField(max_length=20, choices=MilestoneStatus.choices, default=MilestoneStatus.PENDING, verbose_name="Trạng thái")
+    status = models.CharField(max_length=20, choices=MilestoneStatus.choices, default=MilestoneStatus.PENDING, db_index=True, verbose_name="Trạng thái")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

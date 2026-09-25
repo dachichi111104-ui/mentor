@@ -26,5 +26,17 @@ def notification_mark_all_read_view(request):
 
 @login_required
 def unread_count_ajax(request):
-    count = Notification.objects.filter(recipient=request.user, is_read=False).count()
-    return JsonResponse({'status': 'success', 'unread_count': count})
+    unread_qs = Notification.objects.filter(recipient=request.user, is_read=False)
+    count = unread_qs.count()
+    latest_items = list(unread_qs.order_index_by_date()[:3]) if hasattr(unread_qs, 'order_index_by_date') else [
+        {
+            'id': n.id,
+            'title': n.title,
+            'message': n.message,
+            'link': n.link,
+            'type': n.notification_type,
+            'created_at': n.created_at.strftime('%H:%M %d/%m')
+        }
+        for n in unread_qs[:3]
+    ]
+    return JsonResponse({'status': 'success', 'unread_count': count, 'notifications': latest_items})

@@ -22,7 +22,9 @@ urlpatterns = [
     path('', dashboard_views.landing_view, name='landing'),
     path('dashboard/', dashboard_views.dashboard_view, name='dashboard'),
     path('admin/users/', dashboard_views.admin_users_view, name='admin_users'),
+    path('admin/users/create/', dashboard_views.admin_user_create_view, name='admin_user_create'),
     path('admin/users/<int:user_id>/toggle-status/', dashboard_views.admin_toggle_user_status_view, name='admin_toggle_user_status'),
+    path('admin/users/<int:user_id>/change-role/', dashboard_views.admin_user_change_role_view, name='admin_change_user_role'),
     path('admin/audit-logs/', dashboard_views.admin_audit_log_view, name='admin_audit_log'),
     path('search/', dashboard_views.global_search_view, name='global_search'),
 

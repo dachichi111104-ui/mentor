@@ -23,3 +23,19 @@ class AIRequest(models.Model):
 
     def __str__(self):
         return f"AI [{self.get_prompt_type_display()}] by {self.user.display_name} at {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+
+class WeeklySummary(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='weekly_summaries', verbose_name="Đồ án")
+    week_number = models.IntegerField(verbose_name="Tuần thứ")
+    year = models.IntegerField(verbose_name="Năm")
+    summary_text = models.TextField(verbose_name="Nội dung tóm tắt tiến độ")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-year', '-week_number', '-created_at']
+        unique_together = ('project', 'week_number', 'year')
+        verbose_name = "Tóm tắt tiến độ tuần"
+        verbose_name_plural = "Danh sách Tóm tắt tiến độ tuần"
+
+    def __str__(self):
+        return f"Tóm tắt Tuần {self.week_number}/{self.year} - {self.project.code}"
