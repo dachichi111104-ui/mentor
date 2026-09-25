@@ -70,7 +70,7 @@
             </div>
             {% endif %}
 
-            <form method="post" class="space-y-4">
+            <form method="post" id="main-login-form" class="space-y-4">
                 {% csrf_token %}
                 <div>
                     <label class="block text-xs font-semibold text-[#172033] mb-1">Tên đăng nhập / Email *</label>
@@ -85,7 +85,7 @@
                     {{ form.password }}
                 </div>
 
-                <button type="submit" class="w-full py-2.5 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded transition-colors mt-2 uppercase tracking-wider">
+                <button type="submit" class="w-full py-2.5 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded-xl transition-all mt-2 uppercase tracking-wider shadow-xs">
                     Đăng nhập hệ thống <i class="fa-solid fa-arrow-right ml-1"></i>
                 </button>
             </form>
@@ -96,32 +96,20 @@
 
             <!-- Quick Demo Account Preset Buttons -->
             <div class="mt-6 pt-4 border-t border-slate-100">
-                <p class="text-[10px] font-bold text-[#667085] uppercase tracking-wider text-center mb-2">Đăng nhập Nhanh tài khoản Demo</p>
+                <p class="text-[10px] font-bold text-[#667085] uppercase tracking-wider text-center mb-2.5">Đăng nhập Nhanh tài khoản Demo</p>
                 <div class="grid grid-cols-3 gap-2">
-                    <form method="post" class="contents">
-                        {% csrf_token %}
-                        <input type="hidden" name="username" value="student1">
-                        <input type="hidden" name="password" value="user123">
-                        <button type="submit" class="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-[#172033] text-[11px] font-semibold rounded text-center border border-[#D9DEE8] transition-colors">
-                            Sinh viên
-                        </button>
-                    </form>
-                    <form method="post" class="contents">
-                        {% csrf_token %}
-                        <input type="hidden" name="username" value="mentor1">
-                        <input type="hidden" name="password" value="user123">
-                        <button type="submit" class="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-[#172033] text-[11px] font-semibold rounded text-center border border-[#D9DEE8] transition-colors">
-                            Giảng viên
-                        </button>
-                    </form>
-                    <form method="post" class="contents">
-                        {% csrf_token %}
-                        <input type="hidden" name="username" value="admin">
-                        <input type="hidden" name="password" value="admin123">
-                        <button type="submit" class="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-[#172033] text-[11px] font-semibold rounded text-center border border-[#D9DEE8] transition-colors">
-                            Quản trị viên
-                        </button>
-                    </form>
+                    <button type="button" onclick="autoFillLogin('student', 'student123')" 
+                            class="px-2 py-2 bg-slate-100 hover:bg-blue-50 hover:text-[#173F91] hover:border-[#173F91] text-[#172033] text-[11px] font-semibold rounded-xl text-center border border-[#D9DEE8] transition-all">
+                        <i class="fa-solid fa-user-graduate block text-sm mb-1 text-[#173F91]"></i> Sinh viên
+                    </button>
+                    <button type="button" onclick="autoFillLogin('mentor', 'mentor123')" 
+                            class="px-2 py-2 bg-slate-100 hover:bg-amber-50 hover:text-amber-900 hover:border-amber-400 text-[#172033] text-[11px] font-semibold rounded-xl text-center border border-[#D9DEE8] transition-all">
+                        <i class="fa-solid fa-chalkboard-user block text-sm mb-1 text-amber-700"></i> Giảng viên
+                    </button>
+                    <button type="button" onclick="autoFillLogin('admin', 'admin123')" 
+                            class="px-2 py-2 bg-slate-100 hover:bg-purple-50 hover:text-purple-900 hover:border-purple-400 text-[#172033] text-[11px] font-semibold rounded-xl text-center border border-[#D9DEE8] transition-all">
+                        <i class="fa-solid fa-user-shield block text-sm mb-1 text-purple-700"></i> Quản trị viên
+                    </button>
                 </div>
             </div>
 
@@ -132,6 +120,19 @@
     <div class="w-full text-center text-xs text-[#667085] py-4">
         © 2026 ProjectHub — Khoa Công nghệ Thông tin — Học viện Hàng không Việt Nam
     </div>
+
+    <script>
+        function autoFillLogin(username, password) {
+            const userInput = document.getElementById('id_username');
+            const passInput = document.getElementById('id_password');
+            const form = document.getElementById('main-login-form');
+            if (userInput && passInput && form) {
+                userInput.value = username;
+                passInput.value = password;
+                form.submit();
+            }
+        }
+    </script>
 
 </body>
 </html>
