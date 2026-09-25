@@ -1,11 +1,18 @@
 services:
-  # 1. Main Web Application Service
+  # 1. Redis Instance (Cache, Celery Broker & Channels WebSocket Layer)
+  - type: redis
+    name: projecthub-redis
+    plan: free
+    ipAllowList: []
+
+  # 2. Main Web Application Service
   - type: web
     name: projecthub-ai-web
     env: python
+    plan: free
     buildCommand: "./build.sh"
     startCommand: "gunicorn projecthub_config.wsgi:application --log-file -"
-    envVars:
+    envVars: &commonEnvVars
       - key: DJANGO_SECRET_KEY
         generateValue: true
       - key: DJANGO_DEBUG
@@ -22,47 +29,27 @@ services:
           name: projecthub-redis
           property: connectionString
 
-  # 2. Celery Worker Service
+  # 3. Celery Worker Service
   - type: worker
     name: projecthub-ai-worker
     env: python
+    plan: free
     buildCommand: "pip install -r requirements.txt"
     startCommand: "celery -A projecthub_config worker --loglevel=info"
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: projecthub-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: projecthub-redis
-          property: connectionString
+    envVars: *commonEnvVars
 
-  # 3. Celery Beat Scheduler Service
+  # 4. Celery Beat Scheduler Service
   - type: worker
     name: projecthub-ai-beat
     env: python
+    plan: free
     buildCommand: "pip install -r requirements.txt"
     startCommand: "celery -A projecthub_config beat --loglevel=info"
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: projecthub-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: projecthub-redis
-          property: connectionString
+    envVars: *commonEnvVars
 
 databases:
   # Production PostgreSQL Instance
   - name: projecthub-db
+    plan: free
     databaseName: projecthub_db
     user: projecthub_user
-
-# Redis Instance (Cache, Celery Broker & Channels WebSocket Layer)
-redisInstances:
-  - name: projecthub-redis
-    ipAllowList: []
