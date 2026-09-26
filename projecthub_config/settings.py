@@ -85,18 +85,23 @@ WSGI_APPLICATION = 'projecthub_config.wsgi.application'
 
 try:
     import dj_database_url
+    default_db_url = os.getenv('DATABASE_URL', 'postgres://postgres:2@127.0.0.1:5432/projecthub_db')
     DATABASES = {
         'default': dj_database_url.config(
-            default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+            default=default_db_url,
             conn_max_age=600,
             conn_health_checks=True,
         )
     }
-except ImportError:
+except Exception:
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'projecthub_db',
+            'USER': 'postgres',
+            'PASSWORD': '2',
+            'HOST': '127.0.0.1',
+            'PORT': '5432',
         }
     }
 
