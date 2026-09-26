@@ -76,18 +76,19 @@
 
         <div class="space-y-3">
             <input type="text" id="ai-breakdown-input" value="{% if selected_project %}{{ selected_project.name }}{% else %}Phát triển hệ thống phần mềm{% endif %}" 
-                   class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-navy-900">
+                   class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#173F91]">
             
-            <button @click="runBreakdown()" class="px-4 py-2 bg-navy-900 hover:bg-navy-950 text-white font-bold text-xs rounded-lg shadow-xs transition-all">
-                Phân tích & Đề xuất Task
+            <button @click="runBreakdown()" class="px-5 py-2.5 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center space-x-2">
+                <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+                <span>Phân tích & Đề xuất Task</span>
             </button>
         </div>
 
         <div id="breakdown-results" class="space-y-3 hidden pt-3 border-t border-slate-100">
             <div class="flex items-center justify-between">
                 <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Danh sách Task AI Đề xuất</h3>
-                <button @click="acceptTasks()" class="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-lg shadow-xs">
-                    Chấp nhận & Tạo các Task vào Database
+                <button @click="acceptTasks()" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all">
+                    <i class="fa-solid fa-circle-check mr-1.5"></i> Chấp nhận & Tạo các Task vào Database
                 </button>
             </div>
 
@@ -102,8 +103,9 @@
             <p class="text-xs text-slate-500 mt-0.5">AI tự động quét dữ liệu các task đã xong, task đang làm và các vấn đề quá hạn để xuất báo cáo cho Mentor.</p>
         </div>
 
-        <button @click="runWeeklySummary()" class="px-4 py-2 bg-navy-900 hover:bg-navy-950 text-white font-bold text-xs rounded-lg shadow-xs">
-            Xuất Báo cáo Bằng AI
+        <button @click="runWeeklySummary()" class="px-5 py-2.5 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center space-x-2">
+            <i class="fa-solid fa-file-lines text-amber-400"></i>
+            <span>Xuất Báo cáo Bằng AI</span>
         </button>
 
         <div id="summary-result" class="pt-2"></div>
