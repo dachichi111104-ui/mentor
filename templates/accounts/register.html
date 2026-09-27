@@ -120,12 +120,22 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-[#172033] mb-1">Mật khẩu *</label>
-                    {{ form.password }}
+                    <div class="relative">
+                        {{ form.password }}
+                        <button type="button" onclick="togglePasswordVisibility('id_password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#173F91] focus:outline-none p-1 transition-colors" title="Hiện/Ẩn mật khẩu">
+                            <i class="fa-solid fa-eye text-xs"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-[#172033] mb-1">Xác nhận Mật khẩu *</label>
-                    {{ form.confirm_password }}
+                    <div class="relative">
+                        {{ form.confirm_password }}
+                        <button type="button" onclick="togglePasswordVisibility('id_confirm_password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#173F91] focus:outline-none p-1 transition-colors" title="Hiện/Ẩn mật khẩu">
+                            <i class="fa-solid fa-eye text-xs"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" class="w-full py-2.5 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded transition-colors mt-2 uppercase tracking-wider">
@@ -145,5 +155,22 @@
         © 2026 ProjectHub — Khoa Công nghệ Thông tin — Học viện Hàng không Việt Nam
     </div>
 
+    <script>
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    </script>
 </body>
+
 </html>

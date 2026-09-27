@@ -187,7 +187,8 @@ def document_preview_view(request, document_id):
     ext = doc.file.name.split('.')[-1].lower() if '.' in doc.file.name else ''
     is_pdf = ext == 'pdf'
     is_image = ext in {'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'}
-    is_text = ext in {'txt', 'md', 'py', 'js', 'json', 'cpp', 'java', 'html', 'css', 'xml'}
+    is_text = ext in {'txt', 'md', 'py', 'js', 'json', 'cpp', 'java', 'html', 'css', 'xml', 'sql', 'sh', 'yml', 'yaml', 'c', 'h'}
+    is_office = ext in {'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'}
 
     text_content = ""
     if is_text:
@@ -195,7 +196,14 @@ def document_preview_view(request, document_id):
             with doc.file.open('r') as f:
                 text_content = f.read(50000)
         except Exception:
-            text_content = "Không thể đọc nội dung văn bản này."
+            try:
+                with doc.file.open('rb') as f:
+                    text_content = f.read(50000).decode('utf-8', errors='ignore')
+            except Exception:
+                text_content = "Không thể đọc nội dung văn bản này."
+
+    raw_url = request.build_absolute_uri(f"/documents/{doc.id}/raw/")
+    google_viewer_url = f"https://docs.google.com/gview?url={raw_url}&embedded=true"
 
     return render(request, 'documents/document_preview.html', {
         'doc': doc,
@@ -203,8 +211,12 @@ def document_preview_view(request, document_id):
         'is_pdf': is_pdf,
         'is_image': is_image,
         'is_text': is_text,
+        'is_office': is_office,
         'text_content': text_content,
+        'raw_url': raw_url,
+        'google_viewer_url': google_viewer_url,
     })
+
 
 @login_required
 def document_raw_view(request, document_id):

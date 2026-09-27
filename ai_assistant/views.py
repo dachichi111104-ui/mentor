@@ -13,9 +13,23 @@ from audit_log.models import ActionType, ActivityLog
 
 def call_llm_api(prompt):
     """
-    Attempts to call external LLM API if OPENAI_API_KEY, GEMINI_API_KEY, or ANTHROPIC_API_KEY is configured.
-    Returns string response if successful, or None to fall back to rules.
+    Calls Gemini, OpenAI, Anthropic, or free online LLM endpoint to generate real AI responses.
     """
+    gemini_key = os.getenv('GEMINI_API_KEY')
+    if gemini_key:
+        models = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]
+        for m in models:
+            try:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={gemini_key}"
+                headers = {"Content-Type": "application/json"}
+                body = json.dumps({"contents": [{"parts": [{"text": prompt}]}]}).encode('utf-8')
+                req = urllib.request.Request(url, data=body, headers=headers, method='POST')
+                with urllib.request.urlopen(req, timeout=8) as resp:
+                    data = json.loads(resp.read().decode('utf-8'))
+                    return data['candidates'][0]['content']['parts'][0]['text']
+            except Exception as e:
+                print(f"Gemini model {m} error: {e}")
+
     openai_key = os.getenv('OPENAI_API_KEY')
     if openai_key:
         try:
@@ -30,26 +44,11 @@ def call_llm_api(prompt):
                 "temperature": 0.7
             }).encode('utf-8')
             req = urllib.request.Request(url, data=body, headers=headers, method='POST')
-            with urllib.request.urlopen(req, timeout=10) as resp:
+            with urllib.request.urlopen(req, timeout=8) as resp:
                 data = json.loads(resp.read().decode('utf-8'))
                 return data['choices'][0]['message']['content']
         except Exception as e:
             print(f"OpenAI API error: {e}")
-
-    gemini_key = os.getenv('GEMINI_API_KEY')
-    if gemini_key:
-        try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
-            headers = {"Content-Type": "application/json"}
-            body = json.dumps({
-                "contents": [{"parts": [{"text": prompt}]}]
-            }).encode('utf-8')
-            req = urllib.request.Request(url, data=body, headers=headers, method='POST')
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                data = json.loads(resp.read().decode('utf-8'))
-                return data['candidates'][0]['content']['parts'][0]['text']
-        except Exception as e:
-            print(f"Gemini API error: {e}")
 
     anthropic_key = os.getenv('ANTHROPIC_API_KEY')
     if anthropic_key:
@@ -66,13 +65,30 @@ def call_llm_api(prompt):
                 "messages": [{"role": "user", "content": prompt}]
             }).encode('utf-8')
             req = urllib.request.Request(url, data=body, headers=headers, method='POST')
-            with urllib.request.urlopen(req, timeout=10) as resp:
+            with urllib.request.urlopen(req, timeout=8) as resp:
                 data = json.loads(resp.read().decode('utf-8'))
                 return data['content'][0]['text']
         except Exception as e:
             print(f"Anthropic API error: {e}")
 
+    # Free Online Real LLM Fallback (Pollinations AI)
+    try:
+        url = "https://text.pollinations.ai/"
+        headers = {"Content-Type": "application/json"}
+        body = json.dumps({
+            "messages": [{"role": "user", "content": prompt}],
+            "model": "openai"
+        }).encode('utf-8')
+        req = urllib.request.Request(url, data=body, headers=headers, method='POST')
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            content = resp.read().decode('utf-8', errors='ignore')
+            if content and len(content.strip()) > 10:
+                return content.strip()
+    except Exception as e:
+        print(f"Pollinations AI fallback error: {e}")
+
     return None
+
 
 @login_required
 def ai_assistant_page_view(request):

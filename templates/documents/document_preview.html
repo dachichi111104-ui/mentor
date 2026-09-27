@@ -69,21 +69,55 @@
             </div>
         </div>
 
+        {% elif is_office %}
+        <!-- Office Document Viewer (Word / Excel / PowerPoint) -->
+        <div class="w-full space-y-3" x-data="{ activeTab: 'embed' }">
+            <div class="flex items-center justify-between text-xs text-[#667085] border-b border-slate-200 pb-2">
+                <div class="flex items-center space-x-2">
+                    <button @click="activeTab = 'embed'" :class="activeTab === 'embed' ? 'bg-[#173F91] text-white' : 'bg-slate-100 text-[#172033] hover:bg-slate-200'" class="px-3 py-1 rounded font-semibold text-xs transition-colors">
+                        <i class="fa-solid fa-eye mr-1"></i> Xem trước trực tuyến
+                    </button>
+                    <button @click="activeTab = 'download'" :class="activeTab === 'download' ? 'bg-[#173F91] text-white' : 'bg-slate-100 text-[#172033] hover:bg-slate-200'" class="px-3 py-1 rounded font-semibold text-xs transition-colors">
+                        <i class="fa-solid fa-download mr-1"></i> Tải file về máy
+                    </button>
+                </div>
+                <a href="{% url 'document_raw' doc.id %}" target="_blank" class="text-[#173F91] font-semibold hover:underline">Tải tệp gốc <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1"></i></a>
+            </div>
+
+            <div x-show="activeTab === 'embed'">
+                <iframe src="{{ google_viewer_url }}" class="w-full h-[700px] rounded border border-[#D9DEE8]"></iframe>
+            </div>
+
+            <div x-show="activeTab === 'download'" class="w-full max-w-2xl mx-auto py-12 text-center space-y-5">
+                <div class="w-16 h-16 mx-auto rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-[#173F91] text-2xl shadow-xs">
+                    {% if doc.file_type == 'WORD' %}
+                    <i class="fa-solid fa-file-word text-blue-700"></i>
+                    {% elif doc.file_type == 'EXCEL' %}
+                    <i class="fa-solid fa-file-excel text-emerald-700"></i>
+                    {% elif doc.file_type == 'POWERPOINT' %}
+                    <i class="fa-solid fa-file-powerpoint text-amber-700"></i>
+                    {% else %}
+                    <i class="fa-solid fa-file-lines text-slate-700"></i>
+                    {% endif %}
+                </div>
+                <div class="space-y-1">
+                    <h3 class="text-base font-bold text-[#172033]">{{ doc.title }}</h3>
+                    <p class="text-xs text-[#667085]">Định dạng tệp: <span class="font-bold text-[#172033] uppercase">{{ file_extension }}</span> • Dung lượng: {{ doc.file_size }}</p>
+                </div>
+                <div class="pt-2 flex justify-center space-x-3">
+                    <a href="{% url 'document_download' doc.id %}" class="px-6 py-2.5 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-all shadow-xs flex items-center space-x-2">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Tải về Tệp này ({{ doc.file_size }})</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
         {% else %}
-        <!-- Word / Excel / PowerPoint / Zip Preview Card -->
+        <!-- Zip / Rar / Archive Preview Card -->
         <div class="w-full max-w-2xl mx-auto py-12 text-center space-y-5">
-            <div class="w-16 h-16 mx-auto rounded bg-blue-50 border border-blue-200 flex items-center justify-center text-[#173F91] text-2xl">
-                {% if doc.file_type == 'WORD' %}
-                <i class="fa-solid fa-file-word text-blue-700"></i>
-                {% elif doc.file_type == 'EXCEL' %}
-                <i class="fa-solid fa-file-excel text-emerald-700"></i>
-                {% elif doc.file_type == 'POWERPOINT' %}
-                <i class="fa-solid fa-file-powerpoint text-amber-700"></i>
-                {% elif doc.file_type == 'ZIP' %}
-                <i class="fa-solid fa-file-zipper text-purple-700"></i>
-                {% else %}
-                <i class="fa-solid fa-file-lines text-slate-700"></i>
-                {% endif %}
+            <div class="w-16 h-16 mx-auto rounded-2xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700 text-2xl shadow-xs">
+                <i class="fa-solid fa-file-zipper"></i>
             </div>
 
             <div class="space-y-1">
@@ -91,21 +125,22 @@
                 <p class="text-xs text-[#667085]">Định dạng file: <span class="font-bold text-[#172033] uppercase">{{ file_extension }}</span> • Dung lượng: {{ doc.file_size }}</p>
             </div>
 
-            <div class="p-4 bg-amber-50 border border-amber-200 rounded text-xs text-amber-900 max-w-md mx-auto text-left flex items-start space-x-2.5">
+            <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 max-w-md mx-auto text-left flex items-start space-x-2.5">
                 <i class="fa-solid fa-circle-info text-amber-600 mt-0.5"></i>
                 <p class="leading-relaxed">
-                    Tệp tài liệu dạng <b>{{ doc.get_file_type_display }} (.{{ file_extension }})</b> cần được mở bằng ứng dụng tương ứng trên máy tính. Bạn có thể bấm <b>Tải về Tệp</b> bên dưới để mở file.
+                    Tệp tài liệu nén <b>.{{ file_extension }}</b> cần được giải nén bằng phần mềm WinRAR/7-Zip trên máy tính. Bạn vui lòng bấm nút bên dưới để tải về.
                 </p>
             </div>
 
             <div class="pt-2 flex justify-center space-x-3">
-                <a href="{% url 'document_download' doc.id %}" class="px-6 py-2.5 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded uppercase tracking-wider transition-colors flex items-center space-x-2">
+                <a href="{% url 'document_download' doc.id %}" class="px-6 py-2.5 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-all shadow-xs flex items-center space-x-2">
                     <i class="fa-solid fa-download"></i>
-                    <span>Tải về Tệp này ({{ doc.file_size }})</span>
+                    <span>Tải về Tệp nén ({{ doc.file_size }})</span>
                 </a>
             </div>
         </div>
         {% endif %}
+
     </div>
 
 </div>

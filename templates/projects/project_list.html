@@ -6,46 +6,56 @@
 {% block content %}
 <div class="space-y-6">
 
-    <!-- Header Bar -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-            <h1 class="text-xl font-bold text-[#172033] tracking-tight">Danh sách Đồ án Sinh viên</h1>
-            <p class="text-xs text-[#667085] mt-1">Quản lý và theo dõi tiến độ các đồ án được phân công trong hệ thống.</p>
+    <!-- Header Card Banner -->
+    <div class="bg-white rounded-2xl p-6 border border-[#D9DEE8] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-2xl bg-[#173F91] text-white flex items-center justify-center text-xl font-bold shadow-xs">
+                <i class="fa-solid fa-folder-tree"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-[#172033] tracking-tight">Quản Lý Đồ Án Sinh Viên</h1>
+                <p class="text-xs text-[#667085] mt-0.5">Danh sách tổng hợp các đồ án, quy mô lứa nghiên cứu, mã số & tiến độ thực hiện</p>
+            </div>
         </div>
         {% if not request.user.is_admin_user %}
-        <a href="{% url 'project_create' %}" class="px-4 py-2 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded uppercase tracking-wider transition-colors self-start sm:self-auto">
-            + Tạo Đồ án Mới
+        <a href="{% url 'project_create' %}" class="px-5 py-2.5 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-all shadow-xs self-start sm:self-auto flex items-center space-x-1.5">
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>Thêm Đồ Án Mới</span>
         </a>
         {% endif %}
     </div>
 
-    <!-- Search & Filter Bar -->
-    <div class="bg-white rounded p-3.5 border border-[#D9DEE8]">
+    <!-- Search & Filter Bar Card -->
+    <div class="bg-white rounded-2xl p-4 border border-[#D9DEE8] shadow-xs">
         <form method="get" class="flex flex-wrap items-center gap-3">
-            <input type="text" name="q" value="{{ query }}" placeholder="Tìm tên đồ án, công nghệ, mã..." 
-                   class="px-3 py-1.5 text-xs bg-slate-50 border border-[#D9DEE8] rounded focus:outline-none focus:ring-1 focus:ring-[#173F91] w-64">
+            <div class="relative flex-1 min-w-[240px]">
+                <input type="text" name="q" value="{{ query }}" placeholder="Tìm theo tên hoặc mã đồ án, công nghệ..." 
+                       class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-[#D9DEE8] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#173F91] focus:bg-white transition-all">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-[#667085] text-xs"></i>
+            </div>
             
-            <select name="status" class="px-3 py-1.5 text-xs bg-slate-50 border border-[#D9DEE8] rounded focus:outline-none focus:ring-1 focus:ring-[#173F91]">
-                <option value="">-- Tất cả Trạng thái --</option>
+            <select name="status" class="px-3 py-2 text-xs bg-slate-50 border border-[#D9DEE8] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#173F91] text-[#172033]">
+                <option value="">Tất cả Trạng thái</option>
                 <option value="PLANNING" {% if status_filter == 'PLANNING' %}selected{% endif %}>Lập kế hoạch</option>
                 <option value="IN_PROGRESS" {% if status_filter == 'IN_PROGRESS' %}selected{% endif %}>Đang thực hiện</option>
                 <option value="REVIEW" {% if status_filter == 'REVIEW' %}selected{% endif %}>Chờ Review</option>
                 <option value="COMPLETED" {% if status_filter == 'COMPLETED' %}selected{% endif %}>Hoàn thành</option>
             </select>
 
-            <select name="category" class="px-3 py-1.5 text-xs bg-slate-50 border border-[#D9DEE8] rounded focus:outline-none focus:ring-1 focus:ring-[#173F91]">
-                <option value="">-- Tất cả Thể loại --</option>
+            <select name="category" class="px-3 py-2 text-xs bg-slate-50 border border-[#D9DEE8] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#173F91] text-[#172033]">
+                <option value="">Tất cả Thể loại</option>
                 <option value="WEB" {% if category_filter == 'WEB' %}selected{% endif %}>Phát triển Web</option>
                 <option value="MOBILE" {% if category_filter == 'MOBILE' %}selected{% endif %}>Di động (Mobile)</option>
                 <option value="AI_ML" {% if category_filter == 'AI_ML' %}selected{% endif %}>AI & Machine Learning</option>
                 <option value="IOT" {% if category_filter == 'IOT' %}selected{% endif %}>IoT</option>
             </select>
 
-            <button type="submit" class="px-4 py-1.5 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded uppercase tracking-wider">
+            <button type="submit" class="px-5 py-2 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-all shadow-xs">
                 Lọc Đồ án
             </button>
         </form>
     </div>
+
 
     {% if pending_invites %}
     <!-- Pending Invites Section -->

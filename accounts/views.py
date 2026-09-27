@@ -83,9 +83,10 @@ def register_view(request):
                 request=request
             )
 
-            login(request, user)
-            messages.success(request, f'Tạo tài khoản {user.get_role_display()} thành công!')
-            return redirect('dashboard')
+            # Do NOT auto-login. Require user to log in manually first.
+            messages.success(request, f'Tạo tài khoản {user.get_role_display()} thành công! Vui lòng đăng nhập để tiếp tục.')
+            return redirect('login')
+
         else:
             messages.error(request, 'Vui lòng kiểm tra lại thông tin đăng ký.')
     else:

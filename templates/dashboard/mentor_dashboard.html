@@ -15,11 +15,21 @@
             <p class="text-xs text-[#667085] mt-1">
                 Theo dõi và quản lý đồ án phụ trách, duyệt công việc và gửi phản hồi đánh giá cho sinh viên.
             </p>
+        <div class="flex items-center space-x-3">
+            <a href="{% url 'profile' %}" class="flex items-center space-x-3 bg-slate-50 hover:bg-blue-50/80 p-3 rounded-xl border border-[#D9DEE8] hover:border-[#173F91] text-xs transition-all group" title="Bấm để mở trang Thiết lập Hồ sơ cá nhân">
+                <span class="font-semibold text-[#172033] group-hover:text-[#173F91]">Hồ sơ cá nhân:</span>
+                <div class="w-20 bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div class="bg-[#173F91] h-full rounded-full transition-all" style="width: {{ request.user.profile_completion.percent }}%"></div>
+                </div>
+                <span class="font-bold text-[#173F91]">{{ request.user.profile_completion.completed }}/{{ request.user.profile_completion.total }}</span>
+                <i class="fa-solid fa-arrow-right text-[#173F91] text-[10px] transition-transform group-hover:translate-x-0.5"></i>
+            </a>
+            <span class="px-3 py-2 bg-amber-50 text-amber-900 border border-amber-200 font-bold text-xs rounded-xl uppercase tracking-wider hidden sm:inline-block">
+                Mentor Workspace
+            </span>
         </div>
-        <span class="px-3 py-1 bg-amber-50 text-amber-900 border border-amber-200 font-bold text-xs rounded-full uppercase tracking-wider">
-            Mentor Workspace
-        </span>
     </div>
+
 
     {% if pending_mentor_invites %}
     <!-- Pending Mentor Invites Banner -->
@@ -50,23 +60,65 @@
     </div>
     {% endif %}
 
-    <!-- Metric KPI Strip -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="bg-white rounded-2xl p-5 border border-[#D9DEE8] shadow-xs">
-            <p class="text-[10px] font-bold text-[#667085] uppercase tracking-wider">Đồ án Hướng dẫn</p>
-            <p class="text-2xl font-bold text-[#172033] mt-1">{{ total_mentored }}</p>
+    <!-- Metric KPI Strip (4 Stat Cards Grid) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Card 1 -->
+        <div class="bg-white rounded-2xl p-5 border border-[#D9DEE8] shadow-xs hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold text-[#667085] uppercase tracking-wider">Đồ án Hướng dẫn</span>
+                <div class="w-9 h-9 rounded-xl bg-blue-50 text-[#173F91] border border-blue-200 flex items-center justify-center">
+                    <i class="fa-solid fa-folder-tree text-sm"></i>
+                </div>
+            </div>
+            <div class="mt-3">
+                <span class="text-2xl font-extrabold text-[#172033]">{{ total_mentored }}</span>
+                <span class="text-xs text-[#667085] block mt-0.5">đồ án đang tiếp nhận</span>
+            </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-5 border border-[#D9DEE8] shadow-xs">
-            <p class="text-[10px] font-bold text-[#667085] uppercase tracking-wider">Task Chờ Review</p>
-            <p class="text-2xl font-bold text-[#173F91] mt-1">{{ pending_review_tasks.count }}</p>
+        <!-- Card 2 -->
+        <div class="bg-white rounded-2xl p-5 border border-[#D9DEE8] shadow-xs hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold text-[#667085] uppercase tracking-wider">Task Chờ Review</span>
+                <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 flex items-center justify-center">
+                    <i class="fa-solid fa-clipboard-check text-sm"></i>
+                </div>
+            </div>
+            <div class="mt-3">
+                <span class="text-2xl font-extrabold text-[#173F91]">{{ pending_review_tasks.count }}</span>
+                <span class="text-xs text-[#667085] block mt-0.5">cần đánh giá tiến độ</span>
+            </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-5 border border-[#D9DEE8] shadow-xs">
-            <p class="text-[10px] font-bold text-[#667085] uppercase tracking-wider">Đồ án Đang Chờ Duyệt</p>
-            <p class="text-2xl font-bold text-purple-900 mt-1">{{ review_needed_projects.count }}</p>
+        <!-- Card 3 -->
+        <div class="bg-white rounded-2xl p-5 border border-[#D9DEE8] shadow-xs hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold text-[#667085] uppercase tracking-wider">Bản thảo Nộp Duyệt</span>
+                <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-800 border border-purple-200 flex items-center justify-center">
+                    <i class="fa-solid fa-file-signature text-sm"></i>
+                </div>
+            </div>
+            <div class="mt-3">
+                <span class="text-2xl font-extrabold text-purple-900">{{ review_needed_projects.count }}</span>
+                <span class="text-xs text-[#667085] block mt-0.5">đồ án yêu cầu review</span>
+            </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="bg-white rounded-2xl p-5 border border-[#D9DEE8] shadow-xs hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold text-[#667085] uppercase tracking-wider">Lời mời Hướng dẫn</span>
+                <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center justify-center">
+                    <i class="fa-solid fa-envelope-open-text text-sm"></i>
+                </div>
+            </div>
+            <div class="mt-3">
+                <span class="text-2xl font-extrabold text-emerald-800">{{ pending_mentor_invites.count }}</span>
+                <span class="text-xs text-[#667085] block mt-0.5">đơn đang chờ xác nhận</span>
+            </div>
         </div>
     </div>
+
 
     <!-- Review Queue & Mentored Projects Table -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

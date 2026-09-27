@@ -14,14 +14,24 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-projecthub-ai-secre
 
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost,*,.onrender.com').split(',')
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost,*,*.onrender.com,*.ngrok-free.app,*.serveo.net').split(',') if h.strip()]
 
-CSRF_TRUSTED_ORIGINS = os.getenv(
-    'DJANGO_CSRF_TRUSTED_ORIGINS',
-    'https://*.onrender.com,http://*.onrender.com,https://projecthub-ai-web.onrender.com,http://127.0.0.1,http://localhost'
-).split(',')
+default_origins = (
+    'http://127.0.0.1,http://127.0.0.1:8000,http://127.0.0.1:8088,http://127.0.0.1:8001,'
+    'http://localhost,http://localhost:8000,http://localhost:8088,http://localhost:8001,'
+    'https://*.onrender.com,http://*.onrender.com,https://*.ngrok-free.app,https://*.serveo.net'
+)
+raw_origins = os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', default_origins).split(',')
+CSRF_TRUSTED_ORIGINS = list(set([o.strip() for o in raw_origins if o.strip()]))
+
+# Ensure common local ports are always present in CSRF_TRUSTED_ORIGINS
+for port in ['', ':8000', ':8088', ':8001', ':8080', ':3000']:
+    CSRF_TRUSTED_ORIGINS.append(f'http://127.0.0.1{port}')
+    CSRF_TRUSTED_ORIGINS.append(f'http://localhost{port}')
+CSRF_TRUSTED_ORIGINS = list(set(CSRF_TRUSTED_ORIGINS))
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -83,27 +93,30 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'projecthub_config.wsgi.application'
 
+db_url = os.getenv('DATABASE_URL', 'postgres://postgres:2@127.0.0.1:5432/projecthub_db')
 try:
     import dj_database_url
-    default_db_url = os.getenv('DATABASE_URL', 'postgres://postgres:2@127.0.0.1:5432/projecthub_db')
     DATABASES = {
         'default': dj_database_url.config(
-            default=default_db_url,
+            default=db_url,
             conn_max_age=600,
             conn_health_checks=True,
         )
     }
-except Exception:
+except ImportError:
+    from urllib.parse import urlparse
+    url = urlparse(db_url)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'projecthub_db',
-            'USER': 'postgres',
-            'PASSWORD': '2',
-            'HOST': '127.0.0.1',
-            'PORT': '5432',
+            'NAME': url.path[1:] if url.path else 'projecthub_db',
+            'USER': url.username or 'postgres',
+            'PASSWORD': url.password or '2',
+            'HOST': url.hostname or '127.0.0.1',
+            'PORT': str(url.port or 5432),
         }
     }
+
 
 WHITENOISE_MANIFEST_STRICT = False
 
