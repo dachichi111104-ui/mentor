@@ -9,12 +9,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @keyframes flyAcrossSky {
-            0% { transform: translateX(-250px) translateY(0px) rotate(4deg); }
-            50% { transform: translateX(50vw) translateY(-30px) rotate(1deg); }
-            100% { transform: translateX(105vw) translateY(20px) rotate(4deg); }
+            0% { transform: translateX(-400px) translateY(-30px) rotate(6deg); }
+            50% { transform: translateX(45vw) translateY(40px) rotate(-3deg); }
+            100% { transform: translateX(105vw) translateY(-30px) rotate(6deg); }
         }
         .animate-flying-plane {
-            animation: flyAcrossSky 11s linear infinite;
+            animation: flyAcrossSky 9s linear infinite;
         }
 
         .bg-dark-grid {
@@ -43,16 +43,18 @@
 </head>
 <body class="min-h-screen bg-dark-grid text-slate-100 flex flex-col justify-between p-4 font-sans antialiased relative overflow-y-auto">
 
-    <!-- Big Colorful Animated Airplane Flying Across -->
-    <div class="fixed top-10 left-0 w-full pointer-events-none z-0 overflow-hidden h-36">
-        <div class="animate-flying-plane flex items-center gap-4">
+    <!-- Huge Colorful Animated Airplane Flying Across Center of Screen -->
+    <div class="fixed top-1/2 -translate-y-1/2 left-0 w-full pointer-events-none z-0 overflow-hidden h-64 flex items-center">
+        <div class="animate-flying-plane flex items-center gap-6">
             <div class="relative flex items-center">
-                <div class="w-48 h-2 bg-gradient-to-r from-transparent via-cyan-400 to-amber-400 rounded-full blur-[1px] mr-[-10px] opacity-80"></div>
-                <i class="fa-solid fa-plane text-6xl text-amber-400 drop-shadow-[0_0_25px_rgba(245,158,11,0.9)] transform -rotate-12"></i>
+                <!-- Multi-color glowing jet trail -->
+                <div class="w-80 sm:w-96 h-4 bg-gradient-to-r from-transparent via-cyan-400 via-sky-400 to-amber-400 rounded-full blur-[2px] mr-[-20px] opacity-90 shadow-[0_0_20px_rgba(56,189,248,0.8)]"></div>
+                <!-- Giant Glowing Airplane -->
+                <i class="fa-solid fa-plane text-8xl sm:text-9xl text-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,1)] transform -rotate-12"></i>
             </div>
-            <div class="flex items-center gap-2 bg-slate-900/90 px-4 py-1.5 rounded-full border border-amber-500/40 shadow-xl backdrop-blur-md">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-                <span class="text-xs font-mono font-extrabold uppercase tracking-widest text-amber-300">VAU AIRLINES - FLIGHT 2026 AI</span>
+            <div class="flex items-center gap-3 bg-slate-900/95 px-6 py-2.5 rounded-2xl border-2 border-amber-400/60 shadow-[0_10px_30px_rgba(0,0,0,0.8)] backdrop-blur-md">
+                <span class="w-3.5 h-3.5 rounded-full bg-emerald-400 animate-ping"></span>
+                <span class="text-sm sm:text-base font-mono font-black uppercase tracking-widest text-amber-300 drop-shadow-md">VAU AIRLINES - FLIGHT 2026 AI</span>
             </div>
         </div>
     </div>
