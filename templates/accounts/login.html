@@ -9,18 +9,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @keyframes flyAcrossSky {
-            0% { transform: translateX(-400px) translateY(-30px) rotate(6deg); }
-            50% { transform: translateX(45vw) translateY(40px) rotate(-3deg); }
-            100% { transform: translateX(105vw) translateY(-30px) rotate(6deg); }
+            0% { transform: translateX(-500px) translateY(-30px) rotate(5deg); }
+            50% { transform: translateX(45vw) translateY(35px) rotate(-2deg); }
+            100% { transform: translateX(105vw) translateY(-30px) rotate(5deg); }
         }
         .animate-flying-plane {
-            animation: flyAcrossSky 9s linear infinite;
+            animation: flyAcrossSky 8s linear infinite;
         }
 
-        .bg-dark-grid {
+        .bg-caro-grid {
             background-color: #0B132B;
-            background-image: radial-gradient(#1E293B 2px, transparent 2px);
-            background-size: 28px 28px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 36px 36px;
         }
 
         .light-card input {
@@ -41,20 +43,19 @@
         }
     </style>
 </head>
-<body class="min-h-screen bg-dark-grid text-slate-100 flex flex-col justify-between p-4 font-sans antialiased relative overflow-y-auto">
+<body class="min-h-screen bg-caro-grid text-slate-100 flex flex-col justify-between p-4 font-sans antialiased relative overflow-y-auto">
 
-    <!-- Huge Colorful Animated Airplane Flying Across Center of Screen -->
-    <div class="fixed top-1/2 -translate-y-1/2 left-0 w-full pointer-events-none z-0 overflow-hidden h-64 flex items-center">
-        <div class="animate-flying-plane flex items-center gap-6">
-            <div class="relative flex items-center">
-                <!-- Multi-color glowing jet trail -->
-                <div class="w-80 sm:w-96 h-4 bg-gradient-to-r from-transparent via-cyan-400 via-sky-400 to-amber-400 rounded-full blur-[2px] mr-[-20px] opacity-90 shadow-[0_0_20px_rgba(56,189,248,0.8)]"></div>
-                <!-- Giant Glowing Airplane -->
-                <i class="fa-solid fa-plane text-8xl sm:text-9xl text-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,1)] transform -rotate-12"></i>
-            </div>
-            <div class="flex items-center gap-3 bg-slate-900/95 px-6 py-2.5 rounded-2xl border-2 border-amber-400/60 shadow-[0_10px_30px_rgba(0,0,0,0.8)] backdrop-blur-md">
+    <!-- Giant Supersonic Airplane Flying Across Center Screen -->
+    <div class="fixed top-1/2 -translate-y-1/2 left-0 w-full pointer-events-none z-0 overflow-hidden h-80 flex items-center">
+        <div class="animate-flying-plane flex items-center">
+            <!-- Smooth Jet Trail Stream -->
+            <div class="w-[450px] sm:w-[600px] h-3.5 bg-gradient-to-r from-transparent via-cyan-400 via-sky-400 to-amber-400 opacity-90 rounded-l-full mr-[-15px] shadow-[0_0_25px_rgba(56,189,248,0.9)]"></div>
+            <!-- Huge Airplane Icon -->
+            <i class="fa-solid fa-plane text-[120px] sm:text-[150px] text-amber-400 drop-shadow-[0_0_45px_rgba(245,158,11,1)] transform -rotate-6"></i>
+            <!-- Flight Badge -->
+            <div class="ml-6 flex items-center gap-3 bg-slate-900/95 px-6 py-2.5 rounded-2xl border-2 border-amber-400/60 shadow-[0_10px_35px_rgba(0,0,0,0.8)] backdrop-blur-md">
                 <span class="w-3.5 h-3.5 rounded-full bg-emerald-400 animate-ping"></span>
-                <span class="text-sm sm:text-base font-mono font-black uppercase tracking-widest text-amber-300 drop-shadow-md">VAU AIRLINES - FLIGHT 2026 AI</span>
+                <span class="text-sm sm:text-base font-mono font-black uppercase tracking-widest text-amber-300">VAU AIRLINES - FLIGHT 2026 AI</span>
             </div>
         </div>
     </div>
@@ -79,7 +80,7 @@
         </a>
     </div>
 
-    <!-- Main Login Card (Dark Navy Outer Background, Bright White Inner Card) -->
+    <!-- Main Login Card (Dark Navy Caro Grid Outer Background, Bright White Inner Card) -->
     <div class="my-auto py-8 relative z-10">
         <div class="max-w-md w-full mx-auto bg-white text-slate-900 rounded-3xl shadow-2xl border border-slate-200 p-8 relative overflow-hidden light-card">
             
@@ -124,7 +125,7 @@
                     </div>
                 </div>
 
-                <button type="submit" class="w-full py-3 bg-[#0F172A] hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl transition-all mt-2 uppercase tracking-wider shadow-lg border border-slate-900 flex items-center justify-center gap-2">
+                <button type="submit" class="w-full py-3 bg-[#173F91] hover:bg-[#123477] text-white font-extrabold text-xs rounded-xl transition-all mt-2 uppercase tracking-wider shadow-lg border border-blue-900 flex items-center justify-center gap-2">
                     <span>Đăng nhập hệ thống</span>
                     <i class="fa-solid fa-plane-departure text-amber-400 text-xs"></i>
                 </button>

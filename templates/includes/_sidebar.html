@@ -56,6 +56,7 @@
                 </div>
             </a>
 
+            {% if request.user.is_student %}
             <a href="{% url 'my_tasks' %}"
                title="Công việc (Kanban)"
                {% if request.resolver_match.url_name in 'my_tasks,project_tasks' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
@@ -66,6 +67,7 @@
                     <span x-show="!sidebarCollapsed">Công việc (Kanban)</span>
                 </div>
             </a>
+            {% endif %}
         </div>
 
         <!-- SECTION 2: QUẢN LÝ DỰ ÁN & TEAMWORK -->
@@ -94,6 +96,7 @@
                 </div>
             </a>
 
+            {% if not request.user.is_admin_user %}
             <a href="{% url 'document_list' %}"
                title="Kho Tài liệu"
                {% if request.resolver_match.url_name in 'document_list,project_documents,document_preview' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
@@ -104,6 +107,7 @@
                     <span x-show="!sidebarCollapsed">Kho Tài liệu</span>
                 </div>
             </a>
+            {% endif %}
 
             {% if request.user.is_mentor %}
             <a href="{% url 'mentor_reviews' %}"

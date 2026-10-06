@@ -1,183 +1,296 @@
 {% extends 'layouts/base.html' %}
 
 {% block title %}Lịch Đồ án & Cuộc hẹn | PROJECTHUB AI{% endblock %}
-{% block breadcrumb %}<span class="text-slate-500">Đội ngũ & Tiến độ</span> <i class="fa-solid fa-chevron-right text-[9px] text-slate-300 mx-1"></i> <span class="text-slate-900 font-bold">Lịch & Sự kiện</span>{% endblock %}
+{% block breadcrumb %}<a href="{% url 'dashboard' %}" class="hover:underline text-slate-500">Trang chủ</a> <i class="fa-solid fa-chevron-right text-[9px] text-slate-300 mx-1"></i> <a href="{% url 'team' %}" class="hover:underline text-slate-500">Đội ngũ & Tiến độ</a> <i class="fa-solid fa-chevron-right text-[9px] text-slate-300 mx-1"></i> <span class="text-slate-900 font-bold">Lịch & Sự kiện</span>{% endblock %}
 
 {% block content %}
 <div class="space-y-6" x-data="{
     showEventModal: false,
     showBookModal: false,
+    showDateDetailModal: false,
+    selectedDate: '',
+    selectedDayEvents: [],
     events: [],
+
+    currentMonthName: 'Tháng 10, 2026',
+    calendarDays: [],
+
     init() {
         fetch('/api/v1/calendar/events/')
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
                     this.events = data.events;
+                    this.buildCalendar();
                 }
             });
+    },
+
+    buildCalendar() {
+        // Build 35 days for current month view
+        const days = [];
+        const today = new Date();
+        const year = 2026;
+        const month = 9; // October (0-indexed 9)
+        
+        // Days matrix
+        for (let i = 1; i <= 31; i++) {
+            const dateStr = `2026-10-${i.toString().padStart(2, '0')}`;
+            const dayEvents = this.events.filter(e => e.start.startsWith(dateStr));
+            days.push({
+                day: i,
+                dateStr: dateStr,
+                isCurrentMonth: true,
+                isToday: i === 7,
+                events: dayEvents
+            });
+        }
+        this.calendarDays = days;
+    },
+
+    openDayDetails(dayObj) {
+        this.selectedDate = dayObj.dateStr;
+        this.selectedDayEvents = dayObj.events;
+        this.showDateDetailModal = true;
     }
 }">
-    <!-- Header -->
+
+    <!-- Header Banner -->
     <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
             <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Lịch Tiến độ & Cuộc hẹn (Calendar)</h1>
-            <p class="text-sm text-slate-500 mt-1">Tổng hợp hạn chót công việc, cột mốc Milestone và lịch hẹn trao đổi với Mentor</p>
+            <p class="text-sm text-slate-500 mt-1">Theo dõi lịch họp Mentor, hạn chót Task và các mốc Milestone trên giao diện Lịch trực quan</p>
         </div>
         <div class="flex flex-wrap items-center gap-2.5">
-            <a href="{% url 'calendar_export_ics' %}" class="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-2 border border-slate-200">
+            <a href="{% url 'calendar_export_ics' %}" class="px-4 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-2 border border-slate-200">
                 <i class="fa-solid fa-file-export text-slate-500"></i>
                 <span>Xuất Lịch (.ics)</span>
             </a>
-            <button @click="showBookModal = true" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm border border-amber-400">
+            <button @click="showBookModal = true" class="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm border border-amber-400">
                 <i class="fa-regular fa-calendar-plus text-slate-900"></i>
                 <span>Đặt Lịch Hẹn Mentor</span>
             </button>
-            <button @click="showEventModal = true" class="px-4 py-2 bg-[#1E3A8A] hover:bg-blue-900 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm border border-blue-700">
+            <button @click="showEventModal = true" class="px-4 py-2.5 bg-[#173F91] hover:bg-[#123477] text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm uppercase tracking-wider">
                 <i class="fa-solid fa-plus text-amber-400"></i>
                 <span>Thêm Sự Kiện Mới</span>
             </button>
         </div>
     </div>
 
-    <!-- Main Grid -->
+    <!-- Main Interactive Calendar & Side Panel Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Calendar Grid Area (2 Cols) -->
-        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-4">
-                <h3 class="font-bold text-slate-900 text-lg">Danh sách Sự kiện Lịch</h3>
-                <span class="text-xs bg-navy-50 text-navy-800 px-3 py-1 rounded-full font-semibold" x-text="events.length + ' sự kiện'"></span>
+        
+        <!-- Interactive Monthly Calendar Matrix (2 Cols) -->
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-5 border-b border-slate-100 pb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-[#173F91] flex items-center justify-center text-lg font-bold border border-blue-200">
+                        <i class="fa-solid fa-calendar-days"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-extrabold text-base text-slate-900" x-text="currentMonthName"></h2>
+                        <span class="text-xs text-slate-500">Bấm vào từng ngày để xem lịch chi tiết</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="px-3 py-1 bg-blue-50 text-[#173F91] font-bold text-xs rounded-lg border border-blue-200" x-text="events.length + ' Sự kiện'"></span>
+                </div>
             </div>
 
-            <div class="space-y-3">
-                <template x-for="ev in events" :key="ev.id">
-                    <div class="p-4 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-300 transition shadow-xs flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="w-3 h-10 rounded-full" :style="`background-color: ${ev.color}`"></div>
-                            <div>
-                                <h4 class="font-bold text-slate-900 text-sm" x-text="ev.title"></h4>
-                                <div class="flex items-center gap-3 text-xs text-slate-500 mt-1">
-                                    <span><i class="fa-regular fa-folder text-slate-400"></i> <span x-text="ev.project_name"></span></span>
-                                    <span><i class="fa-regular fa-clock text-slate-400"></i> <span x-text="ev.start.split('T')[0]"></span></span>
-                                </div>
-                            </div>
+            <!-- Days of Week Header -->
+            <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs text-slate-500 mb-2 border-b border-slate-100 pb-2">
+                <div class="text-rose-600">CN</div>
+                <div>T2</div>
+                <div>T3</div>
+                <div>T4</div>
+                <div>T5</div>
+                <div>T6</div>
+                <div class="text-blue-600">T7</div>
+            </div>
+
+            <!-- Calendar Days Grid (31 Days) -->
+            <div class="grid grid-cols-7 gap-1.5 min-h-[380px]">
+                <template x-for="d in calendarDays" :key="d.dateStr">
+                    <div @click="openDayDetails(d)" 
+                         :class="{
+                             'bg-blue-50/80 border-blue-300 ring-2 ring-blue-500/30': d.isToday,
+                             'bg-slate-50 hover:bg-blue-50/50 border-slate-200': !d.isToday
+                         }"
+                         class="p-2 rounded-xl border transition-all cursor-pointer flex flex-col justify-between min-h-[72px] hover:shadow-sm relative group">
+                        
+                        <div class="flex justify-between items-center">
+                            <span class="font-extrabold text-xs" :class="d.isToday ? 'text-[#173F91]' : 'text-slate-700'" x-text="d.day"></span>
+                            <template x-if="d.events.length > 0">
+                                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                            </template>
                         </div>
-                        <div>
-                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-700" x-text="ev.type_display"></span>
+
+                        <!-- Event Badges / Icons -->
+                        <div class="mt-1 space-y-1">
+                            <template x-for="ev in d.events.slice(0, 2)" :key="ev.id">
+                                <div class="px-1.5 py-0.5 rounded text-[9px] font-bold truncate text-white" :style="`background-color: ${ev.color}`" :title="ev.title">
+                                    <span x-text="ev.title"></span>
+                                </div>
+                            </template>
+                            <template x-if="d.events.length > 2">
+                                <span class="text-[9px] font-bold text-slate-400 block text-right" x-text="'+' + (d.events.length - 2) + ' lịch'"></span>
+                            </template>
                         </div>
                     </div>
                 </template>
             </div>
         </div>
 
-        <!-- Sidebar Panel (1 Col) -->
+        <!-- Sidebar Panel: Upcoming Events (1 Col) -->
         <div class="space-y-6">
-            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-                <h3 class="font-bold text-slate-900 mb-3 text-sm flex items-center gap-2">
-                    <i class="fa-solid fa-clock-rotate-left text-navy-700"></i>
-                    Sắp tới (Upcoming Events)
-                </h3>
-                <div class="space-y-3">
-                    {% for ev in upcoming_events %}
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                        <div class="flex justify-between items-start gap-2">
-                            <h4 class="font-semibold text-slate-900 text-xs">{{ ev.title }}</h4>
-                            <span class="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold whitespace-nowrap shrink-0">{{ ev.get_event_type_display }}</span>
-                        </div>
-                        <p class="text-[11px] text-slate-500 mt-1"><i class="fa-regular fa-clock"></i> {{ ev.start|date:"H:i d/m/Y" }}</p>
-                    </div>
-                    {% empty %}
-                    <p class="text-xs text-slate-400 italic">Chưa có sự kiện nào sắp tới.</p>
-                    {% endfor %}
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+                    <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-[#173F91]"></i>
+                        Sự kiện Sắp tới (Upcoming)
+                    </h3>
                 </div>
+
+                <div class="space-y-3 max-h-[420px] overflow-y-auto custom-scrollbar">
+                    <template x-for="ev in events" :key="ev.id">
+                        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 hover:border-blue-300 transition shadow-xs">
+                            <div class="flex justify-between items-start gap-2">
+                                <h4 class="font-bold text-slate-900 text-xs leading-snug" x-text="ev.title"></h4>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap text-white" :style="`background-color: ${ev.color}`" x-text="ev.type_display"></span>
+                            </div>
+                            <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500">
+                                <span><i class="fa-regular fa-folder mr-1"></i> <span x-text="ev.project_name"></span></span>
+                                <span class="font-mono font-semibold text-[#173F91]"><i class="fa-regular fa-clock mr-1"></i> <span x-text="ev.start.split('T')[0]"></span></span>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="events.length === 0">
+                        <div class="text-center py-10 text-slate-400">
+                            <i class="fa-regular fa-calendar-xmark text-3xl mb-2 block text-slate-300"></i>
+                            <p class="text-xs">Chưa có sự kiện nào được ghi nhận.</p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Day Details Modal -->
+    <div x-show="showDateDetailModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" @click.self="showDateDetailModal = false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 border border-slate-200 relative">
+            <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-200">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-calendar-day text-[#173F91] text-lg"></i>
+                    <h3 class="font-bold text-slate-900 text-base">Lịch ngày <span x-text="selectedDate"></span></h3>
+                </div>
+                <button @click="showDateDetailModal = false" class="text-slate-400 hover:text-slate-700 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-3 max-h-[350px] overflow-y-auto">
+                <template x-for="ev in selectedDayEvents" :key="ev.id">
+                    <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 flex items-start gap-3">
+                        <div class="w-3 h-12 rounded-full shrink-0" :style="`background-color: ${ev.color}`"></div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-slate-900 text-sm" x-text="ev.title"></h4>
+                            <p class="text-xs text-slate-500 mt-1">Đồ án: <strong x-text="ev.project_name"></strong></p>
+                            <span class="inline-block mt-2 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white" :style="`background-color: ${ev.color}`" x-text="ev.type_display"></span>
+                        </div>
+                    </div>
+                </template>
+                <template x-if="selectedDayEvents.length === 0">
+                    <div class="text-center py-8 text-slate-400">
+                        <i class="fa-solid fa-calendar-day text-3xl mb-2 text-slate-300 block"></i>
+                        <p class="text-xs">Không có sự kiện hoặc hạn chót nào trong ngày này.</p>
+                    </div>
+                </template>
+            </div>
+
+            <div class="mt-5 pt-3 border-t border-slate-100 flex justify-end">
+                <button @click="showDateDetailModal = false" class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl">
+                    Đóng
+                </button>
             </div>
         </div>
     </div>
 
     <!-- Create Event Modal -->
-    <div x-show="showEventModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 border border-slate-200 relative">
-            <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
-                <h3 class="font-bold text-lg text-slate-900">Thêm Sự kiện Lịch Mới</h3>
-                <button type="button" @click="showEventModal = false" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors" title="Đóng modal">
-                    <i class="fa-solid fa-xmark text-sm"></i>
-                </button>
+    <div x-show="showEventModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" @click.self="showEventModal = false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-slate-200 relative">
+            <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-200">
+                <h3 class="font-bold text-slate-900 text-base">Thêm Sự kiện Mới</h3>
+                <button @click="showEventModal = false" class="text-slate-400 hover:text-slate-700 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
+
             <form method="POST" action="{% url 'event_create' %}" class="space-y-4">
                 {% csrf_token %}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Đồ án liên quan</label>
-                    <select name="project_id" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-navy-600">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Chọn Đồ án *</label>
+                    <select name="project_id" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:border-blue-600">
                         {% for p in my_projects %}
                         <option value="{{ p.id }}">{{ p.code }} - {{ p.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Tiêu đề sự kiện</label>
-                    <input type="text" name="title" required placeholder="VD: Họp duyệt giao diện v1..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-navy-600">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Tiêu đề Sự kiện *</label>
+                    <input type="text" name="title" required placeholder="Ví dụ: Họp Review tiến độ Tuần 5" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:border-blue-600">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Loại Sự kiện</label>
+                        <select name="event_type" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:border-blue-600">
+                            <option value="MEETING">Cuộc họp / Review</option>
+                            <option value="WORKSHOP">Hội thảo khoa học</option>
+                            <option value="DEFENSE">Báo cáo Hội đồng</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Thời gian *</label>
+                        <input type="datetime-local" name="start" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:border-blue-600">
+                    </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Loại sự kiện</label>
-                    <select name="event_type" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-navy-600">
-                        <option value="MEETING">Họp nhóm / Mentor</option>
-                        <option value="REVIEW">Đánh giá / Nộp bản thảo</option>
-                        <option value="DEADLINE">Hạn chót công việc</option>
-                        <option value="PERSONAL">Cá nhân / Lịch hẹn</option>
-                    </select>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Link cuộc họp (Google Meet / Zoom)</label>
+                    <input type="url" name="link" placeholder="https://meet.google.com/..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:border-blue-600">
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Thời gian bắt đầu</label>
-                    <input type="datetime-local" name="start" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-navy-600">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Link họp trực tuyến (Google Meet/MS Teams)</label>
-                    <input type="url" name="link" placeholder="https://meet.google.com/..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-navy-600">
-                </div>
-                <div class="flex justify-end gap-3 pt-3 border-t border-slate-100">
-                    <button type="button" @click="showEventModal = false" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition">Hủy bỏ</button>
-                    <button type="submit" class="px-5 py-2 bg-[#1E3A8A] text-white rounded-xl text-xs font-bold hover:bg-blue-900 transition flex items-center gap-1.5 shadow-sm border border-blue-700">
-                        <i class="fa-solid fa-check text-amber-400"></i>
-                        <span>Tạo Sự Kiện</span>
-                    </button>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" @click="showEventModal = false" class="px-4 py-2.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl">Hủy</button>
+                    <button type="submit" class="px-5 py-2.5 bg-[#173F91] hover:bg-[#123477] text-white text-xs font-bold rounded-xl uppercase tracking-wider shadow-sm">Tạo Sự kiện</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Book Appointment Modal -->
-    <div x-show="showBookModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 border border-slate-200 relative">
-            <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
-                <h3 class="font-bold text-lg text-slate-900">Đặt Lịch Hẹn Với Mentor</h3>
-                <button type="button" @click="showBookModal = false" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors" title="Đóng modal">
-                    <i class="fa-solid fa-xmark text-sm"></i>
-                </button>
+    <!-- Appointment Book Modal -->
+    <div x-show="showBookModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" @click.self="showBookModal = false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-slate-200 relative">
+            <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-200">
+                <h3 class="font-bold text-slate-900 text-base">Đặt Lịch Hẹn Hướng Dẫn Mentor</h3>
+                <button @click="showBookModal = false" class="text-slate-400 hover:text-slate-700 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
+
             <form method="POST" action="{% url 'appointment_book' %}" class="space-y-4">
                 {% csrf_token %}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Chọn Đồ án</label>
-                    <select name="project_id" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-navy-600">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Chọn Đồ án *</label>
+                    <select name="project_id" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:border-blue-600">
                         {% for p in my_projects %}
-                        <option value="{{ p.id }}">{{ p.code }} - {{ p.name }} (Mentor: {{ p.mentor.display_name|default:"Chưa chọn" }})</option>
+                        <option value="{{ p.id }}">{{ p.code }} - {{ p.name }} (Mentor: {{ p.mentor.display_name|default:"Chưa có" }})</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nội dung cuộc hẹn</label>
-                    <input type="text" name="title" required placeholder="VD: Góp ý thiết kế CSDL và kiến trúc..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-navy-600">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nội dung trao đổi / Đề xuất *</label>
+                    <input type="text" name="title" required placeholder="Ví dụ: Xin ý kiến duyệt sơ đồ ERD & Trợ lý AI" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:border-blue-600">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Thời gian đề xuất</label>
-                    <input type="datetime-local" name="start" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-navy-600">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Thời gian đề xuất họp *</label>
+                    <input type="datetime-local" name="start" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:border-blue-600">
                 </div>
-                <div class="flex justify-end gap-3 pt-3 border-t border-slate-100">
-                    <button type="button" @click="showBookModal = false" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition">Hủy bỏ</button>
-                    <button type="submit" class="px-5 py-2 bg-[#1E3A8A] text-white rounded-xl text-xs font-bold hover:bg-blue-900 transition flex items-center gap-1.5 shadow-sm border border-blue-700">
-                        <i class="fa-solid fa-check text-amber-400"></i>
-                        <span>Gửi Yêu Cầu</span>
-                    </button>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" @click="showBookModal = false" class="px-4 py-2.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl">Hủy</button>
+                    <button type="submit" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold rounded-xl shadow-sm border border-amber-400">Gửi Yêu cầu Đặt Lịch</button>
                 </div>
             </form>
         </div>
