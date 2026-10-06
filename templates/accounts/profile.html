@@ -11,7 +11,7 @@
         <img src="{{ request.user.get_avatar_url }}" class="w-20 h-20 rounded-full border border-slate-300 object-cover shadow-sm">
         <div class="flex-1 text-center md:text-left">
             <h1 class="text-xl font-bold text-slate-900">{{ request.user.display_name }}</h1>
-            <p class="text-xs text-slate-500 mt-0.5">{{ request.user.email }} • Mã số: {{ request.user.student_id|default:"Chưa cập nhật" }}</p>
+            <p class="text-xs text-slate-500 mt-0.5">{{ request.user.email }}{% if not request.user.is_admin_user %} • Mã số: {{ request.user.student_id|default:"Chưa cập nhật" }}{% endif %}</p>
             <div class="flex flex-wrap justify-center md:justify-start gap-2 mt-2.5">
                 <span class="px-2.5 py-0.5 bg-navy-900 text-white text-[10px] font-bold rounded uppercase tracking-wider">
                     {{ request.user.get_role_display }}
@@ -161,7 +161,7 @@
                 <p class="text-xs text-slate-500 mt-0.5">Mật khẩu tài khoản được quản lý tập trung tại mục Cài đặt Bảo mật</p>
             </div>
         </div>
-        <a href="{% url 'settings' %}" class="px-4 py-2.5 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold text-xs rounded-xl transition flex items-center gap-2 shadow-sm border border-blue-700 self-start sm:self-auto">
+        <a href="{% url 'settings' %}" class="px-4 py-2.5 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold text-xs rounded-xl transition flex items-center gap-2 shadow-sm border border-blue-700 self-start sm:self-auto whitespace-nowrap shrink-0">
             <span>Chuyển tới Cài đặt Bảo mật</span>
             <i class="fa-solid fa-arrow-right text-amber-400 text-xs"></i>
         </a>

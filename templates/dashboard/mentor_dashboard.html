@@ -142,8 +142,8 @@
                                 <span class="font-mono font-bold text-[10px] text-[#667085] block">{{ proj.code }}</span>
                                 <a href="{% url 'project_detail' proj.id %}" class="font-bold text-[#173F91] hover:underline">{{ proj.name }}</a>
                             </td>
-                            <td class="p-3.5 pr-5 text-right">
-                                <a href="{% url 'project_detail' proj.id %}" class="px-3 py-1.5 bg-white text-[#173F91] border border-[#173F91] font-bold text-[11px] rounded-lg hover:bg-blue-50 transition-all">
+                            <td class="p-3.5 pr-5 text-right whitespace-nowrap">
+                                <a href="{% url 'project_detail' proj.id %}" class="px-3 py-1.5 bg-white text-[#173F91] border border-[#173F91] font-bold text-[11px] rounded-lg hover:bg-blue-50 transition-all whitespace-nowrap inline-block">
                                     Review Đồ án
                                 </a>
                             </td>
@@ -168,12 +168,12 @@
 
             <div class="divide-y divide-[#D9DEE8]">
                 {% for task in pending_review_tasks %}
-                <div class="p-3.5 sm:px-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                <div class="p-3.5 sm:px-5 flex items-center justify-between hover:bg-slate-50 transition-colors gap-3">
                     <div>
                         <h4 class="text-xs font-bold text-[#172033]">{{ task.title }}</h4>
                         <span class="text-[10px] text-[#667085] mt-0.5 block">{{ task.project.name }} • {{ task.assignee.display_name }}</span>
                     </div>
-                    <a href="{% url 'project_tasks' task.project.id %}" class="px-3.5 py-1.5 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-[11px] rounded-lg uppercase tracking-wider shadow-2xs transition-all">
+                    <a href="{% url 'project_tasks' task.project.id %}" class="px-3.5 py-1.5 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-[11px] rounded-lg uppercase tracking-wider shadow-2xs transition-all whitespace-nowrap">
                         Chấm điểm
                     </a>
                 </div>

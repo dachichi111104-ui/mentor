@@ -7,34 +7,34 @@
 <div class="space-y-6">
 
     <div>
-        <h1 class="text-xl font-bold text-[#172033] tracking-tight">Audit Log — Nhật ký Hoạt động Hệ thống</h1>
+        <h1 class="text-xl font-bold text-[#172033] tracking-tight">Audit Log - Nhật ký Hoạt động Hệ thống</h1>
         <p class="text-xs text-[#667085] mt-1">Lịch sử ghi nhận đăng nhập, khởi tạo đồ án, cập nhật công việc, thao tác tài liệu và phân quyền bảo mật.</p>
     </div>
 
-    <div class="bg-white rounded border border-[#D9DEE8] overflow-hidden">
+    <div class="bg-white rounded-2xl border border-[#D9DEE8] overflow-hidden shadow-sm">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs text-[#172033]">
                 <thead class="bg-[#F5F7FA] text-[#172033] font-bold uppercase text-[10px] border-b border-[#D9DEE8]">
                     <tr>
-                        <th class="p-3">Thời gian</th>
-                        <th class="p-3">Người dùng</th>
-                        <th class="p-3">Hành động</th>
-                        <th class="p-3">Chi tiết mô tả</th>
-                        <th class="p-3">Địa chỉ IP</th>
+                        <th class="p-3.5 whitespace-nowrap">Thời gian</th>
+                        <th class="p-3.5 whitespace-nowrap">Người dùng</th>
+                        <th class="p-3.5 whitespace-nowrap">Hành động</th>
+                        <th class="p-3.5">Chi tiết mô tả</th>
+                        <th class="p-3.5 whitespace-nowrap">Địa chỉ IP</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-[#D9DEE8]">
                     {% for log in logs %}
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-3 text-[#667085] font-mono text-[11px] whitespace-nowrap">{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
-                        <td class="p-3 font-bold text-[#172033]">{{ log.user.display_name|default:"Hệ thống Tự động" }}</td>
-                        <td class="p-3">
-                            <span class="px-2 py-0.5 bg-[#173F91] text-white font-bold text-[10px] rounded uppercase tracking-wider">
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="p-3.5 text-[#667085] font-mono text-[11px] whitespace-nowrap">{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
+                        <td class="p-3.5 font-bold text-[#172033] whitespace-nowrap">{{ log.user.display_name|default:"Hệ thống Tự động" }}</td>
+                        <td class="p-3.5 whitespace-nowrap">
+                            <span class="px-2.5 py-1 bg-[#173F91] text-white font-bold text-[10px] rounded-lg uppercase tracking-wider whitespace-nowrap inline-block shadow-2xs">
                                 {{ log.get_action_display }}
                             </span>
                         </td>
-                        <td class="p-3 text-[#172033]">{{ log.description }}</td>
-                        <td class="p-3 text-[#667085] font-mono">{{ log.ip_address|default:"127.0.0.1" }}</td>
+                        <td class="p-3.5 text-[#172033] min-w-[280px]">{{ log.description }}</td>
+                        <td class="p-3.5 text-[#667085] font-mono whitespace-nowrap">{{ log.ip_address|default:"127.0.0.1" }}</td>
                     </tr>
                     {% empty %}
                     <tr>

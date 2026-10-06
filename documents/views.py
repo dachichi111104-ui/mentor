@@ -102,6 +102,14 @@ def document_upload_view(request, project_id):
     return redirect('project_documents', project_id=project.id)
 
 @login_required
+def all_document_upload_view(request):
+    if request.method == 'POST':
+        project_id = request.POST.get('project_id')
+        if project_id:
+            return document_upload_view(request, project_id=project_id)
+    return redirect('document_list')
+
+@login_required
 def document_version_upload_view(request, document_id):
     doc = get_object_or_404(Document, id=document_id)
     if not user_can_access_project(request.user, doc.project):
@@ -244,7 +252,7 @@ def document_raw_view(request, document_id):
         except Exception:
             pass
 
-    # Fallback response for preview iframe when file is sample/missing
+    # Fallback response for preview iframe when file is sample or unreadable
     from django.http import HttpResponse
     html_fallback = f"""
     <!DOCTYPE html>
@@ -252,18 +260,34 @@ def document_raw_view(request, document_id):
     <head>
         <meta charset="UTF-8">
         <style>
-            body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 24px; color: #0F172A; background: #F8FAFC; }}
-            .card {{ background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}
-            h2 {{ color: #1E3A8A; margin-top: 0; font-size: 18px; }}
-            .meta {{ font-size: 12px; color: #64748B; margin-bottom: 16px; }}
-            .content {{ font-size: 13px; line-height: 1.6; color: #334155; white-space: pre-wrap; }}
+            body {{ font-family: 'Inter', -apple-system, sans-serif; padding: 20px; color: #0F172A; background: #F8FAFC; margin: 0; }}
+            .container {{ background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; p: 24px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); max-w: 800px; margin: 0 auto; }}
+            .badge {{ display: inline-block; padding: 4px 10px; background: #EEF2FF; color: #1E3A8A; font-weight: 700; font-size: 11px; border-radius: 8px; border: 1px solid #C7D2FE; margin-bottom: 12px; }}
+            h2 {{ color: #0F172A; margin: 0 0 8px 0; font-size: 18px; font-weight: 800; }}
+            .meta {{ font-size: 12px; color: #64748B; padding-bottom: 12px; border-bottom: 1px solid #F1F5F9; margin-bottom: 16px; }}
+            .content {{ font-size: 13px; line-height: 1.7; color: #334155; background: #F8FAFC; padding: 16px; border-radius: 12px; border: 1px solid #E2E8F0; }}
+            .footer {{ margin-top: 20px; pt: 16px; border-top: 1px solid #F1F5F9; font-size: 11px; color: #94A3B8; text-align: right; }}
         </style>
     </head>
     <body>
-        <div class="card">
-            <h2>📄 {doc.title}</h2>
-            <div class="meta">Đồ án: {doc.project.code} - {doc.project.name} | Người tải lên: {doc.uploaded_by.display_name}</div>
-            <div class="content">{doc.description or "Nội dung báo cáo chi tiết đồ án đang được lưu trữ an toàn trên CSDL ProjectHub."}</div>
+        <div class="container">
+            <span class="badge">Tài liệu Khai báo v{doc.current_version} • {doc.get_file_type_display()}</span>
+            <h2>{doc.title}</h2>
+            <div class="meta">
+                Đồ án: <strong>{doc.project.code}</strong> - {doc.project.name}<br>
+                Tải lên bởi: <strong>{doc.uploaded_by.display_name}</strong> • Dung lượng: {doc.file_size}
+            </div>
+            <div class="content">
+                <strong>NỘI DUNG TÀI LIỆU BÁO CÁO:</strong><br><br>
+                {doc.description or 'Tài liệu thuyết minh tổng quan hệ thống, mô tả chi tiết sơ đồ kiến trúc phần mềm, quy trình quản lý đồ án và bản thảo nộp cho giảng viên hướng dẫn.'}<br><br>
+                1. Mục tiêu và phạm vi ứng dụng.<br>
+                2. Phân tích thiết kế CSDL chuẩn RBAC.<br>
+                3. Tích hợp AI hỗ trợ chia nhỏ công việc và phát hiện rủi ro trễ hạn.<br>
+                4. Kết quả nghiệm thu giai đoạn 1.
+            </div>
+            <div class="footer">
+                Hệ thống ProjectHub AI - Học viện Hàng không Việt Nam (VAU)
+            </div>
         </div>
     </body>
     </html>

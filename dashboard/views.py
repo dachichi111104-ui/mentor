@@ -297,7 +297,7 @@ def time_tracker_start_view(request):
 
         project = get_object_or_404(Project, id=project_id) if project_id else None
         if not project:
-            first_project = Project.objects.filter(memberships__user=request.user).first()
+            first_project = Project.objects.filter(Q(created_by=request.user) | Q(memberships__user=request.user)).distinct().first()
             if not first_project:
                 return JsonResponse({'status': 'error', 'message': 'Không tìm thấy đồ án để theo dõi thời gian.'}, status=400)
             project = first_project
@@ -494,8 +494,14 @@ def analytics_export_csv_view(request):
 @login_required
 def analytics_export_pdf_view(request):
     user = request.user
-    projects = Project.objects.filter(memberships__user=user) if not user.is_admin_user else Project.objects.all()
-    tasks = Task.objects.filter(project__in=projects)
+    if user.is_admin_user:
+        projects = Project.objects.all()
+    else:
+        projects = Project.objects.filter(
+            Q(created_by=user) | Q(memberships__user=user) | Q(mentor=user)
+        ).distinct()
+
+    tasks = Task.objects.filter(project__in=projects).distinct()
 
     context = {
         'user': user,

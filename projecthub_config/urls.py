@@ -107,6 +107,7 @@ urlpatterns = [
     # Documents
     path('projects/<int:project_id>/documents/', document_views.project_documents_view, name='project_documents'),
     path('documents/all/', document_views.all_documents_view, name='document_list'),
+    path('documents/upload/global/', document_views.all_document_upload_view, name='all_document_upload'),
     path('projects/<int:project_id>/documents/upload/', document_views.document_upload_view, name='document_upload'),
     path('documents/<int:document_id>/version/upload/', document_views.document_version_upload_view, name='document_version_upload'),
     path('documents/<int:document_id>/delete/', document_views.document_delete_view, name='document_delete'),

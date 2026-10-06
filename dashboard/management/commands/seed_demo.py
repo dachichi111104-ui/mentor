@@ -4,10 +4,10 @@ from projects.models import Project, ProjectStatus, ProjectMember, MemberRole, M
 from tasks.models import Task, TaskStatus, TaskPriority, TaskChecklistItem
 from milestones.models import Milestone, MilestoneStatus, Event
 from dashboard.models import TimeLog
-from documents.models import Document
+from documents.models import Document, DocumentVersion
 from reviews.models import Feedback, ReviewStatus
-from notifications.models import Notification
-from audit_log.models import ActivityLog
+from notifications.models import Notification, NotificationType
+from audit_log.models import ActivityLog, ActionType
 from django.utils import timezone
 
 class Command(BaseCommand):
@@ -21,8 +21,8 @@ class Command(BaseCommand):
             username='admin',
             defaults={
                 'email': 'admin@vau.edu.vn',
-                'first_name': 'Quản Trị Viên',
-                'last_name': 'Hàng Không',
+                'first_name': 'Hàng Không',
+                'last_name': 'Quản trị viên',
                 'role': UserRole.ADMIN,
                 'status': UserStatus.ACTIVE,
                 'is_staff': True,
@@ -31,8 +31,8 @@ class Command(BaseCommand):
             }
         )
         admin_user.set_password('admin123')
-        admin_user.first_name = 'Quản Trị Viên'
-        admin_user.last_name = 'Hàng Không'
+        admin_user.first_name = 'Hàng Không'
+        admin_user.last_name = 'Quản trị viên'
         admin_user.email = 'admin@vau.edu.vn'
         admin_user.save()
 
@@ -58,7 +58,8 @@ class Command(BaseCommand):
                     'last_name': last_name,
                     'role': UserRole.STUDENT,
                     'status': UserStatus.ACTIVE,
-                    'department': 'Khoa Công Nghệ Thông Tin'
+                    'department': 'Khoa Công Nghệ Thông Tin',
+                    'class_name': 'KTPM2022'
                 }
             )
             st_user.set_password('student123')
@@ -68,6 +69,7 @@ class Command(BaseCommand):
             st_user.role = UserRole.STUDENT
             st_user.status = UserStatus.ACTIVE
             st_user.department = 'Khoa Công Nghệ Thông Tin'
+            st_user.class_name = 'KTPM2022'
             st_user.save()
             student_objs.append((st_user, is_leader))
 
@@ -92,7 +94,8 @@ class Command(BaseCommand):
                     'last_name': last_name,
                     'role': UserRole.MENTOR,
                     'status': UserStatus.ACTIVE,
-                    'department': 'Khoa Công Nghệ Thông Tin'
+                    'department': 'Khoa Công Nghệ Thông Tin',
+                    'specialization': 'Phát triển Phần mềm & AI'
                 }
             )
             mt_user.set_password('mentor123')
@@ -156,7 +159,7 @@ class Command(BaseCommand):
         project2.mentor_status = MentorStatus.ACCEPTED
         project2.save()
 
-        # 5. PROJECT MEMBERS (Lê Ngọc Trinh is Leader, others are Members)
+        # 5. PROJECT MEMBERS
         for st_user, is_leader in student_objs:
             role = MemberRole.LEADER if is_leader else MemberRole.MEMBER
             pm1, _ = ProjectMember.objects.get_or_create(
@@ -207,7 +210,7 @@ class Command(BaseCommand):
             TaskChecklistItem.objects.get_or_create(task=t, title='Review cùng Mentor', defaults={'is_completed': st == TaskStatus.DONE})
 
         # 7. MILESTONES & EVENTS
-        m1, _ = Milestone.objects.get_or_create(
+        Milestone.objects.get_or_create(
             project=project1,
             name='Giai đoạn 1: Thiết kế Kiến trúc & Khởi tạo CSDL',
             defaults={
@@ -215,6 +218,17 @@ class Command(BaseCommand):
                 'start_date': timezone.now().date() - timezone.timedelta(days=15),
                 'due_date': timezone.now().date() + timezone.timedelta(days=5),
                 'status': MilestoneStatus.IN_PROGRESS
+            }
+        )
+
+        Event.objects.get_or_create(
+            project=project1,
+            title='Họp Review Tiến độ Tuần với Mentor PGS.TS Nguyễn Văn Minh',
+            defaults={
+                'event_type': 'MEETING',
+                'start': timezone.now() + timezone.timedelta(days=1),
+                'end': timezone.now() + timezone.timedelta(days=1, hours=2),
+                'created_by': leader_user
             }
         )
 
@@ -248,6 +262,85 @@ class Command(BaseCommand):
                 'rating': 5,
                 'status': ReviewStatus.APPROVED
             }
+        )
+
+        # 10. DOCUMENTS
+        doc1, _ = Document.objects.get_or_create(
+            project=project1,
+            title='Slide Thuyết minh Đồ án Tốt nghiệp Hội đồng VAU',
+            defaults={
+                'file_type': 'POWERPOINT',
+                'uploaded_by': leader_user,
+                'file_size': '4.2 MB',
+                'description': 'Slide báo cáo tổng quan kiến trúc phần mềm và demo trợ lý AI.',
+                'current_version': 1
+            }
+        )
+        DocumentVersion.objects.get_or_create(
+            document=doc1,
+            version_number=1,
+            defaults={
+                'uploaded_by': leader_user,
+                'change_log': 'Khởi tạo slide trình chiếu đồ án.'
+            }
+        )
+
+        doc2, _ = Document.objects.get_or_create(
+            project=project1,
+            title='Báo cáo SRS & Sơ đồ CSDL ERD',
+            defaults={
+                'file_type': 'PDF',
+                'uploaded_by': leader_user,
+                'file_size': '2.8 MB',
+                'description': 'Tài liệu phân tích yêu cầu SRS và bản vẽ ERD cơ sở dữ liệu.',
+                'current_version': 1
+            }
+        )
+        DocumentVersion.objects.get_or_create(
+            document=doc2,
+            version_number=1,
+            defaults={
+                'uploaded_by': leader_user,
+                'change_log': 'Phiên bản thiết kế hệ thống v1.'
+            }
+        )
+
+        # 11. NOTIFICATIONS
+        Notification.objects.get_or_create(
+            recipient=leader_user,
+            title='Mentor đã chấp nhận Hướng dẫn',
+            defaults={
+                'message': 'ThS.NCS. Nguyễn Thanh Hiếu đã chấp nhận hướng dẫn đồ án PRJ-2026-AI của bạn.',
+                'notification_type': NotificationType.SYSTEM
+            }
+        )
+        Notification.objects.get_or_create(
+            recipient=main_mentor,
+            title='Bản thảo Đồ án Mới được Nộp',
+            defaults={
+                'message': 'Lê Ngọc Trinh vừa nộp bản thảo "Nộp Báo cáo Tiến độ Tuần 4 cho Mentor Review".',
+                'notification_type': NotificationType.MENTOR_FEEDBACK
+            }
+        )
+
+        # 12. AUDIT LOGS
+        ActivityLog.objects.create(
+            user=leader_user,
+            action=ActionType.LOGIN,
+            description='Đăng nhập hệ thống thành công với vai trò Sinh viên',
+            ip_address='127.0.0.1'
+        )
+        ActivityLog.objects.create(
+            user=main_mentor,
+            action=ActionType.LOGIN,
+            description='Đăng nhập hệ thống thành công với vai trò Giảng viên / Mentor',
+            ip_address='127.0.0.1'
+        )
+        ActivityLog.objects.create(
+            user=admin_user,
+            action=ActionType.LOGIN,
+            description='Đăng nhập hệ thống thành công với vai trò Quản trị viên',
+            ip_address='127.0.0.1'
         )
 
         self.stdout.write(self.style.SUCCESS("Khoi tao du lieu seed_demo VAU thanh cong!"))

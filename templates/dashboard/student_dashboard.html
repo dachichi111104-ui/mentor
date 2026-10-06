@@ -26,7 +26,18 @@
     },
 
     startTimer() {
-        if (!this.selectedProjectId) return;
+        if (!this.selectedProjectId) {
+            const selectEl = document.querySelector('select[x-model="selectedProjectId"]');
+            if (selectEl && selectEl.value) {
+                this.selectedProjectId = selectEl.value;
+            }
+        }
+        if (!this.selectedProjectId) {
+            if (window.Alpine && Alpine.store('toast')) {
+                Alpine.store('toast').show('Vui lòng chọn một đồ án trước khi bấm Bắt đầu!', 'warning');
+            }
+            return;
+        }
         const formData = new FormData();
         formData.append('project_id', this.selectedProjectId);
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
@@ -38,7 +49,18 @@
                     this.timerLog = data.log;
                     this.timerSeconds = 0;
                     this.startTick();
-                    $store.toast.show('Đã bắt đầu bấm giờ làm việc!', 'success');
+                    if (window.Alpine && Alpine.store('toast')) {
+                        Alpine.store('toast').show('Đã bắt đầu bấm giờ làm việc!', 'success');
+                    }
+                } else {
+                    if (window.Alpine && Alpine.store('toast')) {
+                        Alpine.store('toast').show(data.message || 'Lỗi khởi động trình bấm giờ', 'error');
+                    }
+                }
+            })
+            .catch(() => {
+                if (window.Alpine && Alpine.store('toast')) {
+                    Alpine.store('toast').show('Lỗi kết nối máy chủ', 'error');
                 }
             });
     },

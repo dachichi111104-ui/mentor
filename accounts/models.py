@@ -36,12 +36,13 @@ class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Ngày tạo")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Ngày cập nhật")
 
-    def __str__(self):
-        return f"{self.get_full_name() or self.username} ({self.get_role_display()})"
+    def get_full_name(self):
+        full_name = f"{self.last_name} {self.first_name}".strip()
+        return full_name or self.username
 
     @property
     def display_name(self):
-        return self.get_full_name() or self.username
+        return self.get_full_name()
 
     @property
     def is_student(self):
