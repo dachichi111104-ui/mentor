@@ -134,7 +134,16 @@
                         <p class="text-xs text-slate-300">Trao đổi trực tiếp giữa Sinh viên và Mentor</p>
                     </div>
                 </div>
-                <button @click="showChatModal = false" class="text-slate-300 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <div class="flex items-center gap-2">
+                    <select x-model="chatProjectId" @change="fetchMessages()" class="px-3 py-1 bg-navy-800 text-white border border-slate-700 rounded-lg text-xs font-semibold focus:outline-none">
+                        {% for proj in my_projects %}
+                        <option value="{{ proj.id }}">{{ proj.code }} - {{ proj.name }}</option>
+                        {% empty %}
+                        <option value="">-- Chưa có đồ án --</option>
+                        {% endfor %}
+                    </select>
+                    <button @click="showChatModal = false" class="text-slate-300 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
             </div>
 
             <!-- Messages Area -->

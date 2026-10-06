@@ -38,81 +38,80 @@ def run_seed():
         username='admin',
         email='admin@projecthub.vn',
         password='admin123',
-        first_name='Quản trị',
-        last_name='Hệ thống',
+        first_name='Hàng Không',
+        last_name='Quản trị viên',
         role=UserRole.ADMIN,
         status=UserStatus.ACTIVE,
         phone='0987654321',
-        department='Phòng CNTT & Đào tạo',
-        bio='Quản trị viên hệ thống Cổng Quản lý Đồ án ProjectHub AI'
+        department='Khoa Công nghệ Thông tin',
+        bio='Quản trị viên hệ thống Cổng Quản lý Đồ án ProjectHub AI - Học viện Hàng không Việt Nam'
     )
     admin.set_password('admin123')
     admin.save()
 
     # Mentors
     mentor1 = User.objects.create_user(
-        username='mentor1',
-        email='mentor1@projecthub.vn',
-        password='user123',
-        first_name='Minh',
-        last_name='PGS.TS Nguyễn Văn',
+        username='mentor',
+        email='hieunt@vau.edu.vn',
+        password='mentor123',
+        first_name='Thanh Hiếu',
+        last_name='ThS.NCS. Nguyễn',
         role=UserRole.MENTOR,
         status=UserStatus.ACTIVE,
         student_id='GV001',
         phone='0912345678',
         department='Khoa Công nghệ Thông tin',
-        specialization='Kỹ thuật Phần mềm, Kiến trúc Hệ thống SaaS, AI/ML',
-        experience='15 năm giảng dạy và hướng dẫn hơn 120 đồ án tốt nghiệp.',
-        bio='Giảng viên hướng dẫn chuyên môn Kỹ thuật phần mềm.'
+        specialization='Phát triển Phần mềm & Trợ lý AI',
+        experience='15 năm giảng dạy và hướng dẫn đồ án tốt nghiệp Học viện Hàng không.',
+        bio='Giảng viên hướng dẫn chính chuyên môn Kỹ thuật phần mềm.'
     )
-    mentor1.set_password('user123')
+    mentor1.set_password('mentor123')
     mentor1.save()
 
     mentor2 = User.objects.create_user(
-        username='mentor2',
-        email='mentor2@projecthub.vn',
-        password='user123',
-        first_name='Hồng',
-        last_name='TS. Trần Thị',
+        username='tuannla',
+        email='tuannla@vau.edu.vn',
+        password='mentor123',
+        first_name='Lương Anh Tuấn',
+        last_name='TS. Nguyễn',
         role=UserRole.MENTOR,
         status=UserStatus.ACTIVE,
         student_id='GV002',
         phone='0923456789',
-        department='Khoa Khoa học Dữ liệu',
-        specialization='Trí tuệ nhân tạo, Học máy, Xử lý ngôn ngữ tự nhiên (NLP)',
-        experience='10 năm kinh nghiệm nghiên cứu AI và cố vấn đồ án.',
-        bio='Giảng viên hướng dẫn môn học Khoa học dữ liệu và AI.'
+        department='Khoa Công nghệ Thông tin',
+        specialization='Trí tuệ Nhân tạo & Khoa học Dữ liệu',
+        experience='10 năm kinh nghiệm nghiên cứu AI và hướng dẫn đồ án.',
+        bio='Giảng viên hướng dẫn chuyên môn Khoa học dữ liệu.'
     )
-    mentor2.set_password('user123')
+    mentor2.set_password('mentor123')
     mentor2.save()
 
     mentor3 = User.objects.create_user(
-        username='mentor3',
-        email='mentor3@projecthub.vn',
-        password='user123',
-        first_name='Nam',
-        last_name='ThS. Lê Hoàng',
+        username='locth',
+        email='locth@vau.edu.vn',
+        password='mentor123',
+        first_name='Hoàng Lộc',
+        last_name='TS. Trần',
         role=UserRole.MENTOR,
         status=UserStatus.ACTIVE,
         student_id='GV003',
         phone='0934567890',
-        department='Khoa Mạng máy tính & Viễn thông',
-        specialization='Phát triển Web Fullstack, Flutter Mobile, DevOps',
-        experience='8 năm kiến trúc sư giải pháp phần mềm doanh nghiệp.',
-        bio='Giảng viên tư vấn phát triển ứng dụng web và di động.'
+        department='Khoa Công nghệ Thông tin',
+        specialization='Hệ thống Thông tin & Điện toán Đám mây',
+        experience='12 năm cố vấn giải pháp phần mềm doanh nghiệp.',
+        bio='Giảng viên hướng dẫn chuyên môn Hệ thống thông tin.'
     )
-    mentor3.set_password('user123')
+    mentor3.set_password('mentor123')
     mentor3.save()
 
-    # Students
+    # Students (5 STRICT MEMBERS ONLY)
     students = []
     student_data = [
-        ('student1', 'student1@projecthub.vn', 'Anh', 'Nguyễn Văn', '20120001', 'KTPM2021', 'Phát triển Backend Python/Django, Thiết kế CSDL'),
-        ('student2', 'student2@projecthub.vn', 'Bình', 'Phạm Thị', '20120002', 'KTPM2021', 'Thiết kế Giao diện UI/UX, Tailwind CSS, JavaScript'),
-        ('student3', 'student3@projecthub.vn', 'Cường', 'Lê Hoàng', '20120003', 'KTPM2021', 'Phát triển Ứng dụng Di động, Tích hợp RESTful API'),
-        ('student4', 'student4@projecthub.vn', 'Dung', 'Đỗ Minh', '20120004', 'KHMT2021', 'Khoa học Dữ liệu, Python Pandas, Xử lý ngôn ngữ'),
-        ('student5', 'student5@projecthub.vn', 'Giang', 'Vũ Quốc', '20120005', 'HTTT2021', 'Phân tích Yêu cầu Nghiệp vụ, Phân tích Hệ thống'),
-        ('student6', 'student6@projecthub.vn', 'Hương', 'Ngô Thu', '20120006', 'KTPM2021', 'Kiểm thử Phần mềm, Đảm bảo Chất lượng QA'),
+        ('student', 'trinhln@vau.edu.vn', 'Ngọc Trinh', 'Lê', '20120001', 'KTPM2022', 'Phát triển Fullstack, Python Django, Tailwind CSS, AI Assistant'),
+        ('hanndn', 'hanndn@vau.edu.vn', 'Doãn Ngọc Hân', 'Nguyễn', '20120002', 'KTPM2022', 'Thiết kế CSDL, ERD Schema, RESTful API'),
+        ('nghitdg', 'nghitdg@vau.edu.vn', 'Đàm Gia Nghi', 'Trần', '20120003', 'KTPM2022', 'Phát triển Giao diện UI/UX, Alpine.js, Kanban Board'),
+        ('tructtt', 'tructtt@vau.edu.vn', 'Thị Thanh Trúc', 'Phạm', '20120004', 'KTPM2022', 'Tích hợp Trợ lý AI, Prompt Engineering, Celery Jobs'),
+        ('tuyetnlh', 'tuyetnlh@vau.edu.vn', 'Lâm Huyền Tuyết', 'Nguyễn', '20120005', 'KTPM2022', 'Kiểm thử Phần mềm QA/QC, Đóng gói Báo cáo Thuyết minh'),
     ]
 
     for username, email, first_name, last_name, st_id, cls, skills in student_data:
@@ -188,7 +187,7 @@ def run_seed():
         repo_url='https://github.com/medihealth/mobile-app'
     )
     ProjectMember.objects.create(project=proj3, user=students[4], role=MemberRole.LEADER)
-    ProjectMember.objects.create(project=proj3, user=students[5], role=MemberRole.MEMBER)
+    ProjectMember.objects.create(project=proj3, user=students[1], role=MemberRole.MEMBER)
 
     proj4 = Project.objects.create(
         name='SmartLibrary - Hệ thống Quản lý Thư viện Thông minh Mã QR',

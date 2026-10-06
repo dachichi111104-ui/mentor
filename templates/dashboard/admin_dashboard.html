@@ -73,8 +73,8 @@
                         {% for log in audit_logs %}
                         <tr class="hover:bg-slate-50">
                             <td class="p-3 text-[#667085] font-mono text-[11px] whitespace-nowrap">{{ log.created_at|date:"d/m H:i" }}</td>
-                            <td class="p-3 font-bold text-[#172033]">{{ log.user.display_name|default:"Hệ thống" }}</td>
-                            <td class="p-3"><span class="px-2 py-0.5 bg-slate-100 text-[#172033] rounded font-semibold text-[10px] border border-slate-200">{{ log.get_action_display }}</span></td>
+                            <td class="p-3 font-bold text-[#172033] whitespace-nowrap">{{ log.user.display_name|default:"Hệ thống" }}</td>
+                            <td class="p-3 whitespace-nowrap"><span class="px-2 py-0.5 bg-slate-100 text-[#172033] rounded font-semibold text-[10px] border border-slate-200 whitespace-nowrap inline-block">{{ log.get_action_display }}</span></td>
                             <td class="p-3 text-[#667085] truncate max-w-xs">{{ log.description }}</td>
                         </tr>
                         {% endfor %}

@@ -4,7 +4,7 @@ from django.db import models
 class UserRole(models.TextChoices):
     STUDENT = 'STUDENT', 'Sinh viên'
     MENTOR = 'MENTOR', 'Giảng viên / Mentor'
-    ADMIN = 'ADMIN', 'Quản trị viên'
+    ADMIN = 'ADMIN', 'Quản trị viên HVHK'
 
 class UserStatus(models.TextChoices):
     ACTIVE = 'ACTIVE', 'Hoạt động'
