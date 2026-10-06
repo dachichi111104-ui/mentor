@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from milestones.models import Milestone, MilestoneStatus
+from django.utils import timezone
+from milestones.models import Milestone, MilestoneStatus, Event, EventType, EventStatus
 from projects.models import Project
 from projects.permissions import user_can_access_project
 from audit_log.models import ActionType

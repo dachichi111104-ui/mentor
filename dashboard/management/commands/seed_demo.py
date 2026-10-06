@@ -7,18 +7,16 @@ from dashboard.models import TimeLog
 from django.utils import timezone
 
 class Command(BaseCommand):
-    help = 'Tao du lieu mau (seed data) cho he thong ProjectHub AI'
+    help = 'Tạo dữ liệu mẫu (seed data) có dấu cho hệ thống ProjectHub AI'
 
     def handle(self, *args, **options):
-        self.stdout.write("Bat dau khoi tao du lieu mau seed_demo...")
-
         # 1. Users
         admin_user, _ = User.objects.get_or_create(
             username='admin',
             defaults={
                 'email': 'admin@projecthub.edu.vn',
-                'first_name': 'Quan Tri',
-                'last_name': 'He Thong',
+                'first_name': 'Quản Trị',
+                'last_name': 'Hệ Thống',
                 'role': UserRole.ADMIN,
                 'status': UserStatus.ACTIVE,
                 'is_staff': True,
@@ -33,11 +31,11 @@ class Command(BaseCommand):
             username='mentor',
             defaults={
                 'email': 'mentor@projecthub.edu.vn',
-                'first_name': 'Nguyen Van',
-                'last_name': 'Huong Dan',
+                'first_name': 'Nguyễn Văn',
+                'last_name': 'Minh',
                 'role': UserRole.MENTOR,
                 'status': UserStatus.ACTIVE,
-                'department': 'Khoa Cong Nghe Thong Tin'
+                'department': 'Khoa Công Nghệ Thông Tin'
             }
         )
         if _:
@@ -48,11 +46,11 @@ class Command(BaseCommand):
             username='student',
             defaults={
                 'email': 'student@projecthub.edu.vn',
-                'first_name': 'Tran Van',
-                'last_name': 'Sinh Vien',
+                'first_name': 'Nguyễn Văn',
+                'last_name': 'Anh',
                 'role': UserRole.STUDENT,
                 'status': UserStatus.ACTIVE,
-                'department': 'Khoa Cong Nghe Thong Tin'
+                'department': 'Khoa Công Nghệ Thông Tin'
             }
         )
         if _:
@@ -60,11 +58,11 @@ class Command(BaseCommand):
             student_user.save()
 
         # 2. Project
-        project, _ = Project.objects.get_or_create(
+        project, created = Project.objects.get_or_create(
             code='PRJ-2026-AI',
             defaults={
-                'name': 'He thong Quan ly Do an Tot nghiep PROJECTHUB AI',
-                'description': 'Xay dung nen tang ho tro sinh vien va giang vien quan ly tien do do an voi tro ly AI.',
+                'name': 'Hệ thống Quản lý Đồ án Tốt nghiệp PROJECTHUB AI',
+                'description': 'Xây dựng nền tảng hỗ trợ sinh viên và giảng viên quản lý tiến độ đồ án với trợ lý AI.',
                 'category': 'WEB',
                 'technology': 'Python, Django, Tailwind CSS, Alpine.js, PostgreSQL',
                 'created_by': student_user,
@@ -75,6 +73,9 @@ class Command(BaseCommand):
                 'end_date': timezone.now().date() + timezone.timedelta(days=90)
             }
         )
+        if not created:
+            project.name = 'Hệ thống Quản lý Đồ án Tốt nghiệp PROJECTHUB AI'
+            project.save()
 
         ProjectMember.objects.get_or_create(
             project=project,
@@ -82,42 +83,47 @@ class Command(BaseCommand):
             defaults={'role': MemberRole.LEADER, 'status': MemberStatus.ACCEPTED}
         )
 
-        # 3. Tasks
+        # 3. Tasks (with Vietnamese accents)
         tasks_data = [
-            ('Phan tich Yeu cau & Khao sat Nguoi dung', TaskPriority.CRITICAL, TaskStatus.DONE),
-            ('Thiet ke CSDL & So do ERD chuan RBAC', TaskPriority.HIGH, TaskStatus.DONE),
-            ('Xay dung Giao dien Kanban keo tha voi SortableJS', TaskPriority.HIGH, TaskStatus.IN_PROGRESS),
-            ('Tich hop Tro ly AI Phan tich Rui ro & Task Breakdown', TaskPriority.CRITICAL, TaskStatus.IN_PROGRESS),
-            ('Kiem thu Dong goi & Thuyet minh Do an', TaskPriority.MEDIUM, TaskStatus.TODO)
+            ('Phân tích Yêu cầu & Khảo sát Người dùng', TaskPriority.CRITICAL, TaskStatus.DONE),
+            ('Thiết kế CSDL & Sơ đồ ERD chuẩn RBAC', TaskPriority.HIGH, TaskStatus.DONE),
+            ('Xây dựng Giao diện Kanban kéo thả với SortableJS', TaskPriority.HIGH, TaskStatus.IN_PROGRESS),
+            ('Tích hợp Trợ lý AI Phân tích Rủi ro & Task Breakdown', TaskPriority.CRITICAL, TaskStatus.IN_PROGRESS),
+            ('Kiểm thử Đóng gói & Thuyết minh Đồ án', TaskPriority.MEDIUM, TaskStatus.TODO)
         ]
 
         for title, prio, st in tasks_data:
-            t, created = Task.objects.get_or_create(
-                project=project,
-                title=title,
-                defaults={
-                    'priority': prio,
-                    'status': st,
-                    'assignee': student_user,
-                    'created_by': student_user,
-                    'due_date': timezone.now().date() + timezone.timedelta(days=14)
-                }
-            )
-            if created:
-                TaskChecklistItem.objects.create(task=t, title='Hoan thien ban nhap 1', is_completed=True)
-                TaskChecklistItem.objects.create(task=t, title='Review cung Mentor', is_completed=st == TaskStatus.DONE)
+            t = Task.objects.filter(project=project, title__icontains=title[:10]).first()
+            if not t:
+                t = Task.objects.create(
+                    project=project,
+                    title=title,
+                    priority=prio,
+                    status=st,
+                    assignee=student_user,
+                    created_by=student_user,
+                    due_date=timezone.now().date() + timezone.timedelta(days=14)
+                )
+                TaskChecklistItem.objects.create(task=t, title='Hoàn thiện bản nháp 1', is_completed=True)
+                TaskChecklistItem.objects.create(task=t, title='Review cùng Mentor', is_completed=st == TaskStatus.DONE)
+            else:
+                t.title = title
+                t.save()
 
         # 4. Milestone
-        Milestone.objects.get_or_create(
+        ms, _ = Milestone.objects.get_or_create(
             project=project,
-            name='Giai doan 1: Thiet ke & Khoi tao CSDL',
+            name='Giai đoạn 1: Thiết kế & Khởi tạo CSDL',
             defaults={
-                'description': 'Nop ban thao ERD va tai lieu yeu cau SRS',
+                'description': 'Nộp bản thảo ERD và tài liệu yêu cầu SRS',
                 'start_date': timezone.now().date(),
                 'due_date': timezone.now().date() + timezone.timedelta(days=15),
                 'status': MilestoneStatus.IN_PROGRESS
             }
         )
+        if not _:
+            ms.name = 'Giai đoạn 1: Thiết kế & Khởi tạo CSDL'
+            ms.save()
 
         # 5. Time Log
         TimeLog.objects.get_or_create(
@@ -125,7 +131,7 @@ class Command(BaseCommand):
             project=project,
             defaults={
                 'duration': 7200,
-                'note': 'Lap trinh tinh nang Kanban va SortableJS'
+                'note': 'Lập trình tính năng Kanban và SortableJS'
             }
         )
 

@@ -1,17 +1,23 @@
 <!-- TOPBAR NAVIGATION HEADER COMPONENT -->
-<header class="w-full bg-white border-b border-slate-200/80 sticky top-0 z-40 shadow-2xs backdrop-blur-md bg-white/95">
+<header class="w-full bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs backdrop-blur-md bg-white/95">
     <div class="max-w-[1500px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         
-        <!-- Left: Mobile Menu Toggle & Command Palette Launcher -->
+        <!-- Left: Sidebar Toggle Button & Command Palette Launcher -->
         <div class="flex items-center space-x-3">
+            <!-- Mobile Menu Toggle Button -->
             <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden text-slate-600 p-2 hover:bg-slate-100 rounded-xl transition-colors">
+                <i class="fa-solid fa-bars text-lg"></i>
+            </button>
+
+            <!-- Desktop Sidebar Collapse Toggle Button -->
+            <button @click="sidebarCollapsed = !sidebarCollapsed" class="hidden md:flex text-slate-600 p-2 hover:bg-slate-100 rounded-xl transition-colors" title="Ẩn/Hiện Sidebar">
                 <i class="fa-solid fa-bars text-lg"></i>
             </button>
 
             <!-- Command Palette Quick Launcher (Ctrl+K) -->
             <button @click="$dispatch('open-command-palette')"
                     class="hidden sm:flex items-center space-x-3 px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-2xl border border-slate-200 text-xs font-medium transition-all group">
-                <i class="fa-solid fa-magnifying-glass text-slate-400 group-hover:text-accent-primary"></i>
+                <i class="fa-solid fa-magnifying-glass text-slate-400 group-hover:text-navy-800"></i>
                 <span>Tìm kiếm nhanh...</span>
                 <kbd class="px-1.5 py-0.5 bg-white border border-slate-300 rounded-md font-mono text-[10px] text-slate-500 font-bold shadow-2xs">Ctrl K</kbd>
             </button>
@@ -21,12 +27,12 @@
         <div class="flex items-center space-x-3 sm:space-x-4 text-xs">
             
             <!-- AI Ready Status Badge -->
-            <div class="hidden lg:flex items-center space-x-2 bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-3 py-1 rounded-full text-[11px] font-semibold">
+            <a href="{% url 'ai_assistant_page' %}" class="hidden lg:flex items-center space-x-2 bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-3 py-1 rounded-full text-[11px] font-semibold hover:bg-emerald-100 transition">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span>AI: Ready</span>
-            </div>
+            </a>
 
-            <!-- Notifications Dropdown (Realtime Poll & Mark Read) -->
+            <!-- Notifications Dropdown -->
             <div class="relative" x-data="{
                     open: false,
                     unreadCount: {{ unread_notifications_count|default:0 }},
@@ -42,7 +48,7 @@
                         });
                     }
                  }">
-                <button @click="open = !open" class="relative p-2.5 text-slate-600 hover:text-accent-primary rounded-xl hover:bg-slate-100 transition-colors focus:outline-none">
+                <button @click="open = !open" class="relative p-2.5 text-slate-600 hover:text-navy-800 rounded-xl hover:bg-slate-100 transition-colors focus:outline-none">
                     <i class="fa-solid fa-bell text-base"></i>
                     <span x-show="unreadCount > 0"
                           x-text="unreadCount"
@@ -57,7 +63,7 @@
                      class="absolute right-0 mt-2 w-80 bg-white rounded-3xl shadow-2xl border border-slate-200 py-2 z-50 overflow-hidden">
                     <div class="flex items-center justify-between px-4 pb-2 border-b border-slate-100 pt-1">
                         <h4 class="text-[11px] font-bold text-slate-800 uppercase tracking-wider">Thông báo (<span x-text="unreadCount"></span>)</h4>
-                        <button @click="markAllRead()" class="text-[10px] font-bold text-accent-primary hover:underline">Đánh dấu tất cả là đã đọc</button>
+                        <button @click="markAllRead()" class="text-[10px] font-bold text-navy-800 hover:underline">Đánh dấu tất cả là đã đọc</button>
                     </div>
                     <div class="max-h-64 overflow-y-auto divide-y divide-slate-100 custom-scrollbar">
                         {% if recent_notifications %}
@@ -73,14 +79,14 @@
                         {% endif %}
                     </div>
                     <div class="p-2 border-t border-slate-100 bg-slate-50 text-center">
-                        <a href="{% url 'notification_center' %}" class="text-xs font-bold text-accent-primary hover:underline block py-1">Xem tất cả thông báo &rarr;</a>
+                        <a href="{% url 'notification_center' %}" class="text-xs font-bold text-navy-800 hover:underline block py-1">Xem tất cả thông báo &rarr;</a>
                     </div>
                 </div>
             </div>
 
             <!-- Profile Menu Dropdown -->
             <div class="relative" x-data="{ open: false }">
-                <button @click="open = !open" class="flex items-center space-x-2.5 p-1 rounded-2xl hover:bg-slate-100 transition-colors focus:outline-none border border-slate-200/60">
+                <button @click="open = !open" class="flex items-center space-x-2.5 p-1 rounded-2xl hover:bg-slate-100 transition-colors focus:outline-none border border-slate-200">
                     <img src="{{ request.user.get_avatar_url }}" class="w-8 h-8 rounded-full border border-slate-200 object-cover shadow-2xs">
                     <div class="hidden sm:block text-left pr-1">
                         <span class="text-xs font-bold text-slate-900 block leading-none">{{ request.user.display_name }}</span>
@@ -97,21 +103,15 @@
                     <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
                         <p class="text-xs font-bold text-slate-900">{{ request.user.display_name }}</p>
                         <p class="text-[10px] text-slate-500 truncate">{{ request.user.email }}</p>
-                        <span class="inline-block px-2 py-0.5 text-[9px] font-bold rounded-full uppercase mt-1.5
-                        {% if request.user.is_admin_user %}bg-purple-100 text-purple-800 border border-purple-200
-                        {% elif request.user.is_mentor %}bg-amber-100 text-amber-800 border border-amber-200
-                        {% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}">
-                            {{ request.user.get_role_display }}
-                        </span>
                     </div>
 
                     <a href="{% url 'profile' %}" class="flex items-center space-x-2.5 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 font-medium transition-colors">
-                        <i class="fa-solid fa-user-gear text-accent-primary w-4"></i>
+                        <i class="fa-solid fa-user-gear text-navy-800 w-4"></i>
                         <span>Hồ sơ cá nhân</span>
                     </a>
                     
-                    <a href="{% url 'settings_page' %}" class="flex items-center space-x-2.5 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 font-medium transition-colors">
-                        <i class="fa-solid fa-sliders text-accent-primary w-4"></i>
+                    <a href="{% url 'settings' %}" class="flex items-center space-x-2.5 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 font-medium transition-colors">
+                        <i class="fa-solid fa-sliders text-navy-800 w-4"></i>
                         <span>Cài đặt hệ thống & Theme</span>
                     </a>
 

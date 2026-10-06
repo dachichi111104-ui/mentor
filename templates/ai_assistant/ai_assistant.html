@@ -25,6 +25,25 @@
                 Academic AI Module
             </span>
         </div>
+    <!-- Real AI Guide Card -->
+    <div class="p-4 bg-navy-950 text-white rounded-2xl border border-navy-900 shadow-sm space-y-3">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-key text-gold-400"></i>
+                <h3 class="font-bold text-sm">Cách để kết nối Real AI (Gemini / OpenAI / Anthropic)</h3>
+            </div>
+            <span class="px-2.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold rounded-full">
+                Pollinations Free Real LLM Active
+            </span>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+            Hệ thống đang chạy sẵn <b>Real LLM tự do (Pollinations AI)</b> phản hồi sinh động không cần key. Nếu bạn có Key Gemini hoặc OpenAI:
+        </p>
+        <div class="bg-navy-900 p-3 rounded-xl border border-navy-800 text-xs font-mono text-gold-300 space-y-1">
+            <p>1. Mở Environment Variables trên trang deploy (Render / Heroku) hoặc file <b>.env</b> local.</p>
+            <p>2. Điền key: <b>GEMINI_API_KEY</b>=AIzaSy... (hoặc <b>OPENAI_API_KEY</b>=sk-...)</p>
+            <p>3. Lưu & Restart server — Hệ thống sẽ tự động gọi API Gemini 1.5 Flash / GPT-3.5 trực tiếp!</p>
+        </div>
     </div>
 
     {% if request.user.is_admin_user %}

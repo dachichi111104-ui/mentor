@@ -98,7 +98,7 @@
                         <th class="p-3">Hạn chót</th>
                         <th class="p-3">Tiến độ</th>
                         <th class="p-3">Trạng thái</th>
-                        <th class="p-3 text-right">Thao tác</th>
+                        <th class="p-3 text-right whitespace-nowrap">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-[#D9DEE8]">
@@ -131,8 +131,8 @@
                                 {{ proj.get_status_display }}
                             </span>
                         </td>
-                        <td class="p-3 text-right">
-                            <a href="{% url 'project_detail' proj.id %}" class="px-2.5 py-1 bg-white text-[#173F91] border border-[#173F91] font-bold text-[11px] rounded hover:bg-blue-50">
+                        <td class="p-3 text-right whitespace-nowrap">
+                            <a href="{% url 'project_detail' proj.id %}" class="px-2.5 py-1 bg-white text-[#173F91] border border-[#173F91] font-bold text-[11px] rounded hover:bg-blue-50 whitespace-nowrap">
                                 Xem chi tiết
                             </a>
                         </td>

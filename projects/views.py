@@ -9,6 +9,7 @@ from accounts.models import User, UserRole
 from audit_log.models import ActionType
 from audit_log.utils import log_action
 from notifications.models import Notification, NotificationType
+from tasks.models import Task, TaskStatus
 
 @login_required
 def project_list_view(request):

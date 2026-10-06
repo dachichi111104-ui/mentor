@@ -197,7 +197,7 @@
                         <th class="p-3.5">Hạn chót</th>
                         <th class="p-3.5">Tiến độ</th>
                         <th class="p-3.5">Trạng thái</th>
-                        <th class="p-3.5 pr-5 text-right">Thao tác</th>
+                        <th class="p-3.5 pr-5 text-right whitespace-nowrap">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -226,8 +226,8 @@
                                 {{ proj.get_status_display }}
                             </span>
                         </td>
-                        <td class="p-3.5 pr-5 text-right">
-                            <a href="{% url 'project_detail' proj.id %}" class="px-3 py-1.5 bg-white text-navy-800 border border-navy-800 hover:bg-navy-50 font-bold text-[11px] rounded-lg transition-all">
+                        <td class="p-3.5 pr-5 text-right whitespace-nowrap">
+                            <a href="{% url 'project_detail' proj.id %}" class="px-3 py-1.5 bg-white text-navy-800 border border-navy-800 hover:bg-navy-50 font-bold text-[11px] rounded-lg transition-all whitespace-nowrap">
                                 Xem chi tiết
                             </a>
                         </td>

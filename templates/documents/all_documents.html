@@ -1,137 +1,78 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Tất cả Tài liệu - ProjectHub{% endblock %}
+{% block title %}Tất cả Tài liệu - ProjectHub AI{% endblock %}
 {% block breadcrumb %}Kho Tài liệu Tổng hợp{% endblock %}
 
 {% block content %}
-<div class="space-y-6" x-data="{ uploadModal: false, selectedProjectId: '{{ upload_projects.first.id|default:0 }}' }">
+<div class="space-y-6" x-data="{
+    uploadModal: false,
+    selectedProjectId: '{{ upload_projects.first.id|default:0 }}',
+    previewModalDocId: null,
+    previewModalUrl: '',
+    previewModalTitle: '',
+    openPreview(docId, title) {
+        this.previewModalDocId = docId;
+        this.previewModalTitle = title;
+        this.previewModalUrl = `/documents/${docId}/view/`;
+    }
+}">
 
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-            <h1 class="text-xl font-bold text-[#172033] tracking-tight">Kho Tài liệu Đồ án Sinh viên</h1>
-            <p class="text-xs text-[#667085] mt-1">Danh sách toàn bộ các tài liệu được lưu trữ trên các đồ án mà bạn có quyền truy cập.</p>
+            <h1 class="text-xl font-bold text-slate-900 tracking-tight">Kho Tài liệu Đồ án Sinh viên</h1>
+            <p class="text-xs text-slate-500 mt-1">Danh sách toàn bộ các tài liệu lưu trữ thuộc đồ án được cấp quyền.</p>
         </div>
         {% if upload_projects %}
-        <button type="button" @click="uploadModal = true" class="px-4 py-2 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded-xl uppercase tracking-wider flex items-center justify-center space-x-2 transition-all shadow-xs">
+        <button type="button" @click="uploadModal = true" class="px-4 py-2 bg-navy-800 hover:bg-navy-900 text-white font-bold text-xs rounded-xl flex items-center justify-center space-x-2 transition-all shadow-sm">
             <i class="fa-solid fa-cloud-arrow-up"></i>
             <span>+ Tải lên Tài liệu Mới</span>
         </button>
-        {% else %}
-        <a href="{% url 'project_create' %}" class="px-4 py-2 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded-xl uppercase tracking-wider flex items-center justify-center space-x-2 transition-all shadow-xs">
-            <i class="fa-solid fa-plus"></i>
-            <span>+ Tạo Đồ án Mới để Tải Tài liệu</span>
-        </a>
         {% endif %}
     </div>
 
-    <!-- UPLOAD MODAL FOR ALL DOCUMENTS -->
-    {% if upload_projects %}
-    <div x-show="uploadModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-        <div class="bg-white rounded max-w-lg w-full p-6 shadow-md border border-[#D9DEE8] space-y-4" @click.away="uploadModal = false">
-            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-                <h3 class="text-sm font-bold text-[#172033] flex items-center space-x-2">
-                    <i class="fa-solid fa-file-arrow-up text-[#173F91]"></i>
-                    <span>Tải lên Tài liệu Đồ án Mới</span>
-                </h3>
-                <button type="button" @click="uploadModal = false" class="text-slate-400 hover:text-slate-600">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            
-            <form :action="'/projects/' + selectedProjectId + '/documents/upload/'" method="post" enctype="multipart/form-data" class="space-y-4">
-                {% csrf_token %}
-                
-                <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-[#172033]">Chọn Đồ án áp dụng *</label>
-                    <select x-model="selectedProjectId" required class="w-full px-3 py-2 rounded border border-[#D9DEE8] text-xs bg-white">
-                        {% for p in upload_projects %}
-                        <option value="{{ p.id }}">[{{ p.code }}] {{ p.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-[#172033]">Tiêu đề Tài liệu *</label>
-                    <input type="text" name="title" required placeholder="Ví dụ: Báo cáo SRS v1.0..." class="w-full px-3 py-2 rounded border border-[#D9DEE8] text-xs">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1">
-                        <label class="block text-xs font-semibold text-[#172033]">Loại File</label>
-                        <select name="file_type" class="w-full px-3 py-2 rounded border border-[#D9DEE8] text-xs bg-white">
-                            <option value="PDF">PDF</option>
-                            <option value="DOCX">Word (DOC/DOCX)</option>
-                            <option value="SLIDE">Slide Presentation</option>
-                            <option value="SOURCE">Mã nguồn (Zip/Rar)</option>
-                            <option value="OTHER">Khác</option>
-                        </select>
-                    </div>
-                    <div class="space-y-1">
-                        <label class="block text-xs font-semibold text-[#172033]">Chọn File *</label>
-                        <input type="file" name="file" required class="w-full text-xs text-[#667085]">
-                    </div>
-                </div>
-
-                <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-[#172033]">Mô tả ngắn</label>
-                    <textarea name="description" rows="2" placeholder="Ghi chú nội dung tài liệu..." class="w-full px-3 py-2 rounded border border-[#D9DEE8] text-xs"></textarea>
-                </div>
-
-                <div class="flex justify-end space-x-2 pt-2 border-t border-slate-100">
-                    <button type="button" @click="uploadModal = false" class="px-4 py-2 text-xs font-bold text-slate-500">Hủy</button>
-                    <button type="submit" class="px-4 py-2 text-xs font-bold text-white bg-[#173F91] hover:bg-[#123477] rounded uppercase tracking-wider">Xác nhận Tải lên</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    {% endif %}
-
-    <div class="bg-white rounded border border-[#D9DEE8] overflow-hidden">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs text-[#172033]">
-                <thead class="bg-[#F5F7FA] text-[#172033] font-bold uppercase text-[10px] border-b border-[#D9DEE8]">
+            <table class="w-full text-left text-xs text-slate-900 border-collapse">
+                <thead class="bg-slate-50 text-slate-700 font-bold uppercase text-[10px] border-b border-slate-200">
                     <tr>
-                        <th class="p-3">Tên Tài liệu</th>
-                        <th class="p-3">Mã Đồ án</th>
-                        <th class="p-3">Người tải lên</th>
-                        <th class="p-3">Dung lượng</th>
-                        <th class="p-3">Ngày tải lên</th>
-                        <th class="p-3 text-right">Thao tác</th>
+                        <th class="p-3.5 pl-5">Tên Tài liệu</th>
+                        <th class="p-3.5">Mã Đồ án</th>
+                        <th class="p-3.5">Người tải lên</th>
+                        <th class="p-3.5">Dung lượng</th>
+                        <th class="p-3.5">Ngày tải lên</th>
+                        <th class="p-3.5 pr-5 text-right whitespace-nowrap">Thao tác</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-[#D9DEE8]">
+                <tbody class="divide-y divide-slate-100">
                     {% for doc in documents %}
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-3 font-bold text-[#172033]">
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="p-3.5 pl-5 font-bold text-slate-900">
                             {{ doc.title }}
-                            <span class="ml-1 px-1.5 py-0.5 bg-slate-100 text-[#667085] font-mono text-[10px] rounded border border-slate-200">v{{ doc.current_version }}</span>
+                            <span class="ml-1 px-2 py-0.5 bg-slate-100 text-slate-600 font-mono text-[10px] rounded-md border border-slate-200">v{{ doc.current_version }}</span>
                         </td>
-                        <td class="p-3 font-mono">
-                            <a href="{% url 'project_documents' doc.project.id %}" class="text-[#173F91] font-bold hover:underline">
+                        <td class="p-3.5 font-mono">
+                            <a href="{% url 'project_documents' doc.project.id %}" class="text-navy-800 font-bold hover:underline">
                                 {{ doc.project.code }}
                             </a>
                         </td>
-                        <td class="p-3">
-                            <span class="font-semibold block text-[#172033]">{{ doc.uploaded_by.display_name }}</span>
-                            {% if doc.uploaded_by.is_mentor %}
-                            <span class="inline-block px-1.5 py-0.2 bg-amber-50 text-amber-900 border border-amber-300 font-bold text-[9px] rounded uppercase mt-0.5">Tài liệu từ Giảng viên</span>
-                            {% endif %}
+                        <td class="p-3.5">
+                            <span class="font-semibold block text-slate-900">{{ doc.uploaded_by.display_name }}</span>
                         </td>
-                        <td class="p-3 text-[#667085] font-mono text-[11px]">{{ doc.file_size }}</td>
-                        <td class="p-3 text-[#667085]">{{ doc.created_at|date:"d/m/Y H:i" }}</td>
-                        <td class="p-3 text-right space-x-1.5 flex items-center justify-end">
+                        <td class="p-3.5 text-slate-500 font-mono text-[11px]">{{ doc.file_size }}</td>
+                        <td class="p-3.5 text-slate-500 font-mono">{{ doc.created_at|date:"d/m/Y H:i" }}</td>
+                        <td class="p-3.5 pr-5 text-right whitespace-nowrap space-x-1.5">
                             {% if doc.file %}
-                            <a href="{% url 'document_preview' doc.id %}" target="_blank" class="px-2.5 py-1 bg-slate-100 text-[#172033] font-semibold text-[11px] rounded border border-[#D9DEE8] hover:bg-slate-200">
-                                Xem
-                            </a>
-                            <a href="{% url 'document_download' doc.id %}" class="px-2.5 py-1 bg-[#173F91] text-white font-semibold text-[11px] rounded hover:bg-[#123477]">
-                                Tải về
+                            <button type="button" @click="openPreview({{ doc.id }}, '{{ doc.title|escapejs }}')" class="px-3 py-1.5 bg-slate-100 text-slate-800 font-bold text-[11px] rounded-lg border border-slate-200 hover:bg-slate-200 transition inline-flex items-center gap-1">
+                                <i class="fa-solid fa-eye text-navy-800"></i> Xem
+                            </button>
+                            <a href="{% url 'document_download' doc.id %}" class="px-3 py-1.5 bg-navy-800 text-white font-bold text-[11px] rounded-lg hover:bg-navy-900 transition inline-flex items-center gap-1">
+                                <i class="fa-solid fa-download"></i> Tải về
                             </a>
                             {% endif %}
                             {% if doc.uploaded_by == request.user or doc.project.mentor == request.user or request.user.is_admin_user %}
                             <form action="{% url 'document_delete' doc.id %}" method="post" class="inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tài liệu này không?')">
                                 {% csrf_token %}
-                                <button type="submit" class="px-2 py-1 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded text-[11px] font-semibold border border-rose-200">
+                                <button type="submit" class="px-2.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg text-[11px] font-bold border border-rose-200 transition">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </form>
@@ -140,7 +81,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="p-8 text-center text-[#667085]">Không có tài liệu nào trong hệ thống.</td>
+                        <td colspan="6" class="p-8 text-center text-slate-400">Không có tài liệu nào trong hệ thống.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -148,5 +89,22 @@
         </div>
     </div>
 
+    <!-- PREVIEW MODAL POPUP (Xem trước Popup Nhỏ) -->
+    <div x-show="previewModalDocId !== null" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4" @click.self="previewModalDocId = null">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[650px] flex flex-col overflow-hidden border border-slate-200">
+            <div class="p-4 bg-navy-900 text-white flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-file-contract text-gold-400"></i>
+                    <h3 class="font-bold text-sm" x-text="'Xem trước: ' + previewModalTitle"></h3>
+                </div>
+                <button @click="previewModalDocId = null" class="text-slate-300 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex-1 bg-slate-100 p-2">
+                <template x-if="previewModalDocId">
+                    <iframe :src="previewModalUrl" class="w-full h-full rounded-xl border-0"></iframe>
+                </template>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
