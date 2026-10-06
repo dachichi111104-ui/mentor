@@ -34,7 +34,7 @@
             </button>
             <button @click="showEventModal = true" class="px-4 py-2 bg-[#1E3A8A] hover:bg-blue-900 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm border border-blue-700">
                 <i class="fa-solid fa-plus text-amber-400"></i>
-                <span>+ Thêm Sự Kiện Mới</span>
+                <span>Thêm Sự Kiện Mới</span>
             </button>
         </div>
     </div>
@@ -95,8 +95,13 @@
 
     <!-- Create Event Modal -->
     <div x-show="showEventModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 border border-slate-200">
-            <h3 class="font-bold text-lg text-slate-900 mb-4">Thêm Sự kiện Lịch Mới</h3>
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 border border-slate-200 relative">
+            <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+                <h3 class="font-bold text-lg text-slate-900">Thêm Sự kiện Lịch Mới</h3>
+                <button type="button" @click="showEventModal = false" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors" title="Đóng modal">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
             <form method="POST" action="{% url 'event_create' %}" class="space-y-4">
                 {% csrf_token %}
                 <div>

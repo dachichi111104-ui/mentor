@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi" class="h-full bg-[#0F172A]">
+<html lang="vi" class="h-full bg-slate-50">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,27 +8,25 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @keyframes planeFly {
-            0% { transform: translate(0px, 0px) rotate(0deg); }
-            25% { transform: translate(15px, -10px) rotate(6deg); }
-            50% { transform: translate(30px, 0px) rotate(0deg); }
-            75% { transform: translate(15px, 10px) rotate(-6deg); }
-            100% { transform: translate(0px, 0px) rotate(0deg); }
+        @keyframes flyHorizon {
+            0% { transform: translateX(-120px) translateY(0px) rotate(4deg); }
+            50% { transform: translateX(50vw) translateY(-25px) rotate(1deg); }
+            100% { transform: translateX(105vw) translateY(10px) rotate(4deg); }
         }
-        .animate-plane {
-            animation: planeFly 8s ease-in-out infinite;
+        .animate-plane-flying {
+            animation: flyHorizon 14s linear infinite;
         }
-        
-        .bg-grid-pattern {
-            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-                              linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-            background-size: 32px 32px;
+
+        .bg-light-pattern {
+            background-color: #F8FAFC;
+            background-image: radial-gradient(#CBD5E1 1px, transparent 1px);
+            background-size: 20px 20px;
         }
-        
+
         input, select {
-            background-color: #1E293B !important;
-            color: #F8FAFC !important;
-            border-color: #334155 !important;
+            background-color: #FFFFFF !important;
+            color: #0F172A !important;
+            border: 1px solid #CBD5E1 !important;
             border-radius: 0.75rem !important;
             padding: 0.625rem 0.875rem !important;
             font-size: 0.875rem !important;
@@ -36,51 +34,54 @@
             transition: all 0.2s !important;
         }
         input:focus, select:focus {
-            border-color: #3B82F6 !important;
+            border-color: #1E3A8A !important;
             outline: none !important;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15) !important;
         }
     </style>
 </head>
-<body class="min-h-screen bg-[#0F172A] bg-grid-pattern text-slate-100 flex flex-col justify-between p-4 font-sans antialiased relative overflow-x-hidden">
+<body class="min-h-screen bg-light-pattern text-slate-800 flex flex-col justify-between p-4 font-sans antialiased relative overflow-hidden">
+
+    <!-- Flying Plane Animation Background Layer -->
+    <div class="absolute top-16 left-0 w-full pointer-events-none z-0 overflow-hidden h-32">
+        <div class="animate-plane-flying flex items-center gap-2 text-indigo-600/40">
+            <i class="fa-solid fa-plane text-3xl"></i>
+            <span class="text-[10px] font-mono font-bold uppercase tracking-widest text-indigo-400/40">VAU Flight 2026</span>
+        </div>
+    </div>
 
     <!-- Top Academic Header Bar -->
-    <div class="w-full max-w-[1400px] mx-auto flex items-center justify-between py-3 border-b border-slate-800/80">
+    <div class="w-full max-w-[1400px] mx-auto flex items-center justify-between py-3 border-b border-slate-200 relative z-10">
         <a href="{% url 'landing' %}" class="flex items-center space-x-3 group">
-            <div class="w-10 h-10 rounded-2xl bg-[#1E3A8A] text-amber-400 flex items-center justify-center font-bold text-lg shadow-md border border-blue-500/30 group-hover:scale-105 transition-transform">
+            <div class="w-10 h-10 rounded-2xl bg-[#0F172A] text-amber-400 flex items-center justify-center font-bold text-lg shadow-md group-hover:scale-105 transition-transform">
                 <i class="fa-solid fa-graduation-cap"></i>
             </div>
             <div>
                 <div class="flex items-center space-x-2">
-                    <span class="font-extrabold text-white text-base tracking-tight block">PROJECTHUB AI</span>
-                    <span class="px-2 py-0.5 bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[9px] font-mono font-bold rounded-full">&lt;IT_PORTAL&gt;</span>
+                    <span class="font-extrabold text-slate-900 text-base tracking-tight block">PROJECTHUB AI</span>
+                    <span class="px-2 py-0.5 bg-blue-100 text-blue-800 text-[9px] font-mono font-bold rounded-full border border-blue-200">&lt;IT_PORTAL&gt;</span>
                 </div>
-                <span class="text-[10px] text-slate-400 font-bold tracking-wider uppercase block mt-0.5">HỌC VIỆN HÀNG KHÔNG VIỆT NAM — KHOA CNTT</span>
+                <span class="text-[10px] text-slate-500 font-bold tracking-wider uppercase block mt-0.5">HỌC VIỆN HÀNG KHÔNG VIỆT NAM - KHOA CNTT</span>
             </div>
         </a>
-        <a href="{% url 'login' %}" class="text-xs font-bold text-slate-300 hover:text-amber-400 transition flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/60 border border-slate-700">
+        <a href="{% url 'login' %}" class="text-xs font-bold text-slate-700 hover:text-blue-900 transition flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-300 shadow-xs">
             <i class="fa-solid fa-arrow-left text-xs"></i>
             <span>Quay lại Đăng nhập</span>
         </a>
     </div>
 
     <!-- Main Register Card -->
-    <div class="my-auto py-8">
-        <div class="max-w-xl w-full mx-auto bg-[#1E293B] rounded-3xl shadow-2xl border border-slate-700/80 p-8 relative overflow-hidden backdrop-blur-md">
+    <div class="my-auto py-8 relative z-10">
+        <div class="max-w-xl w-full mx-auto bg-white rounded-3xl shadow-xl border border-slate-200 p-8 relative overflow-hidden">
             
-            <!-- Floating Aviation Airplane Badge Graphic -->
-            <div class="absolute -top-6 -right-6 w-24 h-24 bg-blue-600/10 rounded-full flex items-center justify-center pointer-events-none">
-                <i class="fa-solid fa-plane-departure text-3xl text-blue-400/40 animate-plane"></i>
-            </div>
-
-            <div class="text-center mb-6 relative z-10">
-                <div class="w-14 h-14 rounded-2xl bg-[#1E3A8A] text-amber-400 font-bold text-2xl mx-auto flex items-center justify-center mb-3 shadow-lg border border-blue-500/30">
+            <div class="text-center mb-6">
+                <div class="w-14 h-14 rounded-2xl bg-[#0F172A] text-amber-400 font-bold text-2xl mx-auto flex items-center justify-center mb-3 shadow-md">
                     <i class="fa-solid fa-user-plus"></i>
                 </div>
-                <h1 class="text-xl font-extrabold text-white tracking-tight">Đăng ký Tài khoản Mới</h1>
-                <p class="text-xs text-slate-400 mt-1 font-medium">Cổng Quản lý Đồ án Học viện Hàng không Việt Nam (VAU)</p>
-                <div class="mt-3 p-3 bg-blue-950/60 border border-blue-800/80 rounded-2xl text-left text-xs text-blue-300 flex items-start space-x-2">
-                    <i class="fa-solid fa-circle-info text-blue-400 mt-0.5"></i>
+                <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">Đăng ký Tài khoản Mới</h1>
+                <p class="text-xs text-slate-500 mt-1 font-medium">Cổng Quản lý Đồ án Học viện Hàng không Việt Nam (VAU)</p>
+                <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-2xl text-left text-xs text-blue-900 flex items-start space-x-2">
+                    <i class="fa-solid fa-circle-info text-blue-700 mt-0.5"></i>
                     <span>Tài khoản thử nghiệm hỗ trợ đăng ký cho <b>Sinh viên</b> và <b>Giảng viên / Mentor</b>. Hệ thống đồng bộ chuẩn dữ liệu Khoa CNTT.</span>
                 </div>
             </div>
@@ -88,96 +89,96 @@
             {% if messages %}
             <div class="mb-5 space-y-2">
                 {% for message in messages %}
-                <div class="p-3 rounded-xl text-xs font-medium bg-rose-950/80 text-rose-300 border border-rose-800">
+                <div class="p-3 rounded-xl text-xs font-medium bg-rose-50 text-rose-800 border border-rose-200">
                     {{ message }}
                 </div>
                 {% endfor %}
             </div>
             {% endif %}
 
-            <form method="post" class="space-y-4 relative z-10">
+            <form method="post" class="space-y-4">
                 {% csrf_token %}
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">Họ & Tên đệm *</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Họ & Tên đệm *</label>
                         {{ form.last_name }}
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">Tên chính *</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Tên chính *</label>
                         {{ form.first_name }}
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">Tên đăng nhập (Username) *</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Tên đăng nhập (Username) *</label>
                         {{ form.username }}
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">Email *</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Email *</label>
                         {{ form.email }}
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">Vai trò sử dụng *</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Vai trò sử dụng *</label>
                         {{ form.role }}
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">Mã Sinh viên / Giảng viên</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Mã Sinh viên / Giảng viên</label>
                         {{ form.student_id }}
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">Khoa / Bộ môn</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Khoa / Bộ môn</label>
                         {{ form.department }}
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">Số điện thoại</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Số điện thoại</label>
                         {{ form.phone }}
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">Mật khẩu *</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu *</label>
                     <div class="relative">
                         {{ form.password }}
-                        <button type="button" onclick="togglePasswordVisibility('id_password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white focus:outline-none p-1 transition-colors" title="Hiện/Ẩn mật khẩu">
+                        <button type="button" onclick="togglePasswordVisibility('id_password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 focus:outline-none p-1 transition-colors" title="Hiện/Ẩn mật khẩu">
                             <i class="fa-solid fa-eye text-xs"></i>
                         </button>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">Xác nhận Mật khẩu *</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Xác nhận Mật khẩu *</label>
                     <div class="relative">
                         {{ form.confirm_password }}
-                        <button type="button" onclick="togglePasswordVisibility('id_confirm_password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white focus:outline-none p-1 transition-colors" title="Hiện/Ẩn mật khẩu">
+                        <button type="button" onclick="togglePasswordVisibility('id_confirm_password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 focus:outline-none p-1 transition-colors" title="Hiện/Ẩn mật khẩu">
                             <i class="fa-solid fa-eye text-xs"></i>
                         </button>
                     </div>
                 </div>
 
-                <button type="submit" class="w-full py-3 bg-[#1E3A8A] hover:bg-blue-800 text-white font-extrabold text-xs rounded-xl transition-all mt-2 uppercase tracking-wider shadow-lg border border-blue-500/40 flex items-center justify-center gap-2">
+                <button type="submit" class="w-full py-3 bg-[#0F172A] hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl transition-all mt-2 uppercase tracking-wider shadow-md flex items-center justify-center gap-2">
                     <span>Tạo tài khoản mới</span>
                     <i class="fa-solid fa-plane-departure text-amber-400 text-xs"></i>
                 </button>
             </form>
 
-            <div class="mt-6 pt-4 border-t border-slate-700/60 text-center text-xs text-slate-400 relative z-10">
-                Đã có tài khoản? <a href="{% url 'login' %}" class="text-amber-400 font-bold hover:underline">Quay lại Đăng nhập</a>
+            <div class="mt-6 pt-4 border-t border-slate-200 text-center text-xs text-slate-600">
+                Đã có tài khoản? <a href="{% url 'login' %}" class="text-blue-800 font-bold hover:underline">Quay lại Đăng nhập</a>
             </div>
 
         </div>
     </div>
 
     <!-- Academic Footer -->
-    <div class="w-full text-center text-xs text-slate-500 py-3 border-t border-slate-800/80">
-        © 2026 ProjectHub AI — Khoa Công nghệ Thông tin — Học viện Hàng không Việt Nam (VAA)
+    <div class="w-full text-center text-xs text-slate-500 py-3 border-t border-slate-200 relative z-10">
+        © 2026 ProjectHub AI - Khoa Công nghệ Thông tin - Học viện Hàng không Việt Nam (VAU)
     </div>
 
     <script>
