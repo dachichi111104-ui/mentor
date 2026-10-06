@@ -45,6 +45,35 @@ class User(AbstractUser):
         return self.get_full_name()
 
     @property
+    def academic_title(self):
+        if self.role == UserRole.MENTOR:
+            full = self.get_full_name()
+            if 'ThS.NCS.' in full:
+                return 'ThS.NCS.'
+            elif 'PGS.TS.' in full:
+                return 'PGS.TS.'
+            elif 'GS.TS.' in full:
+                return 'GS.TS.'
+            elif 'ThS.' in full:
+                return 'ThS.'
+            elif 'TS.' in full:
+                return 'TS.'
+            return 'Giảng viên'
+        elif self.role == UserRole.STUDENT:
+            return 'Sinh viên'
+        elif self.role == UserRole.ADMIN:
+            return 'Quản trị viên'
+        return ''
+
+    @property
+    def clean_name(self):
+        full = self.get_full_name()
+        for prefix in ['ThS.NCS.', 'PGS.TS.', 'GS.TS.', 'ThS.', 'TS.']:
+            if full.startswith(prefix):
+                return full[len(prefix):].strip()
+        return full
+
+    @property
     def is_student(self):
         return self.role == UserRole.STUDENT
 
@@ -67,7 +96,7 @@ class User(AbstractUser):
         if self.avatar_url:
             return self.avatar_url
         name = self.display_name.replace(' ', '+')
-        return f"https://ui-avatars.com/api/?name={name}&background=0F172A&color=F59E0B&font-size=0.35&bold=true"
+        return f"https://ui-avatars.com/api/?name={name}&background=163B65&color=B58A3A&font-size=0.35&bold=true"
 
     @property
     def profile_completion(self):
@@ -129,5 +158,3 @@ class UserPreference(models.Model):
 
     def __str__(self):
         return f"Cấu hình của {self.user.username} ({self.theme})"
-
-

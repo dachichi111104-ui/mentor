@@ -7,6 +7,16 @@
 <div class="space-y-6" x-data="{
     uploadModal: false,
     selectedProjectId: '{{ upload_projects.first.id|default:0 }}',
+    selectedFileType: 'PDF',
+    acceptTypes: {
+        'PDF': '.pdf,application/pdf',
+        'WORD': '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'EXCEL': '.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'POWERPOINT': '.ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'ZIP': '.zip,.rar,application/zip,application/x-rar-compressed',
+        'IMAGE': '.png,.jpg,.jpeg,.gif,.svg,.webp,image/*',
+        'OTHER': '*/*'
+    },
     previewModalDocId: null,
     previewModalUrl: '',
     previewModalTitle: '',
@@ -19,11 +29,14 @@
 
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-            <h1 class="text-xl font-bold text-slate-900 tracking-tight">Kho Tài liệu Đồ án Sinh viên</h1>
+            <h1 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                <i class="fa-solid fa-folder-open text-[#163B65]"></i>
+                Kho Tài liệu Đồ án Sinh viên
+            </h1>
             <p class="text-xs text-slate-500 mt-1">Danh sách toàn bộ các tài liệu lưu trữ thuộc đồ án được cấp quyền.</p>
         </div>
         {% if upload_projects %}
-        <button type="button" @click="uploadModal = true" class="px-4 py-2 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold text-xs rounded-xl flex items-center justify-center space-x-2 transition-all shadow-sm">
+        <button type="button" @click="uploadModal = true" class="px-4 py-2 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl flex items-center justify-center space-x-2 transition-all shadow-sm">
             <i class="fa-solid fa-cloud-arrow-up text-amber-400"></i>
             <span>Tải lên Tài liệu Mới</span>
         </button>
@@ -43,15 +56,15 @@
                         <th class="p-3.5 pr-5 text-right whitespace-nowrap">Thao tác</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-slate-100 font-medium">
                     {% for doc in documents %}
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <tr class="hover:bg-slate-50/80 transition-colors">
                         <td class="p-3.5 pl-5 font-bold text-slate-900">
                             {{ doc.title }}
                             <span class="ml-1 px-2 py-0.5 bg-slate-100 text-slate-600 font-mono text-[10px] rounded-md border border-slate-200">v{{ doc.current_version }}</span>
                         </td>
                         <td class="p-3.5 font-mono">
-                            <a href="{% url 'project_documents' doc.project.id %}" class="text-[#1E3A8A] font-bold hover:underline">
+                            <a href="{% url 'project_documents' doc.project.id %}" class="text-[#163B65] font-bold hover:underline">
                                 {{ doc.project.code }}
                             </a>
                         </td>
@@ -62,17 +75,17 @@
                         <td class="p-3.5 text-slate-500 font-mono">{{ doc.created_at|date:"d/m/Y H:i" }}</td>
                         <td class="p-3.5 pr-5 text-right whitespace-nowrap space-x-1.5">
                             {% if doc.file %}
-                            <button type="button" @click="openPreview({{ doc.id }}, '{{ doc.title|escapejs }}')" class="px-3 py-1.5 bg-slate-100 text-slate-800 font-bold text-[11px] rounded-lg border border-slate-200 hover:bg-slate-200 transition inline-flex items-center gap-1">
-                                <i class="fa-solid fa-eye text-[#1E3A8A]"></i> Xem
+                            <button type="button" @click="openPreview({{ doc.id }}, '{{ doc.title|escapejs }}')" class="px-3 py-1.5 bg-slate-100 text-slate-800 font-bold text-[11px] rounded-xl border border-slate-200 hover:bg-slate-200 transition inline-flex items-center gap-1">
+                                <i class="fa-solid fa-eye text-[#163B65]"></i> Xem
                             </button>
-                            <a href="{% url 'document_download' doc.id %}" class="px-3 py-1.5 bg-[#1E3A8A] text-white font-bold text-[11px] rounded-lg hover:bg-blue-900 transition inline-flex items-center gap-1">
-                                <i class="fa-solid fa-download"></i> Tải về
+                            <a href="{% url 'document_download' doc.id %}" class="px-3 py-1.5 bg-[#163B65] text-white font-bold text-[11px] rounded-xl hover:bg-[#0f2643] transition inline-flex items-center gap-1 shadow-xs">
+                                <i class="fa-solid fa-download text-amber-400"></i> Tải về
                             </a>
                             {% endif %}
                             {% if doc.uploaded_by == request.user or doc.project.mentor == request.user or request.user.is_admin_user %}
                             <form action="{% url 'document_delete' doc.id %}" method="post" class="inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tài liệu này không?')">
                                 {% csrf_token %}
-                                <button type="submit" class="px-2.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg text-[11px] font-bold border border-rose-200 transition">
+                                <button type="submit" class="px-2.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-xl text-[11px] font-bold border border-rose-200 transition">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </form>
@@ -89,7 +102,7 @@
         </div>
     </div>
 
-    <!-- PREVIEW MODAL POPUP (Xem trước Popup Nhỏ gọn) -->
+    <!-- PREVIEW MODAL POPUP -->
     <div x-show="previewModalDocId !== null" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-4" @click.self="previewModalDocId = null">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl h-[440px] flex flex-col overflow-hidden border border-slate-700/30">
             <div class="px-5 py-3 bg-[#0F172A] text-white flex justify-between items-center border-b border-slate-800">
@@ -118,11 +131,12 @@
             </div>
         </div>
     </div>
+
     <!-- UPLOAD DOCUMENT POPUP MODAL -->
     <div x-show="uploadModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4" @click.self="uploadModal = false">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 relative">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div class="flex items-center space-x-2 text-[#1E3A8A]">
+                <div class="flex items-center space-x-2 text-[#163B65]">
                     <i class="fa-solid fa-cloud-arrow-up text-amber-500 text-base"></i>
                     <h3 class="text-sm font-bold text-slate-900">Tải lên Tài liệu Mới</h3>
                 </div>
@@ -134,7 +148,7 @@
                 {% csrf_token %}
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Chọn Đồ án *</label>
-                    <select name="project_id" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-[#1E3A8A]">
+                    <select name="project_id" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-[#163B65]">
                         {% for p in upload_projects %}
                         <option value="{{ p.id }}">{{ p.code }} - {{ p.name }}</option>
                         {% endfor %}
@@ -142,31 +156,31 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Tên tài liệu *</label>
-                    <input type="text" name="title" placeholder="VD: Báo cáo SRS Kiến trúc Hệ thống..." required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-[#1E3A8A]">
+                    <input type="text" name="title" placeholder="VD: Báo cáo SRS Kiến trúc Hệ thống..." required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-[#163B65]">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Mô tả tài liệu</label>
-                    <textarea name="description" rows="2" placeholder="Tóm tắt nội dung file..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-[#1E3A8A]"></textarea>
+                    <textarea name="description" rows="2" placeholder="Tóm tắt nội dung file..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-[#163B65]"></textarea>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Loại tệp *</label>
-                    <select name="file_type" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-[#1E3A8A]">
-                        <option value="PDF">Tài liệu PDF</option>
-                        <option value="WORD">Word (DOC/DOCX)</option>
-                        <option value="EXCEL">Excel (XLS/XLSX)</option>
-                        <option value="POWERPOINT">PowerPoint (PPT/PPTX)</option>
-                        <option value="ZIP">File Nén (ZIP/RAR)</option>
-                        <option value="IMAGE">Hình ảnh (PNG/JPG)</option>
-                        <option value="OTHER">Khác</option>
+                    <select name="file_type" x-model="selectedFileType" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-[#163B65]">
+                        <option value="PDF">Tài liệu PDF (.pdf)</option>
+                        <option value="WORD">Word (.doc, .docx)</option>
+                        <option value="EXCEL">Excel (.xls, .xlsx)</option>
+                        <option value="POWERPOINT">PowerPoint (.ppt, .pptx)</option>
+                        <option value="ZIP">File Nén (.zip, .rar)</option>
+                        <option value="IMAGE">Hình ảnh (.png, .jpg, .jpeg)</option>
+                        <option value="OTHER">Khác (Tất cả file)</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Chọn File Tải lên *</label>
-                    <input type="file" name="file" required class="text-xs text-slate-600 w-full p-2 bg-slate-50 border border-slate-200 rounded-xl">
+                    <input type="file" name="file" :accept="acceptTypes[selectedFileType] || '*/*'" required class="text-xs text-slate-600 w-full p-2 bg-slate-50 border border-slate-200 rounded-xl">
                 </div>
                 <div class="flex justify-end space-x-2 pt-2 border-t border-slate-100">
                     <button type="button" @click="uploadModal = false" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-200 transition">Hủy bỏ</button>
-                    <button type="submit" class="px-5 py-2 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5 border border-blue-700">
+                    <button type="submit" class="px-5 py-2 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5 border border-blue-900">
                         <i class="fa-solid fa-cloud-arrow-up text-amber-400"></i>
                         <span>Tải lên ngay</span>
                     </button>

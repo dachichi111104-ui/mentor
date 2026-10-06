@@ -43,10 +43,19 @@ def student_dashboard_view(request):
     upcoming_milestones = Milestone.objects.filter(project__in=my_projects).order_by('due_date')[:5]
     recent_activities = ActivityLog.objects.filter(user=user)[:8]
 
+    total_tasks_count = my_tasks.count()
+    done_tasks_count = my_tasks.filter(status=TaskStatus.DONE).count()
+    pending_tasks_count = total_tasks_count - done_tasks_count
+    done_percent = int((done_tasks_count / total_tasks_count * 100)) if total_tasks_count > 0 else 0
+
     context = {
         'total_projects': my_projects.count(),
         'active_projects_count': active_projects_count,
         'completed_projects_count': completed_projects_count,
+        'total_tasks_count': total_tasks_count,
+        'done_tasks_count': done_tasks_count,
+        'pending_tasks_count': pending_tasks_count,
+        'done_percent': done_percent,
         'my_projects': my_projects[:4],
         'my_tasks': my_tasks.exclude(status=TaskStatus.DONE)[:6],
         'in_progress_tasks_count': in_progress_tasks.count(),
@@ -457,12 +466,14 @@ def analytics_data_json_view(request):
     ontime_count = tasks.filter(status=TaskStatus.DONE, due_date__gte=timezone.now().date()).count()
     ontime_rate = int((ontime_count / completed_in_period * 100)) if completed_in_period > 0 else 92
 
-    # Top contributors
+    # Top contributors (Sorted descending from highest to lowest)
     top_contribs = []
-    users_qs = User.objects.filter(role=UserRole.STUDENT)[:5]
+    users_qs = User.objects.filter(role=UserRole.STUDENT)
     for u in users_qs:
-        done_cnt = tasks.filter(assignee=u, status=TaskStatus.DONE).count() or 2
+        done_cnt = tasks.filter(assignee=u, status=TaskStatus.DONE).count()
         top_contribs.append({'name': u.display_name, 'avatar': u.get_avatar_url(), 'done_count': done_cnt})
+    top_contribs.sort(key=lambda x: x['done_count'], reverse=True)
+    top_contribs = top_contribs[:5]
 
     time_by_proj = []
     for p in projects[:5]:

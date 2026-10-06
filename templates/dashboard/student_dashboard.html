@@ -4,102 +4,119 @@
 {% block breadcrumb %}Tổng quan Sinh viên{% endblock %}
 
 {% block content %}
-<div class="space-y-6" x-data="{
-    // Time Tracker State
-    isTimerRunning: false,
-    timerSeconds: 0,
-    timerLog: null,
-    timerInterval: null,
-    selectedProjectId: '{{ my_projects.first.id|default:"" }}',
+<script>
+function studentTimerComponent() {
+    return {
+        isTimerRunning: false,
+        timerSeconds: 0,
+        timerLog: null,
+        timerInterval: null,
+        selectedProjectId: '{{ my_projects.first.id|default:"" }}',
 
-    initTimer() {
-        fetch('/api/v1/time-tracker/status/')
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success' && data.is_running) {
-                    this.isTimerRunning = true;
-                    this.timerLog = data.log;
-                    this.timerSeconds = data.log.elapsed_seconds;
-                    this.startTick();
-                }
-            });
-    },
+        initTimer() {
+            fetch('/api/v1/time-tracker/status/')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success' && data.is_running) {
+                        this.isTimerRunning = true;
+                        this.timerLog = data.log;
+                        this.timerSeconds = data.log.elapsed_seconds;
+                        this.startTick();
+                    }
+                })
+                .catch(() => {});
+        },
 
-    startTimer() {
-        if (!this.selectedProjectId) {
-            const selectEl = document.querySelector('select[x-model="selectedProjectId"]');
-            if (selectEl && selectEl.value) {
-                this.selectedProjectId = selectEl.value;
-            }
-        }
-        if (!this.selectedProjectId) {
-            if (window.Alpine && Alpine.store('toast')) {
-                Alpine.store('toast').show('Vui lòng chọn một đồ án trước khi bấm Bắt đầu!', 'warning');
-            }
-            return;
-        }
-        const formData = new FormData();
-        formData.append('project_id', this.selectedProjectId);
-        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-        fetch('/api/v1/time-tracker/start/', { method: 'POST', body: formData })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    this.isTimerRunning = true;
-                    this.timerLog = data.log;
-                    this.timerSeconds = 0;
-                    this.startTick();
-                    if (window.Alpine && Alpine.store('toast')) {
-                        Alpine.store('toast').show('Đã bắt đầu bấm giờ làm việc!', 'success');
-                    }
-                } else {
-                    if (window.Alpine && Alpine.store('toast')) {
-                        Alpine.store('toast').show(data.message || 'Lỗi khởi động trình bấm giờ', 'error');
-                    }
+        startTimer() {
+            if (!this.selectedProjectId) {
+                const selectEl = document.querySelector('select[x-model="selectedProjectId"]');
+                if (selectEl && selectEl.value) {
+                    this.selectedProjectId = selectEl.value;
                 }
-            })
-            .catch(() => {
+            }
+            if (!this.selectedProjectId) {
                 if (window.Alpine && Alpine.store('toast')) {
-                    Alpine.store('toast').show('Lỗi kết nối máy chủ', 'error');
+                    Alpine.store('toast').show('Vui lòng chọn một đồ án trước khi bấm Bắt đầu!', 'warning');
                 }
-            });
-    },
+                return;
+            }
+            const formData = new FormData();
+            formData.append('project_id', this.selectedProjectId);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            fetch('/api/v1/time-tracker/start/', { method: 'POST', body: formData })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        this.isTimerRunning = true;
+                        this.timerLog = data.log;
+                        this.timerSeconds = 0;
+                        this.startTick();
+                        if (window.Alpine && Alpine.store('toast')) {
+                            Alpine.store('toast').show('Đã bắt đầu bấm giờ làm việc!', 'success');
+                        }
+                    } else {
+                        if (window.Alpine && Alpine.store('toast')) {
+                            Alpine.store('toast').show(data.message || 'Lỗi khởi động trình bấm giờ', 'error');
+                        }
+                    }
+                })
+                .catch(() => {
+                    if (window.Alpine && Alpine.store('toast')) {
+                        Alpine.store('toast').show('Lỗi kết nối máy chủ', 'error');
+                    }
+                });
+        },
 
-    stopTimer() {
-        const formData = new FormData();
-        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-        fetch('/api/v1/time-tracker/stop/', { method: 'POST', body: formData })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    this.isTimerRunning = false;
-                    clearInterval(this.timerInterval);
-                    $store.toast.show(data.message, 'success');
-                }
-            });
-    },
+        stopTimer() {
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            fetch('/api/v1/time-tracker/stop/', { method: 'POST', body: formData })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        this.isTimerRunning = false;
+                        clearInterval(this.timerInterval);
+                        if (window.Alpine && Alpine.store('toast')) {
+                            Alpine.store('toast').show(data.message || 'Đã dừng bấm giờ!', 'success');
+                        }
+                    } else {
+                        if (window.Alpine && Alpine.store('toast')) {
+                            Alpine.store('toast').show(data.message || 'Lỗi dừng trình bấm giờ', 'error');
+                        }
+                    }
+                })
+                .catch(() => {
+                    if (window.Alpine && Alpine.store('toast')) {
+                        Alpine.store('toast').show('Lỗi kết nối máy chủ', 'error');
+                    }
+                });
+        },
 
-    startTick() {
-        clearInterval(this.timerInterval);
-        this.timerInterval = setInterval(() => {
-            this.timerSeconds++;
-        }, 1000);
-    },
+        startTick() {
+            clearInterval(this.timerInterval);
+            this.timerInterval = setInterval(() => {
+                this.timerSeconds++;
+            }, 1000);
+        },
 
-    formatHHMMSS(sec) {
-        const h = Math.floor(sec / 3600).toString().padStart(2, '0');
-        const m = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
-        const s = (sec % 60).toString().padStart(2, '0');
-        return `${h}:${m}:${s}`;
-    }
-}" x-init="initTimer()">
+        formatHHMMSS(sec) {
+            const h = Math.floor(sec / 3600).toString().padStart(2, '0');
+            const m = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
+            const s = (sec % 60).toString().padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+    };
+}
+</script>
+
+<div class="space-y-6" x-data="studentTimerComponent()" x-init="initTimer()">
 
     <!-- Header Banner Card & Time Tracker Row -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Banner Card (2 Cols) -->
         <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div class="flex items-center space-x-4">
-                <div class="w-14 h-14 rounded-2xl bg-navy-800 text-white flex items-center justify-center text-2xl font-bold shadow-sm">
+                <div class="w-14 h-14 rounded-2xl bg-[#163B65] text-white flex items-center justify-center text-2xl font-bold shadow-sm">
                     <i class="fa-solid fa-graduation-cap"></i>
                 </div>
                 <div>
@@ -107,7 +124,7 @@
                         Bảng Điều Khiển Đồ Án Sinh Viên
                     </h1>
                     <p class="text-xs text-slate-500 mt-1">
-                        Xin chào <span class="font-bold text-navy-800">{{ request.user.display_name }}</span> • Tổng quan thời gian thực & trợ lý AI
+                        Xin chào <span class="font-bold text-[#163B65]">{{ request.user.display_name }}</span> • Tổng quan thời gian thực & trợ lý AI
                     </p>
                 </div>
             </div>
@@ -115,141 +132,160 @@
             <a href="{% url 'profile' %}" class="flex items-center space-x-3 bg-slate-50 hover:bg-blue-50 p-3 rounded-xl border border-slate-200 text-xs transition-all group">
                 <span class="font-semibold text-slate-800">Hồ sơ cá nhân:</span>
                 <div class="w-20 bg-slate-200 h-2 rounded-full overflow-hidden">
-                    <div class="bg-navy-800 h-full rounded-full" style="width: {{ request.user.profile_completion.percent }}%"></div>
+                    <div class="bg-[#163B65] h-full rounded-full" style="width: {{ request.user.profile_completion.percent }}%"></div>
                 </div>
-                <span class="font-bold text-navy-800">{{ request.user.profile_completion.completed }}/{{ request.user.profile_completion.total }}</span>
+                <span class="font-bold text-[#163B65]">{{ request.user.profile_completion.completed }}/{{ request.user.profile_completion.total }}</span>
             </a>
         </div>
 
-        <!-- Time Tracker Widget (1 Col) - Striped Navy Card -->
-        <div class="bg-navy-950 text-white p-5 rounded-2xl shadow-md border border-navy-900 flex flex-col justify-between relative overflow-hidden">
-            <!-- Diagonal stripes background pattern -->
-            <div class="absolute inset-0 opacity-10 bg-[linear-gradient(45deg,#fff_25%,transparent_25%,transparent_50%,#fff_50%,#fff_75%,transparent_75%,transparent)] bg-[length:16px_16px]"></div>
-
-            <div class="relative z-10 flex items-center justify-between border-b border-navy-800 pb-3">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-stopwatch text-gold-400 text-lg"></i>
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-200">Time Tracker</span>
+        <!-- Time Tracker Card (1 Col) -->
+        <div class="bg-[#163B65] text-white rounded-2xl p-5 shadow-sm border border-slate-800 flex flex-col justify-between relative overflow-hidden">
+            <div class="flex items-center justify-between z-10">
+                <div class="flex items-center space-x-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
+                    <i class="fa-solid fa-stopwatch text-sm"></i>
+                    <span>Time Tracker</span>
                 </div>
-                <template x-if="isTimerRunning">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse">
-                        ● Đang chạy
-                    </span>
-                </template>
+                <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full border"
+                      :class="isTimerRunning ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 animate-pulse' : 'bg-slate-700/60 text-slate-300 border-slate-600'">
+                    <span x-text="isTimerRunning ? 'ĐANG BẤM GIỜ' : 'TẠM DỪNG'"></span>
+                </span>
             </div>
 
-            <div class="relative z-10 py-3 text-center">
-                <span class="font-mono text-3xl font-black tracking-wider text-gold-400" x-text="formatHHMMSS(timerSeconds)">00:00:00</span>
-                <p class="text-[11px] text-slate-400 mt-1" x-text="isTimerRunning && timerLog ? timerLog.project_name : 'Chọn đồ án và bấm Bắt đầu để tính giờ'"></p>
+            <div class="my-3 z-10">
+                <div class="text-3xl font-black font-mono tracking-tight text-white" x-text="formatHHMMSS(timerSeconds)">00:00:00</div>
+                <p class="text-[11px] text-slate-300 mt-1 flex items-center gap-1">
+                    <i class="fa-solid fa-folder text-amber-400"></i>
+                    <span x-text="timerLog ? timerLog.project_name : 'Theo dõi thời gian làm việc'"></span>
+                </p>
             </div>
 
-            <div class="relative z-10 flex items-center gap-2 pt-2">
+            <div class="space-y-2 z-10">
                 <template x-if="!isTimerRunning">
-                    <div class="flex w-full gap-2">
-                        <select x-model="selectedProjectId" class="flex-1 bg-navy-900 border border-navy-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none">
-                            {% for p in my_projects %}
-                            <option value="{{ p.id }}">{{ p.code }}</option>
+                    <div class="space-y-2">
+                        <select x-model="selectedProjectId" class="w-full text-xs bg-slate-800/90 text-white border border-slate-700 rounded-xl px-3 py-2 focus:outline-none focus:border-amber-400">
+                            {% for proj in my_projects %}
+                            <option value="{{ proj.id }}">{{ proj.code }} - {{ proj.title|truncatechars:28 }}</option>
+                            {% empty %}
+                            <option value="">Chưa có đồ án</option>
                             {% endfor %}
                         </select>
-                        <button @click="startTimer()" class="px-4 py-1.5 bg-gold-500 hover:bg-gold-400 text-navy-950 font-bold text-xs rounded-xl transition flex items-center gap-1">
-                            <i class="fa-solid fa-play"></i> Bắt đầu
+                        <button type="button" @click="startTimer()" class="w-full py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-play text-xs"></i>
+                            <span>Bắt đầu làm việc</span>
                         </button>
                     </div>
                 </template>
-
                 <template x-if="isTimerRunning">
-                    <button @click="stopTimer()" class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm">
-                        <i class="fa-solid fa-square"></i> Dừng & Ghi Nhật ký
+                    <button type="button" @click="stopTimer()" class="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-stop text-xs"></i>
+                        <span>Hoàn thành & Lưu nhật ký</span>
                     </button>
                 </template>
             </div>
         </div>
     </div>
 
-    <!-- 4 STAT CARDS GRID -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {% include "includes/_stat_card.html" with title="Tổng đồ án" value=total_projects icon="fa-folder-open" icon_color="blue" subtitle="đồ án trong học kỳ" %}
-        {% include "includes/_stat_card.html" with title="Công việc cần làm" value=my_tasks.count icon="fa-list-check" icon_color="amber" subtitle="tasks được phân công" %}
-        {% include "includes/_stat_card.html" with title="Đang thực hiện" value=in_progress_tasks_count icon="fa-spinner" icon_color="purple" subtitle="công việc đang làm" %}
-        {% include "includes/_stat_card.html" with title="Chú ý trễ hạn" value=overdue_tasks_count icon="fa-triangle-exclamation" icon_color="rose" subtitle="công việc cần xử lý ngay" %}
+    <!-- Stat Cards Row -->
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {% include "includes/_stat_card.html" with title="Đồ án đang làm" value=my_projects.count icon="fa-briefcase" color="blue" href="/projects/" subtitle="Tổng số đồ án" %}
+        {% include "includes/_stat_card.html" with title="Task được giao" value=total_tasks_count icon="fa-list-check" color="purple" href="/my-tasks/" subtitle="Công việc phân công" %}
+        {% include "includes/_stat_card.html" with title="Task đã hoàn thành" value=done_tasks_count icon="fa-circle-check" color="emerald" href="/my-tasks/?status=DONE" subtitle="Tỉ lệ hoàn thành" %}
+        {% include "includes/_stat_card.html" with title="Quá hạn / Cần làm" value=pending_tasks_count icon="fa-triangle-exclamation" color="rose" href="/my-tasks/?filter=overdue" subtitle="Cần chú ý" %}
     </div>
 
-    <!-- Analytics Charts Row -->
+    <!-- Analytics Charts & Quick Actions -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Weekly Progress Bar Chart (2 Cols) -->
-        <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-            <h3 class="font-bold text-slate-900 text-sm mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-chart-column text-navy-800"></i>
-                Tiến độ Task Hoàn thành theo Tuần
-            </h3>
-            <div class="h-64">
+        <!-- Progress Bar Chart (2 cols) -->
+        <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-column text-[#163B65]"></i>
+                     Tiến độ hoàn thành công việc theo tuần
+                </h2>
+                <a href="{% url 'analytics' %}" class="text-xs text-[#163B65] font-bold hover:underline">Chi tiết Analytics &rarr;</a>
+            </div>
+            <div class="h-64 relative">
                 <canvas id="weeklyProgressChart"></canvas>
             </div>
         </div>
 
-        <!-- Completion Gauge (1 Col) -->
-        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
-            <h3 class="font-bold text-slate-900 text-sm mb-2 text-center">Tỷ lệ Hoàn thành Đồ án</h3>
-            <div class="relative flex justify-center items-center my-4">
-                <canvas id="gaugeChart" class="max-w-[200px]"></canvas>
+        <!-- Doughnut Status Chart (1 col) -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-pie text-amber-500"></i>
+                     Tỷ lệ Trạng thái Task
+                </h2>
             </div>
-            <div class="text-center pt-2 border-t border-slate-100">
-                <span class="text-xs text-slate-500">Tổng quan hoàn thành các task được giao</span>
+            <div class="h-56 relative flex items-center justify-center">
+                <canvas id="gaugeChart"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- Projects Table -->
+    <!-- My Projects Table -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center">
-                <i class="fa-solid fa-folder-open text-navy-800 mr-2"></i> Danh sách Đồ án đang thực hiện
+        <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+            <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-folder-open text-[#163B65]"></i>
+                 Danh sách Đồ án của tôi
             </h2>
-            <a href="{% url 'project_create' %}" class="px-4 py-2 bg-navy-800 hover:bg-navy-900 text-white text-xs font-bold rounded-xl shadow-sm transition-all uppercase tracking-wider">
-                + Tạo Đồ án Mới
+            <a href="{% url 'project_create' %}" class="px-3 py-1.5 bg-[#163B65] hover:bg-[#0f2643] text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5">
+                <i class="fa-solid fa-plus text-amber-400"></i>
+                <span>Tạo Đồ án Mới</span>
             </a>
         </div>
-
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs text-slate-900">
-                <thead class="bg-slate-50 text-slate-700 font-bold uppercase text-[10px] border-b border-slate-200">
-                    <tr>
-                        <th class="p-3.5 pl-5">Mã & Tên Đồ án</th>
-                        <th class="p-3.5">Giảng viên Hướng dẫn</th>
-                        <th class="p-3.5">Hạn chót</th>
-                        <th class="p-3.5">Tiến độ</th>
-                        <th class="p-3.5">Trạng thái</th>
-                        <th class="p-3.5 pr-5 text-right whitespace-nowrap">Thao tác</th>
+            <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                        <th class="p-3.5 pl-5">MÃ & TÊN ĐỒ ÁN</th>
+                        <th class="p-3.5">LOẠI ĐỀ TÀI</th>
+                        <th class="p-3.5">MENTOR HƯỚNG DẪN</th>
+                        <th class="p-3.5">TIẾN ĐỘ</th>
+                        <th class="p-3.5">TRẠNG THÁI</th>
+                        <th class="p-3.5 pr-5 text-right">THAO TÁC</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
                     {% for proj in my_projects %}
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <tr class="hover:bg-slate-50/80 transition-colors">
                         <td class="p-3.5 pl-5">
-                            <span class="font-mono font-bold text-[10px] text-slate-400 block">{{ proj.code }}</span>
-                            <a href="{% url 'project_detail' proj.id %}" class="font-bold text-navy-800 hover:underline">{{ proj.name }}</a>
+                            <a href="{% url 'project_detail' proj.id %}" class="font-bold text-[#163B65] hover:underline block">
+                                {{ proj.code }} - {{ proj.title }}
+                            </a>
                         </td>
-                        <td class="p-3.5 font-medium">{{ proj.mentor.display_name|default:"Chưa chọn Mentor" }}</td>
-                        <td class="p-3.5 font-mono text-slate-500">{{ proj.end_date|date:"d/m/Y" }}</td>
-                        <td class="p-3.5 w-36">
+                        <td class="p-3.5">
+                            <span class="px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md font-mono text-[11px] border border-slate-200">
+                                {{ proj.get_category_display }}
+                            </span>
+                        </td>
+                        <td class="p-3.5">
+                            {% if proj.mentor %}
+                            <span class="font-bold text-slate-800">{{ proj.mentor.display_name }}</span>
+                            {% else %}
+                            <span class="text-slate-400 italic">Chưa gán</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-3.5">
                             <div class="flex items-center space-x-2">
-                                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                                    <div class="bg-navy-800 h-full rounded-full" style="width: {{ proj.progress_percentage }}%"></div>
+                                <div class="w-24 bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200">
+                                    <div class="bg-[#163B65] h-full rounded-full" style="width: {{ proj.progress }}%"></div>
                                 </div>
-                                <span class="font-bold text-[11px] text-navy-800">{{ proj.progress_percentage }}%</span>
+                                <span class="font-bold text-slate-900 text-[11px]">{{ proj.progress }}%</span>
                             </div>
                         </td>
                         <td class="p-3.5">
-                            <span class="px-2.5 py-1 text-[10px] font-bold rounded-full border inline-block
-                            {% if proj.status == 'IN_PROGRESS' %}bg-amber-50 text-amber-800 border-amber-200
-                            {% elif proj.status == 'REVIEW' %}bg-purple-50 text-purple-800 border-purple-200
-                            {% elif proj.status == 'COMPLETED' %}bg-emerald-50 text-emerald-800 border-emerald-200
-                            {% else %}bg-slate-100 text-slate-700 border-slate-200{% endif %}">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border
+                            {% if proj.status == 'COMPLETED' %}bg-emerald-50 text-emerald-700 border-emerald-200
+                            {% elif proj.status == 'IN_PROGRESS' %}bg-blue-50 text-blue-700 border-blue-200
+                            {% elif proj.status == 'UNDER_REVIEW' %}bg-purple-50 text-purple-700 border-purple-200
+                            {% else %}bg-amber-50 text-amber-700 border-amber-200{% endif %}">
                                 {{ proj.get_status_display }}
                             </span>
                         </td>
                         <td class="p-3.5 pr-5 text-right whitespace-nowrap">
-                            <a href="{% url 'project_detail' proj.id %}" class="px-3 py-1.5 bg-white text-navy-800 border border-navy-800 hover:bg-navy-50 font-bold text-[11px] rounded-lg transition-all whitespace-nowrap">
+                            <a href="{% url 'project_detail' proj.id %}" class="px-3 py-1.5 bg-white text-[#163B65] border border-[#163B65] hover:bg-blue-50 font-bold text-[11px] rounded-xl transition-all whitespace-nowrap">
                                 Xem chi tiết
                             </a>
                         </td>

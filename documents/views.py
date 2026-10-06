@@ -60,45 +60,55 @@ def document_upload_view(request, project_id):
         return render(request, 'errors/403.html', status=403)
 
     if request.method == 'POST':
-        title = request.POST.get('title')
-        description = request.POST.get('description', '')
-        file_obj = request.FILES.get('file')
-        file_type = request.POST.get('file_type', FileCategory.PDF)
-        
-        is_valid, err_msg = validate_uploaded_file(file_obj)
-        if not is_valid:
-            messages.error(request, err_msg)
-            return redirect('project_documents', project_id=project.id)
+        try:
+            title = request.POST.get('title')
+            description = request.POST.get('description', '')
+            file_obj = request.FILES.get('file')
+            file_type = request.POST.get('file_type', FileCategory.PDF)
+            
+            is_valid, err_msg = validate_uploaded_file(file_obj)
+            if not is_valid:
+                messages.error(request, err_msg)
+                return redirect(request.META.get('HTTP_REFERER') or 'document_list')
 
-        size_mb = round(file_obj.size / (1024 * 1024), 2)
-        doc = Document.objects.create(
-            project=project,
-            uploaded_by=request.user,
-            title=title,
-            file=file_obj,
-            file_type=file_type,
-            file_size=f"{size_mb} MB" if size_mb > 0.1 else f"{round(file_obj.size/1024, 1)} KB",
-            description=description,
-            current_version=1
-        )
-        
-        DocumentVersion.objects.create(
-            document=doc,
-            file=file_obj,
-            version_number=1,
-            uploaded_by=request.user,
-            change_log="Phiên bản khởi tạo ban đầu."
-        )
-        
-        log_action(
-            user=request.user,
-            action=ActionType.UPLOAD_DOCUMENT,
-            entity_type='Document',
-            entity_id=doc.id,
-            description=f'Tải lên tài liệu mới: {title} cho đồ án {project.code}',
-            request=request
-        )
-        messages.success(request, f'Tải lên tài liệu "{title}" thành công!')
+            if not title:
+                title = file_obj.name if file_obj else "Tài liệu không tên"
+
+            size_mb = round(file_obj.size / (1024 * 1024), 2)
+            doc = Document.objects.create(
+                project=project,
+                uploaded_by=request.user,
+                title=title,
+                file=file_obj,
+                file_type=file_type,
+                file_size=f"{size_mb} MB" if size_mb > 0.1 else f"{round(file_obj.size/1024, 1)} KB",
+                description=description,
+                current_version=1
+            )
+            
+            DocumentVersion.objects.create(
+                document=doc,
+                file=file_obj,
+                version_number=1,
+                uploaded_by=request.user,
+                change_log="Phiên bản khởi tạo ban đầu."
+            )
+            
+            log_action(
+                user=request.user,
+                action=ActionType.UPLOAD_DOCUMENT,
+                entity_type='Document',
+                entity_id=doc.id,
+                description=f'Tải lên tài liệu mới: {title} cho đồ án {project.code}',
+                request=request
+            )
+            messages.success(request, f'Tải lên tài liệu "{title}" thành công!')
+        except Exception as e:
+            messages.error(request, f'Lỗi khi tải tài liệu lên: {str(e)}')
+
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
     return redirect('project_documents', project_id=project.id)
 
 @login_required
@@ -106,7 +116,12 @@ def all_document_upload_view(request):
     if request.method == 'POST':
         project_id = request.POST.get('project_id')
         if project_id:
-            return document_upload_view(request, project_id=project_id)
+            try:
+                return document_upload_view(request, project_id=int(project_id))
+            except Exception as e:
+                messages.error(request, f'Lỗi xử lý đồ án: {str(e)}')
+        else:
+            messages.error(request, 'Vui lòng chọn một đồ án trước khi tải tài liệu lên.')
     return redirect('document_list')
 
 @login_required
