@@ -90,18 +90,25 @@
     </div>
 
     <!-- PREVIEW MODAL POPUP (Xem trước Popup Nhỏ) -->
-    <div x-show="previewModalDocId !== null" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4" @click.self="previewModalDocId = null">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[650px] flex flex-col overflow-hidden border border-slate-200">
-            <div class="p-4 bg-navy-900 text-white flex justify-between items-center">
-                <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-file-contract text-gold-400"></i>
-                    <h3 class="font-bold text-sm" x-text="'Xem trước: ' + previewModalTitle"></h3>
+    <div x-show="previewModalDocId !== null" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-4" @click.self="previewModalDocId = null">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl h-[580px] flex flex-col overflow-hidden border border-slate-700/30">
+            <div class="px-5 py-3.5 bg-[#0F172A] text-white flex justify-between items-center border-b border-slate-800">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-slate-800 flex items-center justify-center text-amber-400">
+                        <i class="fa-solid fa-file-contract text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-xs text-white tracking-tight" x-text="previewModalTitle"></h3>
+                        <span class="text-[10px] text-slate-400 font-mono block">Xem trước tài liệu trực tiếp</span>
+                    </div>
                 </div>
-                <button @click="previewModalDocId = null" class="text-slate-300 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+                <button @click="previewModalDocId = null" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
             </div>
-            <div class="flex-1 bg-slate-100 p-2">
+            <div class="flex-1 bg-slate-100 p-2.5">
                 <template x-if="previewModalDocId">
-                    <iframe :src="previewModalUrl" class="w-full h-full rounded-xl border-0"></iframe>
+                    <iframe :src="previewModalUrl" class="w-full h-full rounded-2xl border border-slate-200 bg-white shadow-inner"></iframe>
                 </template>
             </div>
         </div>

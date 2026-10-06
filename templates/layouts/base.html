@@ -168,8 +168,8 @@
     <!-- AUTHENTICATED APP LAYOUT: SIDEBAR + MAIN CONTENT AREA -->
     <div class="flex min-h-screen">
         
-        <!-- Desktop Sidebar -->
-        <div class="hidden md:block">
+        <!-- Desktop Sidebar (Fixed Sticky on Scroll) -->
+        <div class="hidden md:block sticky top-0 h-screen z-30 shrink-0">
             {% include "includes/_sidebar.html" %}
         </div>
 

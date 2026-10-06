@@ -126,6 +126,7 @@ if 'test' in sys.argv:
     }
 
 WHITENOISE_MANIFEST_STRICT = False
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 AUTH_USER_MODEL = 'accounts.User'
 

@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.contrib import messages
+from django.http import Http404, FileResponse
 from documents.models import Document, DocumentVersion, FileCategory
 from projects.models import Project
 from projects.permissions import user_can_access_project
@@ -177,6 +179,7 @@ def document_download_view(request, document_id):
     return FileResponse(doc.file.open('rb'), as_attachment=True, filename=f"{doc.title}.{ext}")
 
 @login_required
+@xframe_options_sameorigin
 def document_preview_view(request, document_id):
     doc = get_object_or_404(Document, id=document_id)
     if not user_can_access_project(request.user, doc.project):
@@ -219,6 +222,7 @@ def document_preview_view(request, document_id):
 
 
 @login_required
+@xframe_options_sameorigin
 def document_raw_view(request, document_id):
     doc = get_object_or_404(Document, id=document_id)
     if not user_can_access_project(request.user, doc.project):
