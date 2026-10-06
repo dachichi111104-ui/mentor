@@ -1,0 +1,124 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Báo cáo & Phân tích KPI | PROJECTHUB AI{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="{
+    period: '30D',
+    kpis: {
+        completed_tasks: 0,
+        working_hours: 0,
+        ontime_rate: 100,
+        avg_cycle_time: '2.4 ngày'
+    },
+    topContributors: [],
+    fetchData() {
+        fetch(`/api/v1/analytics/data/?period=${this.period}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    this.kpis = data.kpis;
+                    this.topContributors = data.top_contributors;
+                }
+            });
+    },
+    init() {
+        this.fetchData();
+    }
+}">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Thống kê & Phân tích Hiệu suất (Analytics)</h1>
+            <p class="text-sm text-slate-500 mt-1">Báo cáo trực quan KPI công việc, thời lượng làm việc và tốc độ hoàn thành đồ án</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <!-- Period Selector -->
+            <div class="bg-slate-100 p-1 rounded-xl flex items-center gap-1 text-xs font-semibold">
+                <button @click="period = '7D'; fetchData();" :class="period === '7D' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'" class="px-3 py-1.5 rounded-lg transition">7 ngày</button>
+                <button @click="period = '30D'; fetchData();" :class="period === '30D' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'" class="px-3 py-1.5 rounded-lg transition">30 ngày</button>
+                <button @click="period = '90D'; fetchData();" :class="period === '90D' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'" class="px-3 py-1.5 rounded-lg transition">90 ngày</button>
+            </div>
+
+            <!-- Export Buttons -->
+            <a href="{% url 'analytics_export_csv' %}" class="px-3.5 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-file-csv"></i>
+                Xuất CSV
+            </a>
+            <a href="{% url 'analytics_export_pdf' %}" target="_blank" class="px-3.5 py-2 bg-navy-800 text-white rounded-xl text-xs font-bold hover:bg-navy-900 transition flex items-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-file-pdf"></i>
+                In Báo cáo PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- 4 KPI Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-xs font-semibold text-slate-500 block mb-1">Task Hoàn thành</span>
+                <span class="text-2xl font-black text-slate-900" x-text="kpis.completed_tasks"></span>
+            </div>
+            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-xs font-semibold text-slate-500 block mb-1">Tổng Giờ Làm Việc</span>
+                <span class="text-2xl font-black text-slate-900" x-text="kpis.working_hours + 'h'"></span>
+            </div>
+            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                <i class="fa-solid fa-clock"></i>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-xs font-semibold text-slate-500 block mb-1">Tỷ lệ Đúng hạn</span>
+                <span class="text-2xl font-black text-slate-900" x-text="kpis.ontime_rate + '%'"></span>
+            </div>
+            <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                <i class="fa-solid fa-bullseye"></i>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-xs font-semibold text-slate-500 block mb-1">Thời gian Xử lý TB</span>
+                <span class="text-2xl font-black text-slate-900" x-text="kpis.avg_cycle_time"></span>
+            </div>
+            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                <i class="fa-solid fa-bolt"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Contributors Table -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <h3 class="font-bold text-slate-900 text-lg mb-4">Thành viên Đóng góp Tích cực nhất (Top Contributors)</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                    <tr class="border-b border-slate-100 text-xs text-slate-400 uppercase font-semibold">
+                        <th class="py-3 px-4">Thành viên</th>
+                        <th class="py-3 px-4 text-right">Task Hoàn thành</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    <template x-for="c in topContributors" :key="c.name">
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="py-3 px-4 flex items-center gap-3">
+                                <img :src="c.avatar" class="w-8 h-8 rounded-full object-cover">
+                                <span class="font-bold text-slate-900" x-text="c.name"></span>
+                            </td>
+                            <td class="py-3 px-4 text-right font-bold text-emerald-600" x-text="c.done_count + ' tasks'"></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

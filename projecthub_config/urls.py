@@ -18,7 +18,7 @@ from django.contrib.auth import views as auth_views
 urlpatterns = [
     path('django-admin/', admin.site.urls),
 
-    # Dashboard & Landing
+    # Landing & Dashboard
     path('', dashboard_views.landing_view, name='landing'),
     path('dashboard/', dashboard_views.dashboard_view, name='dashboard'),
     path('admin/users/', dashboard_views.admin_users_view, name='admin_users'),
@@ -27,12 +27,29 @@ urlpatterns = [
     path('admin/users/<int:user_id>/change-role/', dashboard_views.admin_user_change_role_view, name='admin_change_user_role'),
     path('admin/audit-logs/', dashboard_views.admin_audit_log_view, name='admin_audit_log'),
     path('search/', dashboard_views.global_search_view, name='global_search'),
+    path('api/v1/global-search-json/', dashboard_views.global_search_json_view, name='global_search_json'),
+    path('api/v1/dashboard-analytics/', dashboard_views.dashboard_analytics_json_view, name='dashboard_analytics_json'),
 
-    # Accounts & Auth
+    # Time Tracker
+    path('api/v1/time-tracker/start/', dashboard_views.time_tracker_start_view, name='time_tracker_start'),
+    path('api/v1/time-tracker/stop/', dashboard_views.time_tracker_stop_view, name='time_tracker_stop'),
+    path('api/v1/time-tracker/status/', dashboard_views.time_tracker_status_view, name='time_tracker_status'),
+
+    # Analytics Page & Exports
+    path('analytics/', dashboard_views.analytics_page_view, name='analytics'),
+    path('analytics-page/', dashboard_views.analytics_page_view, name='analytics_page'),
+    path('api/v1/analytics/data/', dashboard_views.analytics_data_json_view, name='analytics_data_json'),
+    path('analytics/export/csv/', dashboard_views.analytics_export_csv_view, name='analytics_export_csv'),
+    path('analytics/export/pdf/', dashboard_views.analytics_export_pdf_view, name='analytics_export_pdf'),
+
+    # Accounts & Settings
     path('login/', account_views.login_view, name='login'),
     path('register/', account_views.register_view, name='register'),
     path('logout/', account_views.logout_view, name='logout'),
     path('profile/', account_views.profile_view, name='profile'),
+    path('settings/', account_views.settings_page_view, name='settings'),
+    path('settings-page/', account_views.settings_page_view, name='settings_page'),
+    path('api/v1/user/settings/', account_views.user_settings_api_view, name='user_settings_api'),
     path('profile/change-password/', account_views.change_password_view, name='change_password'),
     path('users/<int:user_id>/avatar/', account_views.avatar_view, name='user_avatar'),
     path('forgot-password/', account_views.forgot_password_view, name='forgot_password'),
@@ -47,7 +64,7 @@ urlpatterns = [
         template_name='accounts/password_reset_complete.html'
     ), name='password_reset_complete'),
 
-    # Projects
+    # Projects & Team
     path('projects/', project_views.project_list_view, name='project_list'),
     path('projects/create/', project_views.project_create_view, name='project_create'),
     path('projects/<int:project_id>/', project_views.project_detail_view, name='project_detail'),
@@ -56,6 +73,10 @@ urlpatterns = [
     path('projects/<int:project_id>/member-accept/', project_views.project_member_accept_view, name='project_member_accept'),
     path('projects/<int:project_id>/mentor-accept/', project_views.project_mentor_accept_view, name='project_mentor_accept'),
     path('projects/<int:project_id>/mentor-reject/', project_views.project_mentor_reject_view, name='project_mentor_reject'),
+    path('team/', project_views.team_page_view, name='team'),
+    path('team-page/', project_views.team_page_view, name='team_page'),
+    path('api/v1/projects/<int:project_id>/chat/send/', project_views.project_chat_send_view, name='project_chat_send'),
+    path('api/v1/projects/<int:project_id>/chat/messages/', project_views.project_chat_messages_view, name='project_chat_messages'),
 
     # Tasks & Kanban Board
     path('projects/<int:project_id>/tasks/', task_views.project_tasks_view, name='project_tasks'),
@@ -63,11 +84,25 @@ urlpatterns = [
     path('projects/<int:project_id>/tasks/create/', task_views.task_create_view, name='task_create'),
     path('tasks/<int:task_id>/update-status/', task_views.task_update_status_view, name='task_update_status'),
     path('tasks/<int:task_id>/comment/', task_views.task_comment_view, name='task_comment'),
+    path('api/v1/tasks/reorder/', task_views.task_reorder_view, name='task_reorder'),
+    path('tasks/<int:task_id>/edit/', task_views.task_edit_view, name='task_edit'),
+    path('tasks/<int:task_id>/delete/', task_views.task_delete_view, name='task_delete'),
+    path('tasks/<int:task_id>/duplicate/', task_views.task_duplicate_view, name='task_duplicate'),
+    path('tasks/<int:task_id>/detail-json/', task_views.task_detail_json_view, name='task_detail_json'),
+    path('tasks/<int:task_id>/checklist/add/', task_views.task_checklist_add_view, name='task_checklist_add'),
+    path('tasks/checklist/<int:item_id>/toggle/', task_views.task_checklist_toggle_view, name='task_checklist_toggle'),
+    path('tasks/checklist/<int:item_id>/delete/', task_views.task_checklist_delete_view, name='task_checklist_delete'),
 
-    # Milestones
+    # Milestones & Calendar
     path('projects/<int:project_id>/milestones/', milestone_views.project_milestones_view, name='project_milestones'),
     path('projects/<int:project_id>/milestones/create/', milestone_views.milestone_create_view, name='milestone_create'),
     path('milestones/<int:milestone_id>/delete/', milestone_views.milestone_delete_view, name='milestone_delete'),
+    path('calendar/', milestone_views.calendar_page_view, name='calendar'),
+    path('calendar-page/', milestone_views.calendar_page_view, name='calendar_page'),
+    path('api/v1/calendar/events/', milestone_views.calendar_events_json_view, name='calendar_events_json'),
+    path('calendar/events/create/', milestone_views.event_create_view, name='event_create'),
+    path('calendar/appointments/book/', milestone_views.appointment_book_view, name='appointment_book'),
+    path('calendar/export-ics/', milestone_views.calendar_export_ics_view, name='calendar_export_ics'),
 
     # Documents
     path('projects/<int:project_id>/documents/', document_views.project_documents_view, name='project_documents'),
@@ -94,6 +129,7 @@ urlpatterns = [
 
     # AI Assistant
     path('ai/assistant/', ai_views.ai_assistant_page_view, name='ai_assistant_page'),
+    path('ai/chat/', ai_views.ai_chat_ajax, name='ai_chat'),
     path('ai/task-breakdown/', ai_views.ai_task_breakdown_ajax, name='ai_task_breakdown'),
     path('ai/accept-tasks/', ai_views.ai_accept_tasks_ajax, name='ai_accept_tasks'),
     path('ai/weekly-summary/', ai_views.ai_weekly_summary_ajax, name='ai_weekly_summary'),

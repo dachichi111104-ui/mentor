@@ -1,0 +1,22 @@
+{% comment %}
+Reusable Empty State Component
+Usage:
+{% include "includes/_empty_state.html" with icon="fa-folder-open" title="Chưa có đồ án" description="Bạn chưa tham gia đồ án nào." action_url="/projects/create/" action_text="Tạo đồ án mới" %}
+{% endcomment %}
+<div class="py-12 px-6 text-center space-y-4 max-w-md mx-auto">
+    <div class="w-16 h-16 mx-auto rounded-2xl bg-[#163B65]/10 border border-[#163B65]/20 flex items-center justify-center text-accent-primary text-2xl shadow-sm">
+        <i class="fa-solid {{ icon|default:'fa-inbox' }}"></i>
+    </div>
+    <div class="space-y-1">
+        <h3 class="text-base font-bold text-slate-900 tracking-tight">{{ title|default:"Không có dữ liệu" }}</h3>
+        <p class="text-xs text-slate-500 leading-relaxed">{{ description|default:"Hiện chưa có nội dung nào để hiển thị." }}</p>
+    </div>
+    {% if action_url %}
+    <div class="pt-2">
+        <a href="{{ action_url }}" class="inline-flex items-center space-x-2 px-4 py-2 bg-accent-primary hover:bg-accent-hover text-white text-xs font-bold rounded-xl shadow-sm transition-all uppercase tracking-wider">
+            {% if action_icon %}<i class="fa-solid {{ action_icon }}"></i>{% endif %}
+            <span>{{ action_text|default:"Thêm mới" }}</span>
+        </a>
+    </div>
+    {% endif %}
+</div>

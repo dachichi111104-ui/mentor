@@ -63,4 +63,4 @@ class Command(BaseCommand):
                     )
                     milestone_count += 1
 
-        self.stdout.write(self.style.SUCCESS(f'Hoàn thành kiểm tra: Đã tạo {task_count} thông báo task quá hạn, cập nhật {milestone_count} milestone quá hạn.'))
+        self.stdout.write(self.style.SUCCESS(f'Kiem tra xong: Da tao {task_count} thong bao task qua han, cap nhat {milestone_count} milestone qua han.'))

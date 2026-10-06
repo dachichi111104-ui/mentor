@@ -1,0 +1,42 @@
+{% comment %}
+Reusable Slide-out Drawer Component (Right side)
+{% endcomment %}
+<div x-show="{{ show_binding|default:'drawerOpen' }}"
+     x-cloak
+     class="fixed inset-0 z-50 overflow-hidden">
+    <!-- Backdrop -->
+    <div x-show="{{ show_binding|default:'drawerOpen' }}"
+         x-transition:enter="transition-opacity ease-linear duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition-opacity ease-linear duration-300"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click="{{ show_binding|default:'drawerOpen' }} = false"
+         class="fixed inset-0 bg-slate-950/50 backdrop-blur-xs"></div>
+
+    <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+        <!-- Panel -->
+        <div x-show="{{ show_binding|default:'drawerOpen' }}"
+             x-transition:enter="transform transition ease-in-out duration-300 sm:duration-500"
+             x-transition:enter-start="translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transform transition ease-in-out duration-300 sm:duration-500"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="translate-x-full"
+             class="w-screen {{ drawer_width|default:'max-w-md' }} bg-white shadow-2xl border-l border-slate-200 flex flex-col justify-between">
+            <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    {% if drawer_icon %}<i class="fa-solid {{ drawer_icon }} text-accent-primary"></i>{% endif %}
+                    <h3 class="text-base font-bold text-slate-900 tracking-tight">{{ drawer_title|default:"Chi tiết" }}</h3>
+                </div>
+                <button @click="{{ show_binding|default:'drawerOpen' }} = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+            <div class="p-6 flex-1 overflow-y-auto custom-scrollbar text-xs text-slate-700 space-y-4">
+                {{ drawer_content|safe }}
+            </div>
+        </div>
+    </div>
+</div>

@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.contrib import messages
-from tasks.models import Task, TaskComment, TaskStatus, TaskPriority
+from tasks.models import Task, TaskComment, TaskStatus, TaskPriority, TaskChecklistItem
 from projects.models import Project, ProjectMember
 from projects.permissions import user_can_access_project
 from audit_log.models import ActionType
@@ -150,3 +150,194 @@ def task_comment_view(request, task_id):
             )
             messages.success(request, 'Đã gửi bình luận!')
     return redirect('project_tasks', project_id=task.project.id)
+
+
+@login_required
+def task_reorder_view(request):
+    if request.method == 'POST':
+        task_id = request.POST.get('task_id')
+        new_status = request.POST.get('status')
+        order_index = request.POST.get('order_index', 0)
+
+        task = get_object_or_404(Task, id=task_id)
+        if not user_can_access_project(request.user, task.project):
+            return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+
+        if new_status in TaskStatus.values:
+            task.status = new_status
+            task.order_index = int(order_index)
+            task.save()
+            log_action(
+                user=request.user,
+                action=ActionType.UPDATE_TASK,
+                entity_type='Task',
+                entity_id=task.id,
+                description=f'Di chuyển task "{task.title}" sang {task.get_status_display()}',
+                request=request
+            )
+            return JsonResponse({'status': 'success', 'task_id': task.id, 'new_status': new_status})
+    return JsonResponse({'status': 'error', 'message': 'Yêu cầu không hợp lệ'}, status=400)
+
+
+@login_required
+def task_edit_view(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    if not user_can_access_project(request.user, task.project):
+        return render(request, 'errors/403.html', status=403)
+
+    if request.method == 'POST':
+        task.title = request.POST.get('title', task.title)
+        task.description = request.POST.get('description', task.description)
+        task.priority = request.POST.get('priority', task.priority)
+        task.status = request.POST.get('status', task.status)
+        assignee_id = request.POST.get('assignee_id')
+        milestone_id = request.POST.get('milestone_id')
+
+        task.assignee_id = assignee_id if assignee_id else None
+        task.milestone_id = milestone_id if milestone_id else None
+        due_date = request.POST.get('due_date')
+        if due_date:
+            task.due_date = due_date
+        task.labels = request.POST.get('labels', task.labels)
+        task.save()
+
+        messages.success(request, f'Cập nhật công việc "{task.title}" thành công!')
+        log_action(
+            user=request.user,
+            action=ActionType.UPDATE_TASK,
+            entity_type='Task',
+            entity_id=task.id,
+            description=f'Chỉnh sửa thông tin công việc "{task.title}"',
+            request=request
+        )
+        return redirect('project_tasks', project_id=task.project.id)
+
+    return JsonResponse({'status': 'error', 'message': 'Yêu cầu không hợp lệ'}, status=400)
+
+
+@login_required
+def task_delete_view(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    project_id = task.project.id
+    if not user_can_access_project(request.user, task.project):
+        return render(request, 'errors/403.html', status=403)
+
+    if request.method == 'POST':
+        title = task.title
+        task.delete()
+        messages.success(request, f'Đã xóa công việc "{title}".')
+        log_action(
+            user=request.user,
+            action=ActionType.DELETE_TASK,
+            entity_type='Task',
+            entity_id=task_id,
+            description=f'Xóa công việc "{title}" khỏi dự án',
+            request=request
+        )
+        return redirect('project_tasks', project_id=project_id)
+    return JsonResponse({'status': 'error', 'message': 'Yêu cầu không hợp lệ'}, status=400)
+
+
+@login_required
+def task_duplicate_view(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    if not user_can_access_project(request.user, task.project):
+        return render(request, 'errors/403.html', status=403)
+
+    new_task = Task.objects.create(
+        project=task.project,
+        title=f"{task.title} (Bản sao)",
+        description=task.description,
+        priority=task.priority,
+        status=TaskStatus.TODO,
+        assignee=task.assignee,
+        milestone=task.milestone,
+        due_date=task.due_date,
+        labels=task.labels,
+        created_by=request.user
+    )
+    messages.success(request, f'Đã nhân bản công việc thành "{new_task.title}".')
+    return redirect('project_tasks', project_id=task.project.id)
+
+
+@login_required
+def task_detail_json_view(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    if not user_can_access_project(request.user, task.project):
+        return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+
+    checklist_items = task.checklist_items.all()
+    comments = task.comments.all().select_related('user')
+
+    return JsonResponse({
+        'status': 'success',
+        'task': {
+            'id': task.id,
+            'title': task.title,
+            'description': task.description,
+            'status': task.status,
+            'status_display': task.get_status_display(),
+            'priority': task.priority,
+            'priority_display': task.get_priority_display(),
+            'assignee_id': task.assignee.id if task.assignee else None,
+            'assignee_name': task.assignee.display_name if task.assignee else 'Chưa giao',
+            'due_date': task.due_date.strftime('%Y-%m-%d') if task.due_date else None,
+            'labels': task.labels or '',
+            'progress': task.checklist_progress,
+            'checklist': [{'id': item.id, 'title': item.title, 'is_completed': item.is_completed} for item in checklist_items],
+            'comments': [{'id': c.id, 'user_name': c.user.display_name, 'user_avatar': c.user.get_avatar_url(), 'content': c.content, 'created_at': c.created_at.strftime('%H:%M %d/%m/%Y')} for c in comments],
+        }
+    })
+
+
+@login_required
+def task_checklist_add_view(request, task_id):
+    if request.method == 'POST':
+        task = get_object_or_404(Task, id=task_id)
+        if not user_can_access_project(request.user, task.project):
+            return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+
+        title = request.POST.get('title')
+        if title:
+            item = TaskChecklistItem.objects.create(task=task, title=title)
+            return JsonResponse({
+                'status': 'success',
+                'item': {'id': item.id, 'title': item.title, 'is_completed': item.is_completed},
+                'progress': task.checklist_progress
+            })
+    return JsonResponse({'status': 'error'}, status=400)
+
+
+@login_required
+def task_checklist_toggle_view(request, item_id):
+    if request.method == 'POST':
+        item = get_object_or_404(TaskChecklistItem, id=item_id)
+        if not user_can_access_project(request.user, item.task.project):
+            return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+
+        item.is_completed = not item.is_completed
+        item.save()
+
+        return JsonResponse({
+            'status': 'success',
+            'is_completed': item.is_completed,
+            'progress': item.task.checklist_progress
+        })
+    return JsonResponse({'status': 'error'}, status=400)
+
+
+@login_required
+def task_checklist_delete_view(request, item_id):
+    if request.method == 'POST':
+        item = get_object_or_404(TaskChecklistItem, id=item_id)
+        if not user_can_access_project(request.user, item.task.project):
+            return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+
+        task = item.task
+        item.delete()
+        return JsonResponse({
+            'status': 'success',
+            'progress': task.checklist_progress
+        })
+    return JsonResponse({'status': 'error'}, status=400)
+

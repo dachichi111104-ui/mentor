@@ -1,0 +1,42 @@
+{% comment %}
+Reusable Stat Card Component with Count-Up support
+Usage:
+{% include "includes/_stat_card.html" with title="Tổng đồ án" value=12 subtitle="Đang thực hiện" icon="fa-folder-tree" icon_bg="bg-blue-50 text-[#163B65]" %}
+{% endcomment %}
+<div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-200 relative overflow-hidden group">
+    <div class="flex items-start justify-between">
+        <div class="space-y-1">
+            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">{{ title }}</span>
+            <div class="flex items-baseline space-x-2">
+                <span class="text-3xl font-extrabold text-slate-900 tracking-tight"
+                      x-data="{ count: 0, target: {{ value|default:0 }} }"
+                      x-init="
+                          let duration = 800;
+                          let start = 0;
+                          let stepTime = Math.abs(Math.floor(duration / (target || 1)));
+                          if (target > 0) {
+                              let timer = setInterval(() => {
+                                  start += 1;
+                                  count = start;
+                                  if (start >= target) clearInterval(timer);
+                              }, stepTime || 20);
+                          } else { count = 0; }
+                      "
+                      x-text="count">
+                    {{ value|default:0 }}
+                </span>
+                {% if badge_text %}
+                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full {{ badge_class|default:'bg-emerald-50 text-emerald-700 border border-emerald-200' }}">
+                    {{ badge_text }}
+                </span>
+                {% endif %}
+            </div>
+            {% if subtitle %}
+            <p class="text-xs text-slate-500 leading-snug">{{ subtitle }}</p>
+            {% endif %}
+        </div>
+        <div class="w-11 h-11 rounded-2xl {{ icon_bg|default:'bg-slate-100 text-slate-700' }} flex items-center justify-center text-lg border border-slate-200/50 shadow-xs group-hover:scale-110 transition-transform">
+            <i class="fa-solid {{ icon|default:'fa-chart-simple' }}"></i>
+        </div>
+    </div>
+</div>

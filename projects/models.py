@@ -100,3 +100,19 @@ class ProjectMember(models.Model):
 
     def __str__(self):
         return f"{self.user.display_name} - {self.project.name} ({self.get_role_display()})"
+
+
+class Message(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='messages', verbose_name="Đồ án")
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_project_messages', verbose_name="Người gửi")
+    content = models.TextField(verbose_name="Nội dung tin nhắn")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Thời gian gửi")
+
+    class Meta:
+        ordering = ['created_at']
+        verbose_name = "Tin nhắn đồ án"
+        verbose_name_plural = "Danh sách Tin nhắn đồ án"
+
+    def __str__(self):
+        return f"{self.sender.display_name} in {self.project.code}: {self.content[:30]}"
+

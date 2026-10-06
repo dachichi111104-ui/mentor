@@ -1,0 +1,168 @@
+<!-- SIDEBAR NAVIGATION COMPONENT -->
+<aside class="w-64 bg-slate-900 text-slate-100 flex-shrink-0 flex flex-col justify-between min-h-screen border-r border-slate-800 shadow-xl select-none">
+    
+    <!-- Top Branding Header -->
+    <div class="p-5 border-b border-slate-800 flex items-center space-x-3">
+        <a href="{% url 'dashboard' %}" class="flex items-center space-x-3 group">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-accent-primary to-[#1e3a5f] flex items-center justify-center text-white font-bold text-lg shadow-md group-hover:scale-105 transition-transform">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div>
+                <span class="font-extrabold text-white text-base tracking-tight block leading-none">PROJECTHUB</span>
+                <span class="text-[10px] text-slate-400 font-bold tracking-wider uppercase block mt-1">CỔNG QUẢN LÝ ĐỒ ÁN</span>
+            </div>
+        </a>
+    </div>
+
+    <!-- Main Navigation Menu List -->
+    <nav class="p-3 flex-1 overflow-y-auto space-y-6 custom-scrollbar text-xs">
+        
+        <!-- SECTION 1: CHÍNH (MAIN) -->
+        <div class="space-y-1">
+            <span class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Bảng điều khiển</span>
+            
+            <a href="{% url 'dashboard' %}"
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all relative group
+               {% if request.resolver_match.url_name == 'dashboard' %}bg-accent-primary text-white shadow-md border-l-4 border-accent-gold{% else %}text-slate-300 hover:bg-slate-800/80 hover:text-white{% endif %}">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-chart-line text-sm w-4"></i>
+                    <span>Tổng quan (Dashboard)</span>
+                </div>
+            </a>
+
+            {% if request.user.is_admin_user %}
+            <a href="{% url 'admin_users' %}"
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               {% if request.resolver_match.url_name == 'admin_users' %}bg-accent-primary text-white shadow-md border-l-4 border-accent-gold{% else %}text-slate-300 hover:bg-slate-800/80 hover:text-white{% endif %}">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-users-gear text-sm w-4"></i>
+                    <span>Quản lý Tài khoản</span>
+                </div>
+            </a>
+            {% endif %}
+
+            <a href="{% url 'project_list' %}"
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               {% if request.resolver_match.url_name in 'project_list,project_detail,project_create' %}bg-accent-primary text-white shadow-md border-l-4 border-accent-gold{% else %}text-slate-300 hover:bg-slate-800/80 hover:text-white{% endif %}">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-folder-tree text-sm w-4"></i>
+                    <span>{% if request.user.is_student %}Đồ án của tôi{% elif request.user.is_mentor %}Đồ án Hướng dẫn{% else %}Quản lý Đồ án{% endif %}</span>
+                </div>
+            </a>
+
+            <a href="{% url 'my_tasks' %}"
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               {% if request.resolver_match.url_name in 'my_tasks,project_tasks' %}bg-accent-primary text-white shadow-md border-l-4 border-accent-gold{% else %}text-slate-300 hover:bg-slate-800/80 hover:text-white{% endif %}">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-list-check text-sm w-4"></i>
+                    <span>Công việc (Kanban)</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- SECTION 2: QUẢN LÝ DỰ ÁN & TEAMWORK -->
+        <div class="space-y-1">
+            <span class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Đội ngũ & Tiến độ</span>
+
+            <a href="{% url 'team_page' %}"
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               {% if request.resolver_match.url_name == 'team_page' %}bg-accent-primary text-white shadow-md border-l-4 border-accent-gold{% else %}text-slate-300 hover:bg-slate-800/80 hover:text-white{% endif %}">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-users text-sm w-4"></i>
+                    <span>Thành viên & Team</span>
+                </div>
+            </a>
+
+            <a href="{% url 'calendar_page' %}"
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               {% if request.resolver_match.url_name == 'calendar_page' %}bg-accent-primary text-white shadow-md border-l-4 border-accent-gold{% else %}text-slate-300 hover:bg-slate-800/80 hover:text-white{% endif %}">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-calendar-days text-sm w-4"></i>
+                    <span>Lịch & Sự kiện</span>
+                </div>
+            </a>
+
+            <a href="{% url 'document_list' %}"
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               {% if request.resolver_match.url_name in 'document_list,project_documents,document_preview' %}bg-accent-primary text-white shadow-md border-l-4 border-accent-gold{% else %}text-slate-300 hover:bg-slate-800/80 hover:text-white{% endif %}">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-file-lines text-sm w-4"></i>
+                    <span>Kho Tài liệu</span>
+                </div>
+            </a>
+
+            {% if request.user.is_mentor %}
+            <a href="{% url 'mentor_reviews' %}"
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               {% if request.resolver_match.url_name == 'mentor_reviews' %}bg-accent-primary text-white shadow-md border-l-4 border-accent-gold{% else %}text-slate-300 hover:bg-slate-800/80 hover:text-white{% endif %}">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-clipboard-check text-sm w-4"></i>
+                    <span>Review & Đánh giá</span>
+                </div>
+            </a>
+            {% endif %}
+
+            <a href="{% url 'analytics_page' %}"
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               {% if request.resolver_match.url_name == 'analytics_page' %}bg-accent-primary text-white shadow-md border-l-4 border-accent-gold{% else %}text-slate-300 hover:bg-slate-800/80 hover:text-white{% endif %}">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-chart-pie text-sm w-4"></i>
+                    <span>Phân tích & Thống kê</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- SECTION 3: HỆ THỐNG & CÀI ĐẶT -->
+        <div class="space-y-1">
+            <span class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Hệ thống & AI</span>
+
+            {% if not request.user.is_admin_user %}
+            <a href="{% url 'ai_assistant_page' %}"
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               {% if request.resolver_match.url_name == 'ai_assistant_page' %}bg-accent-primary text-white shadow-md border-l-4 border-accent-gold{% else %}text-slate-300 hover:bg-slate-800/80 hover:text-white{% endif %}">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-robot text-sm w-4 text-amber-400"></i>
+                    <span>Trợ lý AI</span>
+                </div>
+                <span class="px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded-full font-bold text-[9px]">REAL</span>
+            </a>
+            {% endif %}
+
+            <a href="{% url 'settings_page' %}"
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               {% if request.resolver_match.url_name == 'settings_page' %}bg-accent-primary text-white shadow-md border-l-4 border-accent-gold{% else %}text-slate-300 hover:bg-slate-800/80 hover:text-white{% endif %}">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-gear text-sm w-4"></i>
+                    <span>Cài đặt hệ thống</span>
+                </div>
+            </a>
+
+            {% if request.user.is_admin_user %}
+            <a href="{% url 'admin_audit_log' %}"
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               {% if request.resolver_match.url_name == 'admin_audit_log' %}bg-accent-primary text-white shadow-md border-l-4 border-accent-gold{% else %}text-slate-300 hover:bg-slate-800/80 hover:text-white{% endif %}">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-shield-halved text-sm w-4"></i>
+                    <span>Nhật ký Hệ thống</span>
+                </div>
+            </a>
+            {% endif %}
+        </div>
+
+    </nav>
+
+    <!-- Bottom Promo Card (Mobile App Promo Card) -->
+    <div class="p-3 border-t border-slate-800">
+        <div class="p-3.5 bg-gradient-to-br from-slate-800 to-slate-850 rounded-2xl border border-slate-700/60 space-y-2 text-xs">
+            <div class="flex items-center space-x-2 text-amber-400">
+                <i class="fa-solid fa-[#F2B705] fa-mobile-screen-button text-sm"></i>
+                <span class="font-bold text-slate-100">ProjectHub App</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-tight">Theo dõi tiến độ & thông báo đồ án mọi lúc trên thiết bị di động.</p>
+            <a href="{% url 'settings_page' %}" class="block text-center py-1.5 bg-accent-primary hover:bg-accent-hover text-white font-bold text-[11px] rounded-xl transition-all shadow-xs">
+                Tải ứng dụng
+            </a>
+        </div>
+    </div>
+
+</aside>

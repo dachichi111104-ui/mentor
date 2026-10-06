@@ -120,3 +120,19 @@ class TaskComment(models.Model):
 
     def __str__(self):
         return f"{self.user.display_name} on {self.task.title}"
+
+
+class TaskChecklistItem(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='checklist_items', verbose_name="Công việc")
+    title = models.CharField(max_length=255, verbose_name="Nội dung mục cần làm")
+    is_completed = models.BooleanField(default=False, verbose_name="Đã hoàn thành")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+        verbose_name = "Checklist công việc"
+        verbose_name_plural = "Danh sách Checklist công việc"
+
+    def __str__(self):
+        return f"{self.task.title} - {self.title} ({'OK' if self.is_completed else 'Pending'})"
+

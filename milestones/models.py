@@ -39,3 +39,38 @@ class Milestone(models.Model):
             return 100 if self.status == MilestoneStatus.COMPLETED else 0
         completed_tasks = self.tasks.filter(status='DONE').count()
         return int((completed_tasks / total_tasks) * 100)
+
+
+class EventType(models.TextChoices):
+    MEETING = 'MEETING', 'Họp nhóm / Mentor'
+    REVIEW = 'REVIEW', 'Đánh giá / Nộp bản thảo'
+    DEADLINE = 'DEADLINE', 'Hạn chót công việc'
+    PERSONAL = 'PERSONAL', 'Cá nhân / Lịch hẹn'
+
+
+class EventStatus(models.TextChoices):
+    PENDING = 'PENDING', 'Chờ xác nhận'
+    ACCEPTED = 'ACCEPTED', 'Đã xác nhận'
+    REJECTED = 'REJECTED', 'Đã từ chối'
+
+
+class Event(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='events', verbose_name="Đồ án")
+    title = models.CharField(max_length=255, verbose_name="Tiêu đề sự kiện")
+    event_type = models.CharField(max_length=20, choices=EventType.choices, default=EventType.MEETING, verbose_name="Loại sự kiện")
+    start = models.DateTimeField(verbose_name="Bắt đầu")
+    end = models.DateTimeField(null=True, blank=True, verbose_name="Kết thúc")
+    participants = models.ManyToManyField('accounts.User', blank=True, related_name='calendar_events', verbose_name="Thành viên tham gia")
+    link = models.CharField(max_length=500, blank=True, null=True, verbose_name="Link Họp trực tuyến")
+    status = models.CharField(max_length=20, choices=EventStatus.choices, default=EventStatus.ACCEPTED, verbose_name="Trạng thái xác nhận")
+    created_by = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='created_events', verbose_name="Người tạo")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['start']
+        verbose_name = "Sự kiện lịch"
+        verbose_name_plural = "Danh sách Sự kiện lịch"
+
+    def __str__(self):
+        return f"[{self.get_event_type_display()}] {self.title} ({self.start.strftime('%d/%m/%Y %H:%M')})"
+

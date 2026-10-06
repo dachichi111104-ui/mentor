@@ -225,3 +225,95 @@ def project_mentor_reject_view(request, project_id):
     )
     messages.warning(request, f'Bạn đã từ chối nhận hướng dẫn đồ án {project.name}.')
     return redirect('dashboard')
+
+
+@login_required
+def team_page_view(request):
+    user = request.user
+    role_filter = request.GET.get('role', '')
+    dept_filter = request.GET.get('department', '')
+    query = request.GET.get('q', '')
+
+    members = User.objects.filter(status='ACTIVE').order_by('first_name')
+
+    if query:
+        members = members.filter(Q(first_name__icontains=query) | Q(last_name__icontains=query) | Q(email__icontains=query) | Q(username__icontains=query))
+    if role_filter:
+        members = members.filter(role=role_filter)
+    if dept_filter:
+        members = members.filter(department__icontains=dept_filter)
+
+    member_data = []
+    for m in members:
+        assigned_tasks = Task.objects.filter(assignee=m)
+        open_count = assigned_tasks.exclude(status=TaskStatus.DONE).count()
+        done_count = assigned_tasks.filter(status=TaskStatus.DONE).count()
+        workload = min(100, open_count * 20)
+
+        member_data.append({
+            'user': m,
+            'open_count': open_count,
+            'done_count': done_count,
+            'workload': workload,
+            'is_high_workload': workload > 80,
+        })
+
+    my_projects = Project.objects.filter(memberships__user=user) if not user.is_admin_user else Project.objects.all()
+
+    return render(request, 'projects/team.html', {
+        'members_data': member_data,
+        'role_filter': role_filter,
+        'dept_filter': dept_filter,
+        'query': query,
+        'my_projects': my_projects,
+    })
+
+
+@login_required
+def project_chat_send_view(request, project_id):
+    from projects.models import Message
+    project = get_object_or_404(Project, id=project_id)
+    if not user_can_access_project(request.user, project):
+        return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+
+    if request.method == 'POST':
+        content = request.POST.get('content', '').strip()
+        if content:
+            msg = Message.objects.create(
+                project=project,
+                sender=request.user,
+                content=content
+            )
+            return JsonResponse({
+                'status': 'success',
+                'message': {
+                    'id': msg.id,
+                    'sender_name': msg.sender.display_name,
+                    'sender_avatar': msg.sender.get_avatar_url(),
+                    'content': msg.content,
+                    'created_at': msg.created_at.strftime('%H:%M %d/%m')
+                }
+            })
+    return JsonResponse({'status': 'error', 'message': 'Yêu cầu không hợp lệ'}, status=400)
+
+
+@login_required
+def project_chat_messages_view(request, project_id):
+    from projects.models import Message
+    project = get_object_or_404(Project, id=project_id)
+    if not user_can_access_project(request.user, project):
+        return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+
+    messages_qs = project.messages.select_related('sender').order_by('created_at')[:50]
+    msg_list = [{
+        'id': m.id,
+        'sender_id': m.sender.id,
+        'sender_name': m.sender.display_name,
+        'sender_avatar': m.sender.get_avatar_url(),
+        'content': m.content,
+        'created_at': m.created_at.strftime('%H:%M %d/%m'),
+        'is_me': (m.sender == request.user)
+    } for m in messages_qs]
+
+    return JsonResponse({'status': 'success', 'messages': msg_list})
+

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Báo cáo Đồ án - PROJECTHUB AI</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; margin: 40px; color: #1e293b; background: #fff; }
+        .header { border-bottom: 2px solid #163B65; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+        h1 { color: #163B65; margin: 0; font-size: 24px; }
+        .meta { font-size: 12px; color: #64748b; margin-top: 4px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+        th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; }
+        th { background: #f8fafc; color: #1e293b; font-weight: bold; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; display: inline-block; }
+        .badge-done { background: #dcfce7; color: #166534; }
+        .badge-progress { background: #fef3c7; color: #92400e; }
+        @media print {
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="margin-bottom: 20px; text-align: right;">
+        <button onclick="window.print()" style="padding: 8px 16px; background: #163B65; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">In Báo Cáo / Lưu PDF</button>
+    </div>
+
+    <div class="header">
+        <div>
+            <h1>BÁO CÁO TỔNG QUAN ĐỒ ÁN (PROJECTHUB AI)</h1>
+            <div class="meta">Người xuất: {{ user.display_name }} ({{ user.get_role_display }}) | Thời gian: {{ generated_at }}</div>
+        </div>
+    </div>
+
+    <h2>Danh sách Đồ án Đang Thực hiện</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Mã Đồ án</th>
+                <th>Tên Đồ án</th>
+                <th>Thể loại</th>
+                <th>Công nghệ</th>
+                <th>Mentor</th>
+                <th>Trạng thái</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in projects %}
+            <tr>
+                <td><strong>{{ p.code }}</strong></td>
+                <td>{{ p.name }}</td>
+                <td>{{ p.get_category_display }}</td>
+                <td>{{ p.technology }}</td>
+                <td>{{ p.mentor.display_name|default:"Chưa phân công" }}</td>
+                <td><span class="badge badge-progress">{{ p.get_status_display }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2 style="margin-top: 32px;">Danh sách Công việc (Tasks)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tiêu đề Task</th>
+                <th>Đồ án</th>
+                <th>Người thực hiện</th>
+                <th>Độ ưu tiên</th>
+                <th>Trạng thái</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in tasks %}
+            <tr>
+                <td>#{{ t.id }}</td>
+                <td>{{ t.title }}</td>
+                <td>{{ t.project.name }}</td>
+                <td>{{ t.assignee.display_name|default:"Chưa giao" }}</td>
+                <td>{{ t.get_priority_display }}</td>
+                <td><span class="badge {% if t.status == 'DONE' %}badge-done{% else %}badge-progress{% endif %}">{{ t.get_status_display }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

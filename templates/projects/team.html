@@ -1,0 +1,165 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Đội ngũ & Thành viên | PROJECTHUB AI{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="{
+    activeTab: 'members',
+    selectedMember: null,
+    showDrawer: false,
+    showChatModal: false,
+    chatProjectId: '{{ my_projects.first.id|default:"" }}',
+    chatMessages: [],
+    newMessage: '',
+    fetchMessages() {
+        if (!this.chatProjectId) return;
+        fetch(`/api/v1/projects/${this.chatProjectId}/chat/messages/`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    this.chatMessages = data.messages;
+                }
+            });
+    },
+    sendMessage() {
+        if (!this.newMessage.trim() || !this.chatProjectId) return;
+        const formData = new FormData();
+        formData.append('content', this.newMessage);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        fetch(`/api/v1/projects/${this.chatProjectId}/chat/send/`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                this.chatMessages.push(data.message);
+                this.newMessage = '';
+            }
+        });
+    }
+}">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Thành viên & Tải công việc (Team & Workload)</h1>
+            <p class="text-sm text-slate-500 mt-1">Theo dõi danh sách sinh viên, giảng viên mentor và khối lượng công việc đang xử lý</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button @click="showChatModal = true; fetchMessages();" class="px-4 py-2 bg-navy-800 text-white rounded-xl text-sm font-medium hover:bg-navy-900 transition flex items-center gap-2 shadow-sm">
+                <i class="fa-solid fa-comments"></i>
+                Chat Nhóm Đồ án
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <form method="GET" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap gap-4 items-center">
+        <div class="flex-1 min-w-[200px] relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+            <input type="text" name="q" value="{{ query }}" placeholder="Tìm theo tên, email, mssv..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-navy-600">
+        </div>
+        <div class="w-48">
+            <select name="role" onchange="this.form.submit()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-navy-600">
+                <option value="">-- Vai trò (Tất cả) --</option>
+                <option value="STUDENT" {% if role_filter == 'STUDENT' %}selected{% endif %}>Sinh viên</option>
+                <option value="MENTOR" {% if role_filter == 'MENTOR' %}selected{% endif %}>Giảng viên Mentor</option>
+                <option value="ADMIN" {% if role_filter == 'ADMIN' %}selected{% endif %}>Quản trị viên</option>
+            </select>
+        </div>
+        {% if query or role_filter %}
+        <a href="{% url 'team' %}" class="px-3 py-2 text-slate-600 hover:text-slate-900 text-sm font-medium">Clear</a>
+        {% endif %}
+    </form>
+
+    <!-- Team Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {% for item in members_data %}
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition group">
+            <div class="flex items-start justify-between">
+                <div class="flex items-center gap-3">
+                    <img src="{{ item.user.get_avatar_url }}" alt="{{ item.user.display_name }}" class="w-12 h-12 rounded-full object-cover border-2 border-slate-100">
+                    <div>
+                        <h3 class="font-bold text-slate-900 group-hover:text-navy-700 transition">{{ item.user.display_name }}</h3>
+                        <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold mt-1 {% if item.user.role == 'MENTOR' %}bg-purple-100 text-purple-700{% elif item.user.role == 'ADMIN' %}bg-rose-100 text-rose-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                            {{ item.user.get_role_display }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workload Bar -->
+            <div class="mt-4 pt-4 border-t border-slate-100">
+                <div class="flex justify-between text-xs font-semibold mb-1">
+                    <span class="text-slate-500">Khối lượng (Workload):</span>
+                    <span class="{% if item.is_high_workload %}text-rose-600 font-bold{% else %}text-emerald-600{% endif %}">{{ item.workload }}%</span>
+                </div>
+                <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-500 {% if item.is_high_workload %}bg-rose-500{% else %}bg-navy-600{% endif %}" style="width: {{ item.workload }}%;"></div>
+                </div>
+                {% if item.is_high_workload %}
+                <p class="text-[11px] text-rose-600 font-medium mt-1"><i class="fa-solid fa-triangle-exclamation"></i> Tải công việc cao (&gt;80%)</p>
+                {% endif %}
+            </div>
+
+            <!-- Task Quick Stats -->
+            <div class="grid grid-cols-2 gap-2 mt-4 text-center">
+                <div class="bg-slate-50 p-2 rounded-lg">
+                    <span class="block text-xs text-slate-500">Đang thực hiện</span>
+                    <span class="font-bold text-slate-900 text-sm">{{ item.open_count }}</span>
+                </div>
+                <div class="bg-emerald-50 p-2 rounded-lg">
+                    <span class="block text-xs text-emerald-700">Đã xong</span>
+                    <span class="font-bold text-emerald-800 text-sm">{{ item.done_count }}</span>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full py-12 text-center bg-white rounded-2xl border border-slate-200">
+            <i class="fa-solid fa-users-slash text-4xl text-slate-300 mb-3 block"></i>
+            <p class="text-slate-500">Không tìm thấy thành viên phù hợp với bộ lọc.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Chat Modal -->
+    <div x-show="showChatModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" @click.self="showChatModal = false">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden border border-slate-200 flex flex-col h-[550px]">
+            <div class="p-4 bg-navy-900 text-white flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-comments text-gold-400 text-lg"></i>
+                    <div>
+                        <h3 class="font-bold">Trò chuyện Đồ án (Project Chat)</h3>
+                        <p class="text-xs text-slate-300">Trao đổi trực tiếp giữa Sinh viên và Mentor</p>
+                    </div>
+                </div>
+                <button @click="showChatModal = false" class="text-slate-300 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <!-- Messages Area -->
+            <div class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50">
+                <template x-for="msg in chatMessages" :key="msg.id">
+                    <div class="flex items-start gap-2.5" :class="msg.is_me ? 'flex-row-reverse' : ''">
+                        <img :src="msg.sender_avatar" class="w-8 h-8 rounded-full object-cover">
+                        <div class="max-w-[75%]">
+                            <div class="flex items-center gap-2 mb-1" :class="msg.is_me ? 'justify-end' : ''">
+                                <span class="text-xs font-semibold text-slate-700" x-text="msg.sender_name"></span>
+                                <span class="text-[10px] text-slate-400" x-text="msg.created_at"></span>
+                            </div>
+                            <div class="p-3 rounded-2xl text-xs leading-relaxed" :class="msg.is_me ? 'bg-navy-800 text-white rounded-tr-none' : 'bg-white text-slate-800 border border-slate-200 shadow-sm rounded-tl-none'">
+                                <p x-text="msg.content"></p>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Input Bar -->
+            <div class="p-3 bg-white border-t border-slate-200 flex items-center gap-2">
+                <input type="text" x-model="newMessage" @keydown.enter="sendMessage()" placeholder="Nhập tin nhắn..." class="flex-1 px-4 py-2.5 bg-slate-100 rounded-xl text-sm border-0 focus:outline-none focus:ring-2 focus:ring-navy-600">
+                <button @click="sendMessage()" class="px-4 py-2.5 bg-navy-800 text-white rounded-xl text-sm font-medium hover:bg-navy-900 transition"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

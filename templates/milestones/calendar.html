@@ -1,0 +1,169 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Lịch Đồ án & Cuộc hẹn | PROJECTHUB AI{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="{
+    showEventModal: false,
+    showBookModal: false,
+    events: [],
+    init() {
+        fetch('/api/v1/calendar/events/')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    this.events = data.events;
+                }
+            });
+    }
+}">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Lịch Tiến độ & Cuộc hẹn (Calendar)</h1>
+            <p class="text-sm text-slate-500 mt-1">Tổng hợp hạn chót công việc, cột mốc Milestone và lịch hẹn trao đổi với Mentor</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'calendar_export_ics' %}" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-200 transition flex items-center gap-2">
+                <i class="fa-solid fa-file-export"></i>
+                Xuất Lịch (.ics)
+            </a>
+            <button @click="showBookModal = true" class="px-4 py-2 bg-gold-500 text-navy-950 rounded-xl text-sm font-bold hover:bg-gold-400 transition flex items-center gap-2 shadow-sm">
+                <i class="fa-regular fa-calendar-plus"></i>
+                Đặt Lịch Hẹn Mentor
+            </button>
+            <button @click="showEventModal = true" class="px-4 py-2 bg-navy-800 text-white rounded-xl text-sm font-medium hover:bg-navy-900 transition flex items-center gap-2 shadow-sm">
+                <i class="fa-solid fa-plus"></i>
+                Thêm Sự kiện
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Calendar Grid Area (2 Cols) -->
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-4">
+                <h3 class="font-bold text-slate-900 text-lg">Danh sách Sự kiện Lịch</h3>
+                <span class="text-xs bg-navy-50 text-navy-800 px-3 py-1 rounded-full font-semibold" x-text="events.length + ' sự kiện'"></span>
+            </div>
+
+            <div class="space-y-3">
+                <template x-for="ev in events" :key="ev.id">
+                    <div class="p-4 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-300 transition shadow-xs flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-3 h-10 rounded-full" :style="`background-color: ${ev.color}`"></div>
+                            <div>
+                                <h4 class="font-bold text-slate-900 text-sm" x-text="ev.title"></h4>
+                                <div class="flex items-center gap-3 text-xs text-slate-500 mt-1">
+                                    <span><i class="fa-regular fa-folder text-slate-400"></i> <span x-text="ev.project_name"></span></span>
+                                    <span><i class="fa-regular fa-clock text-slate-400"></i> <span x-text="ev.start.split('T')[0]"></span></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-700" x-text="ev.type_display"></span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Sidebar Panel (1 Col) -->
+        <div class="space-y-6">
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                <h3 class="font-bold text-slate-900 mb-3 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-navy-700"></i>
+                    Sắp tới (Upcoming Events)
+                </h3>
+                <div class="space-y-3">
+                    {% for ev in upcoming_events %}
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-semibold text-slate-900 text-xs">{{ ev.title }}</h4>
+                            <span class="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">{{ ev.get_event_type_display }}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1"><i class="fa-regular fa-clock"></i> {{ ev.start|date:"H:i d/m/Y" }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-xs text-slate-400 italic">Chưa có sự kiện nào sắp tới.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Event Modal -->
+    <div x-show="showEventModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 border border-slate-200">
+            <h3 class="font-bold text-lg text-slate-900 mb-4">Thêm Sự kiện Lịch Mới</h3>
+            <form method="POST" action="{% url 'event_create' %}" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Đồ án liên quan</label>
+                    <select name="project_id" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-navy-600">
+                        {% for p in my_projects %}
+                        <option value="{{ p.id }}">{{ p.code }} - {{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Tiêu đề sự kiện</label>
+                    <input type="text" name="title" required placeholder="VD: Họp duyệt giao diện v1..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-navy-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Loại sự kiện</label>
+                    <select name="event_type" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-navy-600">
+                        <option value="MEETING">Họp nhóm / Mentor</option>
+                        <option value="REVIEW">Đánh giá / Nộp bản thảo</option>
+                        <option value="DEADLINE">Hạn chót công việc</option>
+                        <option value="PERSONAL">Cá nhân / Lịch hẹn</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Thời gian bắt đầu</label>
+                    <input type="datetime-local" name="start" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-navy-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Link họp trực tuyến (Google Meet/MS Teams)</label>
+                    <input type="url" name="link" placeholder="https://meet.google.com/..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-navy-600">
+                </div>
+                <div class="flex justify-end gap-3 pt-3">
+                    <button type="button" @click="showEventModal = false" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200">Hủy</button>
+                    <button type="submit" class="px-4 py-2 bg-navy-800 text-white rounded-lg text-sm font-bold hover:bg-navy-900">Lưu Sự Kiện</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Book Appointment Modal -->
+    <div x-show="showBookModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 border border-slate-200">
+            <h3 class="font-bold text-lg text-slate-900 mb-4">Đặt Lịch Hẹn Với Mentor</h3>
+            <form method="POST" action="{% url 'appointment_book' %}" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Chọn Đồ án</label>
+                    <select name="project_id" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-navy-600">
+                        {% for p in my_projects %}
+                        <option value="{{ p.id }}">{{ p.code }} - {{ p.name }} (Mentor: {{ p.mentor.display_name|default:"Chưa chọn" }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nội dung cuộc hẹn</label>
+                    <input type="text" name="title" required placeholder="VD: Góp ý thiết kế CSDL và kiến trúc..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-navy-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Thời gian đề xuất</label>
+                    <input type="datetime-local" name="start" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-navy-600">
+                </div>
+                <div class="flex justify-end gap-3 pt-3">
+                    <button type="button" @click="showBookModal = false" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200">Hủy</button>
+                    <button type="submit" class="px-4 py-2 bg-gold-500 text-navy-950 rounded-lg text-sm font-bold hover:bg-gold-400">Gửi Yêu Cầu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -177,3 +177,44 @@ def avatar_view(request, user_id):
     if not target.avatar:
         raise Http404("Avatar không tồn tại.")
     return FileResponse(target.avatar.open('rb'), as_attachment=False)
+
+
+from accounts.models import UserPreference
+from django.http import JsonResponse
+
+@login_required
+def settings_page_view(request):
+    user = request.user
+    pref, created = UserPreference.objects.get_or_create(user=user)
+    profile_form = ProfileUpdateForm(instance=user)
+    password_form = PasswordChangeForm(user)
+
+    if request.method == 'POST':
+        theme = request.POST.get('theme')
+        if theme in ['NAVY', 'FOREST', 'PLUM', 'EMBER']:
+            pref.theme = theme
+            pref.email_notifications = request.POST.get('email_notifications') == 'on'
+            pref.push_notifications = request.POST.get('push_notifications') == 'on'
+            pref.week_start = request.POST.get('week_start', 'MONDAY')
+            pref.save()
+            messages.success(request, 'Đã lưu cài đặt giao diện và hệ thống thành công.')
+            return redirect('settings')
+
+    return render(request, 'accounts/settings.html', {
+        'pref': pref,
+        'profile_form': profile_form,
+        'password_form': password_form,
+    })
+
+
+@login_required
+def user_settings_api_view(request):
+    if request.method == 'POST':
+        pref, created = UserPreference.objects.get_or_create(user=request.user)
+        theme = request.POST.get('theme')
+        if theme in ['NAVY', 'FOREST', 'PLUM', 'EMBER']:
+            pref.theme = theme
+            pref.save()
+            return JsonResponse({'status': 'success', 'theme': pref.theme})
+    return JsonResponse({'status': 'error', 'message': 'Yêu cầu không hợp lệ'}, status=400)
+

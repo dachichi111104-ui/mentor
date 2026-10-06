@@ -402,3 +402,35 @@ def ai_mentor_questions_ajax(request):
         return JsonResponse({'status': 'success', 'questions_html': q_html})
 
     return JsonResponse({'status': 'error'}, status=400)
+
+
+@login_required
+def ai_chat_ajax(request):
+    if request.method == 'POST':
+        project_id = request.POST.get('project_id')
+        user_message = request.POST.get('message', '').strip()
+        if not user_message:
+            return JsonResponse({'status': 'error', 'message': 'Tin nhắn không được để trống.'}, status=400)
+
+        project = None
+        if project_id:
+            project = Project.objects.filter(id=project_id).first()
+
+        context_prompt = f"Bạn là Trợ lý AI ProjectHub AI hỗ trợ tư vấn học thuật, hướng dẫn lập trình và quản lý đồ án. Người dùng hỏi: {user_message}"
+        if project:
+            context_prompt = f"Dự án: {project.name} ({project.code}), Công nghệ: {project.technology}. Hãy trả lời câu hỏi sau của sinh viên/mentor: {user_message}"
+
+        answer = call_llm_api(context_prompt)
+        if not answer:
+            answer = f"Cảm ơn bạn đã hỏi về '{user_message}'. Với đồ án {project.name if project else 'của bạn'}, hãy tập trung chia nhỏ task, quản lý mốc milestone rõ ràng và kiểm thử kỹ lưỡng trước khi báo cáo với Mentor."
+
+        AIRequest.objects.create(
+            user=request.user,
+            project=project,
+            prompt_type=AIPromptType.MENTOR_QUESTIONS,
+            input_data=user_message,
+            output_result=answer
+        )
+        return JsonResponse({'status': 'success', 'answer': answer})
+    return JsonResponse({'status': 'error'}, status=400)
+

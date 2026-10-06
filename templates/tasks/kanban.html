@@ -4,142 +4,185 @@
 {% block breadcrumb %}{{ project.code }} / Kanban Board{% endblock %}
 
 {% block content %}
-<div class="space-y-6" x-data="{ createTaskModal: false }">
+<div class="space-y-6" x-data="{
+    createTaskModal: false,
+    selectedTask: null,
+    showDrawer: false,
+    filterMode: 'ALL',
+    searchQuery: '',
+    checklistTitle: '',
 
+    openTaskDetail(taskId) {
+        fetch(`/tasks/${taskId}/detail-json/`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    this.selectedTask = data.task;
+                    this.showDrawer = true;
+                }
+            });
+    },
+
+    toggleChecklist(itemId) {
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        fetch(`/tasks/checklist/${itemId}/toggle/`, { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success' && this.selectedTask) {
+                    const item = this.selectedTask.checklist.find(i => i.id === itemId);
+                    if (item) item.is_completed = data.is_completed;
+                    this.selectedTask.progress = data.progress;
+                }
+            });
+    },
+
+    addChecklist() {
+        if (!this.checklistTitle.trim() || !this.selectedTask) return;
+        const formData = new FormData();
+        formData.append('title', this.checklistTitle);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        fetch(`/tasks/${this.selectedTask.id}/checklist/add/`, { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    this.selectedTask.checklist.push(data.item);
+                    this.selectedTask.progress = data.progress;
+                    this.checklistTitle = '';
+                }
+            });
+    }
+}">
     <!-- Header Bar -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
             <div class="flex items-center space-x-2">
-                <span class="px-2 py-0.5 bg-[#173F91] text-white font-mono font-bold text-[10px] rounded">{{ project.code }}</span>
-                <span class="text-xs text-[#667085] font-semibold">{{ project.name }}</span>
+                <span class="px-2.5 py-0.5 bg-navy-800 text-white font-mono font-bold text-[10px] rounded-md">{{ project.code }}</span>
+                <span class="text-xs text-slate-500 font-semibold">{{ project.name }}</span>
             </div>
-            <h1 class="text-xl font-bold text-[#172033] tracking-tight mt-1">Bảng công việc Kanban</h1>
-            <p class="text-xs text-[#667085]">Kéo thả các thẻ công việc giữa các cột để cập nhật trạng thái thực hiện.</p>
+            <h1 class="text-xl font-bold text-slate-900 tracking-tight mt-1">Bảng công việc Kanban</h1>
+            <p class="text-xs text-slate-500">SortableJS kéo thả mượt mà, lưu thứ tự và quản lý công việc chi tiết</p>
         </div>
 
         <div class="flex items-center space-x-2.5">
-            <a href="{% url 'project_detail' project.id %}" class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs rounded border border-[#D9DEE8]">
+            <a href="{% url 'project_detail' project.id %}" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">
                 ← Về trang Đồ án
             </a>
-            <button @click="createTaskModal = true" class="px-4 py-2 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded uppercase tracking-wider transition-colors">
+            <button @click="createTaskModal = true" class="px-4 py-2 bg-navy-800 hover:bg-navy-900 text-white font-bold text-xs rounded-xl shadow-sm transition">
                 + Tạo Task Mới
             </button>
         </div>
     </div>
 
-    <!-- Navigation Sub-Tabs -->
-    <div class="flex items-center space-x-1 border-b border-[#D9DEE8] overflow-x-auto text-xs font-semibold uppercase tracking-wider">
-        <a href="{% url 'project_detail' project.id %}" class="px-4 py-2.5 text-[#667085] hover:text-[#173F91] hover:bg-white">
-            Tổng quan (Overview)
-        </a>
-        <a href="{% url 'project_tasks' project.id %}" class="px-4 py-2.5 bg-[#173F91] text-white border-b-2 border-[#F2B705]">
-            Công việc Kanban
-        </a>
-        <a href="{% url 'project_milestones' project.id %}" class="px-4 py-2.5 text-[#667085] hover:text-[#173F91] hover:bg-white">
-            Milestones & Giai đoạn
-        </a>
-        <a href="{% url 'project_documents' project.id %}" class="px-4 py-2.5 text-[#667085] hover:text-[#173F91] hover:bg-white">
-            Kho Tài liệu
-        </a>
+    <!-- Filter Bar & Sub-Tabs -->
+    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <!-- Filter Tabs -->
+        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+            <button @click="filterMode = 'ALL'" :class="filterMode === 'ALL' ? 'bg-white text-navy-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'" class="px-3 py-1.5 rounded-lg transition">Tất cả ({{ todo_tasks.count|add:in_progress_tasks.count|add:review_tasks.count|add:done_tasks.count }})</button>
+            <button @click="filterMode = 'MINE'" :class="filterMode === 'MINE' ? 'bg-white text-navy-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'" class="px-3 py-1.5 rounded-lg transition">Của tôi</button>
+            <button @click="filterMode = 'HIGH'" :class="filterMode === 'HIGH' ? 'bg-white text-navy-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'" class="px-3 py-1.5 rounded-lg transition">Ưu tiên cao</button>
+        </div>
+
+        <!-- Search Input -->
+        <div class="w-full md:w-64 relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" x-model="searchQuery" placeholder="Tìm task trong board..." class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-navy-600">
+        </div>
     </div>
 
     <!-- KANBAN BOARD COLUMNS -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start overflow-x-auto pb-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start pb-6">
         
         <!-- COLUMN 1: TODO -->
-        <div class="bg-[#F5F7FA] rounded p-3 border border-[#D9DEE8] min-h-[480px]"
-             ondragover="event.preventDefault()" 
-             ondrop="dropTask(event, 'TODO')">
-            <div class="flex items-center justify-between mb-2.5 px-1 border-b border-slate-200 pb-2">
-                <span class="text-xs font-bold text-[#172033] uppercase tracking-wider">Cần làm (TODO)</span>
-                <span class="px-2 py-0.5 bg-slate-200 text-[#172033] font-bold text-[10px] rounded border border-slate-300">{{ todo_tasks.count }}</span>
+        <div class="bg-slate-50/80 rounded-2xl p-4 border border-slate-200 min-h-[500px]">
+            <div class="flex items-center justify-between mb-3 px-1 pb-2 border-b border-slate-200">
+                <span class="text-xs font-bold text-slate-800 tracking-wider">Cần làm (TODO)</span>
+                <span class="px-2 py-0.5 bg-slate-200 text-slate-800 font-bold text-[10px] rounded-full">{{ todo_tasks.count }}</span>
             </div>
 
-            <div class="space-y-2.5" id="col-TODO">
+            <div class="space-y-3 sortable-col" id="col-TODO" data-status="TODO">
                 {% for task in todo_tasks %}
                 {% include "tasks/task_card.html" with task=task %}
                 {% empty %}
-                <div class="p-6 text-center text-xs text-[#667085] border border-dashed border-[#D9DEE8] rounded bg-white">Trống</div>
+                <div class="p-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl bg-white">Trống</div>
                 {% endfor %}
             </div>
         </div>
 
         <!-- COLUMN 2: IN_PROGRESS -->
-        <div class="bg-[#F5F7FA] rounded p-3 border border-[#D9DEE8] min-h-[480px]"
-             ondragover="event.preventDefault()" 
-             ondrop="dropTask(event, 'IN_PROGRESS')">
-            <div class="flex items-center justify-between mb-2.5 px-1 border-b border-slate-200 pb-2">
-                <span class="text-xs font-bold text-amber-800 uppercase tracking-wider">Đang làm (IN PROGRESS)</span>
-                <span class="px-2 py-0.5 bg-amber-100 text-amber-900 font-bold text-[10px] rounded border border-amber-200">{{ in_progress_tasks.count }}</span>
+        <div class="bg-slate-50/80 rounded-2xl p-4 border border-slate-200 min-h-[500px]">
+            <div class="flex items-center justify-between mb-3 px-1 pb-2 border-b border-slate-200">
+                <span class="text-xs font-bold text-amber-800 tracking-wider">Đang làm (IN PROGRESS)</span>
+                <span class="px-2 py-0.5 bg-amber-100 text-amber-900 font-bold text-[10px] rounded-full">{{ in_progress_tasks.count }}</span>
             </div>
+            {% if in_progress_tasks.count > 5 %}
+            <div class="mb-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-[10px] font-semibold text-amber-800 flex items-center gap-1.5">
+                <i class="fa-solid fa-triangle-exclamation"></i> Cảnh báo WIP Limit (&gt;5 tasks)!
+            </div>
+            {% endif %}
 
-            <div class="space-y-2.5" id="col-IN_PROGRESS">
+            <div class="space-y-3 sortable-col" id="col-IN_PROGRESS" data-status="IN_PROGRESS">
                 {% for task in in_progress_tasks %}
                 {% include "tasks/task_card.html" with task=task %}
                 {% empty %}
-                <div class="p-6 text-center text-xs text-[#667085] border border-dashed border-[#D9DEE8] rounded bg-white">Trống</div>
+                <div class="p-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl bg-white">Trống</div>
                 {% endfor %}
             </div>
         </div>
 
         <!-- COLUMN 3: REVIEW -->
-        <div class="bg-[#F5F7FA] rounded p-3 border border-[#D9DEE8] min-h-[480px]"
-             ondragover="event.preventDefault()" 
-             ondrop="dropTask(event, 'REVIEW')">
-            <div class="flex items-center justify-between mb-2.5 px-1 border-b border-slate-200 pb-2">
-                <span class="text-xs font-bold text-purple-800 uppercase tracking-wider">Chờ Review</span>
-                <span class="px-2 py-0.5 bg-purple-100 text-purple-900 font-bold text-[10px] rounded border border-purple-200">{{ review_tasks.count }}</span>
+        <div class="bg-slate-50/80 rounded-2xl p-4 border border-slate-200 min-h-[500px]">
+            <div class="flex items-center justify-between mb-3 px-1 pb-2 border-b border-slate-200">
+                <span class="text-xs font-bold text-purple-800 tracking-wider">Chờ Review</span>
+                <span class="px-2 py-0.5 bg-purple-100 text-purple-900 font-bold text-[10px] rounded-full">{{ review_tasks.count }}</span>
             </div>
 
-            <div class="space-y-2.5" id="col-REVIEW">
+            <div class="space-y-3 sortable-col" id="col-REVIEW" data-status="REVIEW">
                 {% for task in review_tasks %}
                 {% include "tasks/task_card.html" with task=task %}
                 {% empty %}
-                <div class="p-6 text-center text-xs text-[#667085] border border-dashed border-[#D9DEE8] rounded bg-white">Trống</div>
+                <div class="p-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl bg-white">Trống</div>
                 {% endfor %}
             </div>
         </div>
 
         <!-- COLUMN 4: DONE -->
-        <div class="bg-[#F5F7FA] rounded p-3 border border-[#D9DEE8] min-h-[480px]"
-             ondragover="event.preventDefault()" 
-             ondrop="dropTask(event, 'DONE')">
-            <div class="flex items-center justify-between mb-2.5 px-1 border-b border-slate-200 pb-2">
-                <span class="text-xs font-bold text-emerald-800 uppercase tracking-wider">Hoàn thành (DONE)</span>
-                <span class="px-2 py-0.5 bg-emerald-100 text-emerald-900 font-bold text-[10px] rounded border border-emerald-200">{{ done_tasks.count }}</span>
+        <div class="bg-slate-50/80 rounded-2xl p-4 border border-slate-200 min-h-[500px]">
+            <div class="flex items-center justify-between mb-3 px-1 pb-2 border-b border-slate-200">
+                <span class="text-xs font-bold text-emerald-800 tracking-wider">Hoàn thành (DONE)</span>
+                <span class="px-2 py-0.5 bg-emerald-100 text-emerald-900 font-bold text-[10px] rounded-full">{{ done_tasks.count }}</span>
             </div>
 
-            <div class="space-y-2.5" id="col-DONE">
+            <div class="space-y-3 sortable-col" id="col-DONE" data-status="DONE">
                 {% for task in done_tasks %}
                 {% include "tasks/task_card.html" with task=task %}
                 {% empty %}
-                <div class="p-6 text-center text-xs text-[#667085] border border-dashed border-[#D9DEE8] rounded bg-white">Trống</div>
+                <div class="p-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl bg-white">Trống</div>
                 {% endfor %}
             </div>
         </div>
-
     </div>
 
     <!-- Create Task Modal -->
-    <div x-show="createTaskModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-        <div class="bg-white rounded max-w-lg w-full p-6 shadow-md border border-[#D9DEE8] space-y-4" @click.away="createTaskModal = false">
-            <h3 class="text-base font-bold text-[#172033]">Tạo Công việc Mới</h3>
+    <div x-show="createTaskModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200 space-y-4" @click.away="createTaskModal = false">
+            <h3 class="text-base font-bold text-slate-900">Tạo Công việc Mới</h3>
             <form method="post" action="{% url 'task_create' project.id %}" class="space-y-3.5">
                 {% csrf_token %}
                 <div>
-                    <label class="block text-xs font-semibold text-[#172033] mb-1">Tiêu đề Công việc *</label>
-                    <input type="text" name="title" required class="w-full px-3 py-2 rounded border border-[#D9DEE8] text-xs">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Tiêu đề Công việc *</label>
+                    <input type="text" name="title" required class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-navy-600">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-[#172033] mb-1">Chi tiết / Yêu cầu</label>
-                    <textarea name="description" rows="3" class="w-full px-3 py-2 rounded border border-[#D9DEE8] text-xs"></textarea>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Chi tiết / Yêu cầu</label>
+                    <textarea name="description" rows="3" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-navy-600"></textarea>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-[#172033] mb-1">Độ ưu tiên</label>
-                        <select name="priority" class="w-full px-3 py-2 rounded border border-[#D9DEE8] text-xs">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Độ ưu tiên</label>
+                        <select name="priority" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-navy-600">
                             <option value="LOW">Thấp</option>
                             <option value="MEDIUM" selected>Trung bình</option>
                             <option value="HIGH">Cao</option>
@@ -148,8 +191,8 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-[#172033] mb-1">Người thực hiện</label>
-                        <select name="assignee_id" class="w-full px-3 py-2 rounded border border-[#D9DEE8] text-xs">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Người thực hiện</label>
+                        <select name="assignee_id" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-navy-600">
                             <option value="">-- Chưa phân công --</option>
                             {% for m in members %}
                             <option value="{{ m.user.id }}">{{ m.user.display_name }}</option>
@@ -160,8 +203,8 @@
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-[#172033] mb-1">Giai đoạn (Milestone)</label>
-                        <select name="milestone_id" class="w-full px-3 py-2 rounded border border-[#D9DEE8] text-xs">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Giai đoạn (Milestone)</label>
+                        <select name="milestone_id" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-navy-600">
                             <option value="">-- Không chọn --</option>
                             {% for ms in milestones %}
                             <option value="{{ ms.id }}">{{ ms.name }}</option>
@@ -170,51 +213,114 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-[#172033] mb-1">Hạn hoàn thành</label>
-                        <input type="date" name="due_date" class="w-full px-3 py-2 rounded border border-[#D9DEE8] text-xs">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Hạn hoàn thành</label>
+                        <input type="date" name="due_date" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-navy-600">
                     </div>
                 </div>
 
-                <div class="flex justify-end space-x-2 pt-2 border-t border-slate-100">
-                    <button type="button" @click="createTaskModal = false" class="px-3 py-1.5 text-xs font-bold text-slate-500">Hủy</button>
-                    <button type="submit" class="px-4 py-1.5 bg-[#173F91] text-white font-bold text-xs rounded uppercase tracking-wider">Tạo Task</button>
+                <div class="flex justify-end space-x-2 pt-3 border-t border-slate-100">
+                    <button type="button" @click="createTaskModal = false" class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700">Hủy</button>
+                    <button type="submit" class="px-4 py-2 bg-navy-800 text-white font-bold text-xs rounded-xl shadow-sm hover:bg-navy-900 transition">Tạo Task</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Task Detail Drawer (Slide-Over Right) -->
+    <div x-show="showDrawer" x-cloak class="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-xs">
+        <div class="w-full max-w-lg bg-white h-full shadow-2xl p-6 overflow-y-auto space-y-6" @click.away="showDrawer = false">
+            <template x-if="selectedTask">
+                <div class="space-y-6">
+                    <div class="flex justify-between items-start border-b border-slate-100 pb-4">
+                        <div>
+                            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-navy-50 text-navy-800 border border-navy-200" x-text="selectedTask.status_display"></span>
+                            <h2 class="text-lg font-bold text-slate-900 mt-2" x-text="selectedTask.title"></h2>
+                        </div>
+                        <button @click="showDrawer = false" class="text-slate-400 hover:text-slate-700 text-xl font-bold"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+
+                    <!-- Checklist Section -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-bold text-xs text-slate-900 uppercase tracking-wider">Subtasks Checklist (<span x-text="selectedTask.progress + '%'"></span>)</h4>
+                        </div>
+                        <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-3">
+                            <div class="h-full bg-emerald-500 rounded-full transition-all duration-300" :style="`width: ${selectedTask.progress}%`"></div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <template x-for="item in selectedTask.checklist" :key="item.id">
+                                <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" :checked="item.is_completed" @change="toggleChecklist(item.id)" class="w-4 h-4 text-navy-800 rounded">
+                                        <span :class="item.is_completed ? 'line-through text-slate-400' : 'text-slate-800 font-medium'" x-text="item.title"></span>
+                                    </label>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="flex gap-2 mt-3">
+                            <input type="text" x-model="checklistTitle" @keydown.enter="addChecklist()" placeholder="+ Thêm mục kiểm tra..." class="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-navy-600">
+                            <button @click="addChecklist()" class="px-3 py-1.5 bg-navy-800 text-white rounded-lg text-xs font-bold hover:bg-navy-900 transition">Thêm</button>
+                        </div>
+                    </div>
+
+                    <!-- Comments Section -->
+                    <div>
+                        <h4 class="font-bold text-xs text-slate-900 uppercase tracking-wider mb-3">Bình luận & Thảo luận</h4>
+                        <div class="space-y-3 max-h-60 overflow-y-auto">
+                            <template x-for="c in selectedTask.comments" :key="c.id">
+                                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-bold text-slate-900" x-text="c.user_name"></span>
+                                        <span class="text-[10px] text-slate-400" x-text="c.created_at"></span>
+                                    </div>
+                                    <p class="text-slate-700" x-text="c.content"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
-    let draggedTaskId = null;
+    document.addEventListener("DOMContentLoaded", function() {
+        const cols = document.querySelectorAll(".sortable-col");
+        cols.forEach(col => {
+            new Sortable(col, {
+                group: "kanban",
+                animation: 150,
+                ghostClass: "opacity-40",
+                onEnd: function(evt) {
+                    const taskId = evt.item.dataset.taskId;
+                    const newStatus = evt.to.dataset.status;
+                    const newIndex = evt.newIndex;
 
-    function dragTask(event, taskId) {
-        draggedTaskId = taskId;
-        event.dataTransfer.setData("text/plain", taskId);
-    }
+                    if (taskId && newStatus) {
+                        const formData = new FormData();
+                        formData.append("task_id", taskId);
+                        formData.append("status", newStatus);
+                        formData.append("order_index", newIndex);
+                        formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
 
-    function dropTask(event, newStatus) {
-        event.preventDefault();
-        if (!draggedTaskId) return;
-
-        const card = document.getElementById("task-card-" + draggedTaskId);
-        const targetCol = document.getElementById("col-" + newStatus);
-
-        if (card && targetCol) {
-            targetCol.appendChild(card);
-            
-            const formData = new FormData();
-            formData.append('status', newStatus);
-            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-
-            fetch(`/tasks/${draggedTaskId}/update-status/`, {
-                method: 'POST',
-                body: formData
-            }).then(response => response.json())
-              .then(data => {
-                  console.log("Status updated:", data);
-              }).catch(err => console.error(err));
-        }
-    }
+                        fetch("/api/v1/tasks/reorder/", {
+                            method: "POST",
+                            body: formData
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                Alpine.store('toast').show('Đã cập nhật trạng thái công việc thành công!', 'success');
+                            }
+                        });
+                    }
+                }
+            });
+        });
+    });
 </script>
 {% endblock %}

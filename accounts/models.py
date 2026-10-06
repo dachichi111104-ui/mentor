@@ -105,3 +105,28 @@ class User(AbstractUser):
             'is_fully_completed': filled == total
         }
 
+
+class UserPreferenceTheme(models.TextChoices):
+    NAVY = 'NAVY', 'Navy (Mặc định)'
+    FOREST = 'FOREST', 'Forest Green'
+    PLUM = 'PLUM', 'Royal Plum'
+    EMBER = 'EMBER', 'Warm Ember'
+
+
+class UserPreference(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='preference', verbose_name="Người dùng")
+    theme = models.CharField(max_length=20, choices=UserPreferenceTheme.choices, default=UserPreferenceTheme.NAVY, verbose_name="Giao diện Accent")
+    email_notifications = models.BooleanField(default=True, verbose_name="Thông báo qua Email")
+    in_app_notifications = models.BooleanField(default=True, verbose_name="Thông báo trong Ứng dụng")
+    deadline_reminders = models.BooleanField(default=True, verbose_name="Nhắc nhở Hạn chót")
+    week_start = models.CharField(max_length=10, choices=[('MON', 'Thứ 2'), ('SUN', 'Chủ nhật')], default='MON', verbose_name="Ngày bắt đầu tuần")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Cập nhật lúc")
+
+    class Meta:
+        verbose_name = "Cấu hình Người dùng"
+        verbose_name_plural = "Danh sách Cấu hình Người dùng"
+
+    def __str__(self):
+        return f"Cấu hình của {self.user.username} ({self.theme})"
+
+

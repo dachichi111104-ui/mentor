@@ -21,8 +21,11 @@ def notification_mark_read_view(request, notif_id):
 @login_required
 def notification_mark_all_read_view(request):
     Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.method == 'POST':
+        return JsonResponse({'status': 'success'})
     messages.success(request, 'Đã đánh dấu tất cả thông báo là đã đọc.')
     return redirect('notification_center')
+
 
 @login_required
 def unread_count_ajax(request):
