@@ -381,12 +381,29 @@ def dashboard_analytics_json_view(request):
 
     today = timezone.now().date()
     days = [(today - timezone.timedelta(days=i)) for i in range(6, -1, -1)]
-    weekly_labels = [d.strftime('%a %d/%m') for d in days]
+    weekly_labels = [d.strftime('%d/%m') for d in days]
     weekly_completed = []
 
     for d in days:
         cnt = tasks.filter(status=TaskStatus.DONE, updated_at__date=d).count()
         weekly_completed.append(cnt)
+
+    status_counts = {
+        'TODO': tasks.filter(status=TaskStatus.TODO).count(),
+        'IN_PROGRESS': tasks.filter(status=TaskStatus.IN_PROGRESS).count(),
+        'REVIEW': tasks.filter(status=TaskStatus.REVIEW).count(),
+        'DONE': tasks.filter(status=TaskStatus.DONE).count(),
+    }
+
+    return JsonResponse({
+        'status': 'success',
+        'weekly_labels': weekly_labels,
+        'weekly_completed': weekly_completed,
+        'completion_rate': completion_rate,
+        'total_tasks': total_t,
+        'done_tasks': done_t,
+        'status_counts': status_counts
+    })
 
 @login_required
 def analytics_page_view(request):
