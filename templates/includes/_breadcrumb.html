@@ -1,0 +1,16 @@
+{% if breadcrumbs %}
+<nav aria-label="Breadcrumb" class="flex items-center text-xs text-slate-500 font-medium space-x-2 mb-4 bg-white/80 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-slate-200 shadow-xs">
+    <a href="{% url 'landing' %}" class="hover:text-[#163B65] transition flex items-center gap-1.5 font-medium">
+        <i class="fa-solid fa-house text-slate-400 text-[11px]"></i>
+        <span>Trang chủ</span>
+    </a>
+    {% for item in breadcrumbs %}
+        <i class="fa-solid fa-chevron-right text-[9px] text-slate-400"></i>
+        {% if forloop.last or not item.url %}
+            <span class="text-slate-900 font-bold">{{ item.title }}</span>
+        {% else %}
+            <a href="{{ item.url }}" class="hover:text-[#163B65] transition">{{ item.title }}</a>
+        {% endif %}
+    {% endfor %}
+</nav>
+{% endif %}

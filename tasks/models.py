@@ -105,6 +105,22 @@ class Task(models.Model):
             return True
         return False
 
+    @property
+    def checklist_total_count(self):
+        return self.checklist_items.count()
+
+    @property
+    def checklist_done_count(self):
+        return self.checklist_items.filter(is_completed=True).count()
+
+    @property
+    def checklist_progress(self):
+        total = self.checklist_total_count
+        if total == 0:
+            return 0
+        done = self.checklist_done_count
+        return int((done / total) * 100)
+
 class TaskComment(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='comments', verbose_name="Công việc")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='comments')

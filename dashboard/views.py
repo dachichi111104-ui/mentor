@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Count
 from django.contrib import messages
 from django.http import JsonResponse
+from django.utils import timezone
 from accounts.models import User, UserRole, UserStatus
 from projects.models import Project, ProjectStatus
 from tasks.models import Task, TaskStatus, TaskPriority
@@ -10,6 +11,7 @@ from milestones.models import Milestone, MilestoneStatus
 from documents.models import Document
 from audit_log.models import ActivityLog, ActionType
 from notifications.models import Notification
+from dashboard.models import TimeLog
 
 def landing_view(request):
     if request.user.is_authenticated:

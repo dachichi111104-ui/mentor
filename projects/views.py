@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import JsonResponse
 from django.db.models import Q
 from projects.models import Project, ProjectMember, MemberRole, MentorStatus, MemberStatus
 from projects.forms import ProjectForm
@@ -259,7 +260,14 @@ def team_page_view(request):
             'is_high_workload': workload > 80,
         })
 
-    my_projects = Project.objects.filter(memberships__user=user) if not user.is_admin_user else Project.objects.all()
+    if user.is_admin_user:
+        my_projects = Project.objects.all()
+    else:
+        my_projects = Project.objects.filter(
+            Q(created_by=user) | 
+            Q(mentor=user, mentor_status=MentorStatus.ACCEPTED) | 
+            Q(memberships__user=user, memberships__status=MemberStatus.ACCEPTED)
+        ).distinct()
 
     return render(request, 'projects/team.html', {
         'members_data': member_data,

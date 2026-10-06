@@ -222,11 +222,19 @@
             <!-- Main Page Content Slot -->
             <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1500px] w-full mx-auto space-y-6">
                 <!-- Breadcrumbs -->
-                <nav class="flex items-center text-xs text-slate-500 space-x-2 font-medium">
-                    <a href="{% url 'dashboard' %}" class="hover:text-accent-primary transition-colors">Trang chủ</a>
-                    <i class="fa-solid fa-chevron-right text-[9px] text-slate-300"></i>
+                {% include "includes/_breadcrumb.html" %}
+                {% if not breadcrumbs %}
+                <nav aria-label="Breadcrumb" class="flex items-center text-xs text-slate-500 space-x-2 font-medium bg-white/80 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-slate-200 shadow-xs mb-4">
+                    <a href="{% url 'landing' %}" class="hover:text-[#163B65] transition flex items-center gap-1.5 font-medium">
+                        <i class="fa-solid fa-house text-slate-400 text-[11px]"></i>
+                        <span>Trang chủ</span>
+                    </a>
+                    <i class="fa-solid fa-chevron-right text-[9px] text-slate-400"></i>
+                    <a href="{% url 'dashboard' %}" class="hover:text-[#163B65] transition font-medium">Bảng điều khiển</a>
+                    <i class="fa-solid fa-chevron-right text-[9px] text-slate-400"></i>
                     <span class="text-slate-900 font-bold">{% block breadcrumb %}Cổng thông tin{% endblock %}</span>
                 </nav>
+                {% endif %}
 
                 {% block content %}{% endblock %}
             </main>
