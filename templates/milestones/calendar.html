@@ -23,18 +23,18 @@
             <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Lịch Tiến độ & Cuộc hẹn (Calendar)</h1>
             <p class="text-sm text-slate-500 mt-1">Tổng hợp hạn chót công việc, cột mốc Milestone và lịch hẹn trao đổi với Mentor</p>
         </div>
-        <div class="flex items-center gap-3">
-            <a href="{% url 'calendar_export_ics' %}" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-200 transition flex items-center gap-2">
-                <i class="fa-solid fa-file-export"></i>
-                Xuất Lịch (.ics)
+        <div class="flex flex-wrap items-center gap-2.5">
+            <a href="{% url 'calendar_export_ics' %}" class="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-2 border border-slate-200">
+                <i class="fa-solid fa-file-export text-slate-500"></i>
+                <span>Xuất Lịch (.ics)</span>
             </a>
-            <button @click="showBookModal = true" class="px-4 py-2 bg-gold-500 text-navy-950 rounded-xl text-sm font-bold hover:bg-gold-400 transition flex items-center gap-2 shadow-sm">
-                <i class="fa-regular fa-calendar-plus"></i>
-                Đặt Lịch Hẹn Mentor
+            <button @click="showBookModal = true" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm border border-amber-400">
+                <i class="fa-regular fa-calendar-plus text-slate-900"></i>
+                <span>Đặt Lịch Hẹn Mentor</span>
             </button>
-            <button @click="showEventModal = true" class="px-4 py-2 bg-navy-800 text-white rounded-xl text-sm font-medium hover:bg-navy-900 transition flex items-center gap-2 shadow-sm">
-                <i class="fa-solid fa-plus"></i>
-                Thêm Sự kiện
+            <button @click="showEventModal = true" class="px-4 py-2 bg-[#1E3A8A] hover:bg-blue-900 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm border border-blue-700">
+                <i class="fa-solid fa-plus text-amber-400"></i>
+                <span>+ Thêm Sự Kiện Mới</span>
             </button>
         </div>
     </div>

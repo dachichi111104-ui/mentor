@@ -122,8 +122,8 @@
                                 <span class="font-bold text-[11px]">{{ proj.progress_percentage }}%</span>
                             </div>
                         </td>
-                        <td class="p-3">
-                            <span class="px-2 py-0.5 text-[10px] font-bold rounded border
+                        <td class="p-3 whitespace-nowrap">
+                            <span class="inline-block whitespace-nowrap px-2 py-0.5 text-[10px] font-bold rounded border
                             {% if proj.status == 'IN_PROGRESS' %}bg-amber-50 text-amber-800 border-amber-200
                             {% elif proj.status == 'REVIEW' %}bg-purple-50 text-purple-800 border-purple-200
                             {% elif proj.status == 'COMPLETED' %}bg-emerald-50 text-emerald-800 border-emerald-200

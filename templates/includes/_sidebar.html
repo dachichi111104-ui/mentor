@@ -1,20 +1,20 @@
 <!-- SIDEBAR NAVIGATION COMPONENT -->
-<aside :class="sidebarCollapsed ? 'w-20' : 'w-64'" class="bg-[#0F172A] text-slate-100 flex-shrink-0 flex flex-col justify-between h-screen overflow-y-auto border-r border-slate-800/80 shadow-2xl select-none transition-all duration-300 custom-scrollbar">
+<aside :class="sidebarCollapsed ? 'w-20' : 'w-64'" style="background-color: var(--sidebar-bg);" class="text-slate-100 flex-shrink-0 flex flex-col justify-between h-screen overflow-y-auto border-r border-white/10 shadow-2xl select-none transition-all duration-300 custom-scrollbar">
     
     <!-- Top Branding Header -->
-    <div class="p-4 border-b border-slate-800/80 flex items-center justify-between bg-[#0B132B]">
+    <div style="background-color: var(--sidebar-header);" class="p-4 border-b border-white/10 flex items-center justify-between">
         <a href="{% url 'dashboard' %}" class="flex items-center space-x-3 group overflow-hidden">
-            <div class="w-10 h-10 rounded-xl bg-[#1E293B] text-amber-400 flex items-center justify-center font-bold text-lg shadow-inner border border-slate-700/50 group-hover:scale-105 transition-transform flex-shrink-0">
-                <i class="fa-solid fa-graduation-cap"></i>
+            <div class="w-10 h-10 rounded-xl bg-white/10 text-amber-400 flex items-center justify-center font-bold text-lg shadow-inner border border-white/10 group-hover:scale-105 transition-transform flex-shrink-0">
+                <i class="fa-solid fa-graduation-cap" style="color: var(--accent-gold);"></i>
             </div>
             <div x-show="!sidebarCollapsed" class="transition-opacity duration-300">
                 <span class="font-extrabold text-white text-base tracking-tight block leading-none">PROJECTHUB</span>
-                <span class="text-[10px] text-amber-400/90 font-bold tracking-wider uppercase block mt-1">QUẢN LÝ ĐỒ ÁN AI</span>
+                <span class="text-[10px] font-bold tracking-wider uppercase block mt-1" style="color: var(--accent-gold);">QUẢN LÝ ĐỒ ÁN AI</span>
             </div>
         </a>
 
         <!-- Desktop Collapse Button -->
-        <button @click="sidebarCollapsed = !sidebarCollapsed" class="hidden md:flex text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition">
+        <button @click="sidebarCollapsed = !sidebarCollapsed" class="hidden md:flex text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition">
             <i class="fa-solid" :class="sidebarCollapsed ? 'fa-indent' : 'fa-outdent'"></i>
         </button>
     </div>
@@ -28,10 +28,11 @@
             
             <a href="{% url 'dashboard' %}"
                title="Tổng quan (Dashboard)"
+               {% if request.resolver_match.url_name == 'dashboard' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
                class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all relative group
-               {% if request.resolver_match.url_name == 'dashboard' %}bg-[#1E3A8A] text-white shadow-md border-l-4 border-amber-400{% else %}text-slate-300 hover:bg-[#1E293B] hover:text-white{% endif %}">
+               {% if request.resolver_match.url_name == 'dashboard' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-chart-line text-sm w-4 text-center {% if request.resolver_match.url_name == 'dashboard' %}text-amber-400{% endif %}"></i>
+                    <i class="fa-solid fa-chart-line text-sm w-4 text-center" {% if request.resolver_match.url_name == 'dashboard' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Tổng quan (Dashboard)</span>
                 </div>
             </a>
@@ -39,10 +40,11 @@
             {% if request.user.is_admin_user %}
             <a href="{% url 'admin_users' %}"
                title="Quản lý Tài khoản"
+               {% if request.resolver_match.url_name == 'admin_users' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
                class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
-               {% if request.resolver_match.url_name == 'admin_users' %}bg-[#1E3A8A] text-white shadow-md border-l-4 border-amber-400{% else %}text-slate-300 hover:bg-[#1E293B] hover:text-white{% endif %}">
+               {% if request.resolver_match.url_name == 'admin_users' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-users-gear text-sm w-4 text-center {% if request.resolver_match.url_name == 'admin_users' %}text-amber-400{% endif %}"></i>
+                    <i class="fa-solid fa-users-gear text-sm w-4 text-center" {% if request.resolver_match.url_name == 'admin_users' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Quản lý Tài khoản</span>
                 </div>
             </a>
@@ -50,20 +52,22 @@
 
             <a href="{% url 'project_list' %}"
                title="Đồ án"
+               {% if request.resolver_match.url_name in 'project_list,project_detail,project_create' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
                class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
-               {% if request.resolver_match.url_name in 'project_list,project_detail,project_create' %}bg-[#1E3A8A] text-white shadow-md border-l-4 border-amber-400{% else %}text-slate-300 hover:bg-[#1E293B] hover:text-white{% endif %}">
+               {% if request.resolver_match.url_name in 'project_list,project_detail,project_create' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-folder-tree text-sm w-4 text-center {% if request.resolver_match.url_name in 'project_list,project_detail,project_create' %}text-amber-400{% endif %}"></i>
+                    <i class="fa-solid fa-folder-tree text-sm w-4 text-center" {% if request.resolver_match.url_name in 'project_list,project_detail,project_create' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">{% if request.user.is_student %}Đồ án của tôi{% elif request.user.is_mentor %}Đồ án Hướng dẫn{% else %}Quản lý Đồ án{% endif %}</span>
                 </div>
             </a>
 
             <a href="{% url 'my_tasks' %}"
                title="Công việc (Kanban)"
+               {% if request.resolver_match.url_name in 'my_tasks,project_tasks' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
                class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
-               {% if request.resolver_match.url_name in 'my_tasks,project_tasks' %}bg-[#1E3A8A] text-white shadow-md border-l-4 border-amber-400{% else %}text-slate-300 hover:bg-[#1E293B] hover:text-white{% endif %}">
+               {% if request.resolver_match.url_name in 'my_tasks,project_tasks' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-list-check text-sm w-4 text-center {% if request.resolver_match.url_name in 'my_tasks,project_tasks' %}text-amber-400{% endif %}"></i>
+                    <i class="fa-solid fa-list-check text-sm w-4 text-center" {% if request.resolver_match.url_name in 'my_tasks,project_tasks' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Công việc (Kanban)</span>
                 </div>
             </a>
@@ -75,30 +79,33 @@
 
             <a href="{% url 'team' %}"
                title="Thành viên & Team"
+               {% if request.resolver_match.url_name in 'team,team_page' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
                class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
-               {% if request.resolver_match.url_name in 'team,team_page' %}bg-[#1E3A8A] text-white shadow-md border-l-4 border-amber-400{% else %}text-slate-300 hover:bg-[#1E293B] hover:text-white{% endif %}">
+               {% if request.resolver_match.url_name in 'team,team_page' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-users text-sm w-4 text-center {% if request.resolver_match.url_name in 'team,team_page' %}text-amber-400{% endif %}"></i>
+                    <i class="fa-solid fa-users text-sm w-4 text-center" {% if request.resolver_match.url_name in 'team,team_page' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Thành viên & Team</span>
                 </div>
             </a>
 
             <a href="{% url 'calendar' %}"
                title="Lịch & Sự kiện"
+               {% if request.resolver_match.url_name in 'calendar,calendar_page' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
                class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
-               {% if request.resolver_match.url_name in 'calendar,calendar_page' %}bg-[#1E3A8A] text-white shadow-md border-l-4 border-amber-400{% else %}text-slate-300 hover:bg-[#1E293B] hover:text-white{% endif %}">
+               {% if request.resolver_match.url_name in 'calendar,calendar_page' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-calendar-days text-sm w-4 text-center {% if request.resolver_match.url_name in 'calendar,calendar_page' %}text-amber-400{% endif %}"></i>
+                    <i class="fa-solid fa-calendar-days text-sm w-4 text-center" {% if request.resolver_match.url_name in 'calendar,calendar_page' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Lịch & Sự kiện</span>
                 </div>
             </a>
 
             <a href="{% url 'document_list' %}"
                title="Kho Tài liệu"
+               {% if request.resolver_match.url_name in 'document_list,project_documents,document_preview' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
                class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
-               {% if request.resolver_match.url_name in 'document_list,project_documents,document_preview' %}bg-[#1E3A8A] text-white shadow-md border-l-4 border-amber-400{% else %}text-slate-300 hover:bg-[#1E293B] hover:text-white{% endif %}">
+               {% if request.resolver_match.url_name in 'document_list,project_documents,document_preview' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-file-lines text-sm w-4 text-center {% if request.resolver_match.url_name in 'document_list,project_documents,document_preview' %}text-amber-400{% endif %}"></i>
+                    <i class="fa-solid fa-file-lines text-sm w-4 text-center" {% if request.resolver_match.url_name in 'document_list,project_documents,document_preview' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Kho Tài liệu</span>
                 </div>
             </a>
@@ -106,10 +113,11 @@
             {% if request.user.is_mentor %}
             <a href="{% url 'mentor_reviews' %}"
                title="Review & Đánh giá"
+               {% if request.resolver_match.url_name == 'mentor_reviews' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
                class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
-               {% if request.resolver_match.url_name == 'mentor_reviews' %}bg-[#1E3A8A] text-white shadow-md border-l-4 border-amber-400{% else %}text-slate-300 hover:bg-[#1E293B] hover:text-white{% endif %}">
+               {% if request.resolver_match.url_name == 'mentor_reviews' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-clipboard-check text-sm w-4 text-center {% if request.resolver_match.url_name == 'mentor_reviews' %}text-amber-400{% endif %}"></i>
+                    <i class="fa-solid fa-clipboard-check text-sm w-4 text-center" {% if request.resolver_match.url_name == 'mentor_reviews' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Review & Đánh giá</span>
                 </div>
             </a>
@@ -117,10 +125,11 @@
 
             <a href="{% url 'analytics' %}"
                title="Phân tích & Thống kê"
+               {% if request.resolver_match.url_name in 'analytics,analytics_page' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
                class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
-               {% if request.resolver_match.url_name in 'analytics,analytics_page' %}bg-[#1E3A8A] text-white shadow-md border-l-4 border-amber-400{% else %}text-slate-300 hover:bg-[#1E293B] hover:text-white{% endif %}">
+               {% if request.resolver_match.url_name in 'analytics,analytics_page' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-chart-pie text-sm w-4 text-center {% if request.resolver_match.url_name in 'analytics,analytics_page' %}text-amber-400{% endif %}"></i>
+                    <i class="fa-solid fa-chart-pie text-sm w-4 text-center" {% if request.resolver_match.url_name in 'analytics,analytics_page' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Phân tích & Thống kê</span>
                 </div>
             </a>
@@ -133,10 +142,11 @@
             {% if not request.user.is_admin_user %}
             <a href="{% url 'ai_assistant_page' %}"
                title="Trợ lý AI"
+               {% if request.resolver_match.url_name == 'ai_assistant_page' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
                class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
-               {% if request.resolver_match.url_name == 'ai_assistant_page' %}bg-[#1E3A8A] text-white shadow-md border-l-4 border-amber-400{% else %}text-slate-300 hover:bg-[#1E293B] hover:text-white{% endif %}">
+               {% if request.resolver_match.url_name == 'ai_assistant_page' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-robot text-sm w-4 text-amber-400 text-center"></i>
+                    <i class="fa-solid fa-robot text-sm w-4 text-center" style="color: var(--accent-gold);"></i>
                     <span x-show="!sidebarCollapsed">Trợ lý AI</span>
                 </div>
                 <span x-show="!sidebarCollapsed" class="px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-full font-bold text-[9px] border border-amber-500/30">REAL</span>
@@ -145,10 +155,11 @@
 
             <a href="{% url 'settings' %}"
                title="Cài đặt hệ thống"
+               {% if request.resolver_match.url_name in 'settings,settings_page' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
                class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
-               {% if request.resolver_match.url_name in 'settings,settings_page' %}bg-[#1E3A8A] text-white shadow-md border-l-4 border-amber-400{% else %}text-slate-300 hover:bg-[#1E293B] hover:text-white{% endif %}">
+               {% if request.resolver_match.url_name in 'settings,settings_page' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-gear text-sm w-4 text-center {% if request.resolver_match.url_name in 'settings,settings_page' %}text-amber-400{% endif %}"></i>
+                    <i class="fa-solid fa-gear text-sm w-4 text-center" {% if request.resolver_match.url_name in 'settings,settings_page' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Cài đặt hệ thống</span>
                 </div>
             </a>
@@ -156,10 +167,11 @@
             {% if request.user.is_admin_user %}
             <a href="{% url 'admin_audit_log' %}"
                title="Nhật ký Hệ thống"
+               {% if request.resolver_match.url_name == 'admin_audit_log' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
                class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
-               {% if request.resolver_match.url_name == 'admin_audit_log' %}bg-[#1E3A8A] text-white shadow-md border-l-4 border-amber-400{% else %}text-slate-300 hover:bg-[#1E293B] hover:text-white{% endif %}">
+               {% if request.resolver_match.url_name == 'admin_audit_log' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-shield-halved text-sm w-4 text-center {% if request.resolver_match.url_name == 'admin_audit_log' %}text-amber-400{% endif %}"></i>
+                    <i class="fa-solid fa-shield-halved text-sm w-4 text-center" {% if request.resolver_match.url_name == 'admin_audit_log' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Nhật ký Hệ thống</span>
                 </div>
             </a>
@@ -169,14 +181,14 @@
     </nav>
 
     <!-- Bottom Promo Card (Mobile App Promo Card) -->
-    <div x-show="!sidebarCollapsed" class="p-3 border-t border-slate-800/80 bg-[#0B132B]">
-        <div class="p-3.5 bg-[#1E293B] rounded-2xl border border-slate-700/60 space-y-2 text-xs">
-            <div class="flex items-center space-x-2 text-amber-400">
-                <i class="fa-solid fa-mobile-screen-button text-sm"></i>
+    <div x-show="!sidebarCollapsed" class="p-3 border-t border-white/10" style="background-color: var(--sidebar-header);">
+        <div class="p-3.5 bg-white/5 rounded-2xl border border-white/10 space-y-2 text-xs">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-mobile-screen-button text-sm" style="color: var(--accent-gold);"></i>
                 <span class="font-bold text-white">ProjectHub App</span>
             </div>
             <p class="text-[11px] text-slate-300 leading-tight">Theo dõi tiến độ & thông báo đồ án mọi lúc trên di động.</p>
-            <a href="{% url 'settings' %}" class="block text-center py-1.5 bg-[#1E3A8A] hover:bg-blue-800 text-white font-bold text-[11px] rounded-xl transition-all border border-blue-600/50 shadow-sm">
+            <a href="{% url 'settings' %}" style="background-color: var(--accent-primary);" class="block text-center py-1.5 text-white font-bold text-[11px] rounded-xl transition-all border border-white/20 shadow-sm">
                 Tải ứng dụng
             </a>
         </div>

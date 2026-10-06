@@ -23,14 +23,8 @@
             </button>
         </div>
 
-        <!-- Right: AI Status, Notifications, Profile Dropdown -->
+        <!-- Right: Notifications, Profile Dropdown -->
         <div class="flex items-center space-x-3 sm:space-x-4 text-xs">
-            
-            <!-- AI Ready Status Badge -->
-            <a href="{% url 'ai_assistant_page' %}" class="hidden lg:flex items-center space-x-2 bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-3 py-1 rounded-full text-[11px] font-semibold hover:bg-emerald-100 transition">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>AI: Ready</span>
-            </a>
 
             <!-- Notifications Dropdown -->
             <div class="relative" x-data="{

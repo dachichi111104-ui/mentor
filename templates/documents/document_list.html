@@ -14,7 +14,7 @@
     openPreview(docId, title) {
         this.previewModalDocId = docId;
         this.previewModalTitle = title;
-        this.previewModalUrl = `/documents/${docId}/view/`;
+        this.previewModalUrl = `/documents/${docId}/raw/`;
     }
 }">
 
@@ -104,24 +104,29 @@
         </div>
     </div>
 
-    <!-- PREVIEW MODAL POPUP (Xem trước Popup Nhỏ) -->
+    <!-- PREVIEW MODAL POPUP (Xem trước Popup Nhỏ gọn) -->
     <div x-show="previewModalDocId !== null" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-4" @click.self="previewModalDocId = null">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl h-[580px] flex flex-col overflow-hidden border border-slate-700/30">
-            <div class="px-5 py-3.5 bg-[#0F172A] text-white flex justify-between items-center border-b border-slate-800">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl h-[440px] flex flex-col overflow-hidden border border-slate-700/30">
+            <div class="px-5 py-3 bg-[#0F172A] text-white flex justify-between items-center border-b border-slate-800">
                 <div class="flex items-center space-x-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-slate-800 flex items-center justify-center text-amber-400">
-                        <i class="fa-solid fa-file-contract text-sm"></i>
+                    <div class="w-7 h-7 rounded-xl bg-slate-800 flex items-center justify-center text-amber-400 text-xs">
+                        <i class="fa-solid fa-file-contract"></i>
                     </div>
                     <div>
                         <h3 class="font-bold text-xs text-white tracking-tight" x-text="previewModalTitle"></h3>
-                        <span class="text-[10px] text-slate-400 font-mono block">Xem trước tài liệu trực tiếp</span>
+                        <span class="text-[10px] text-slate-400 font-mono block">Cửa sổ xem trước tập tin</span>
                     </div>
                 </div>
-                <button @click="previewModalDocId = null" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition">
-                    <i class="fa-solid fa-xmark text-sm"></i>
-                </button>
+                <div class="flex items-center space-x-2">
+                    <a :href="`/documents/${previewModalDocId}/view/`" target="_blank" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-[10px] rounded-lg transition inline-flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Trang đầy đủ
+                    </a>
+                    <button @click="previewModalDocId = null" class="w-7 h-7 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                </div>
             </div>
-            <div class="flex-1 bg-slate-100 p-2.5">
+            <div class="flex-1 bg-slate-100 p-2">
                 <template x-if="previewModalDocId">
                     <iframe :src="previewModalUrl" class="w-full h-full rounded-2xl border border-slate-200 bg-white shadow-inner"></iframe>
                 </template>
