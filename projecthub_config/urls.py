@@ -162,3 +162,20 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+def custom_page_not_found_view(request, exception=None):
+    return render(request, 'errors/404.html', status=404)
+
+def custom_server_error_view(request):
+    return render(request, 'errors/500.html', status=500)
+
+def custom_permission_denied_view(request, exception=None):
+    return render(request, 'errors/403.html', status=403)
+
+def custom_bad_request_view(request, exception=None):
+    return render(request, 'errors/403.html', status=400)
+
+handler404 = 'projecthub_config.urls.custom_page_not_found_view'
+handler500 = 'projecthub_config.urls.custom_server_error_view'
+handler403 = 'projecthub_config.urls.custom_permission_denied_view'
+handler400 = 'projecthub_config.urls.custom_bad_request_view'

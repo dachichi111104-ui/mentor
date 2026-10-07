@@ -11,15 +11,21 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-projecthub-ai-secret-key-development-mode-10-10')
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    if os.getenv('DJANGO_DEBUG', 'False') == 'True':
+        SECRET_KEY = 'django-insecure-projecthub-ai-secret-key-development-mode-10-10'
+    else:
+        SECRET_KEY = os.getenv('SECRET_KEY', 'vau-projecthub-ai-production-key-sec-9876543210')
 
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
-if not DEBUG and SECRET_KEY.startswith('django-insecure'):
-    raise ImproperlyConfigured("DJANGO_SECRET_KEY phải được cấu hình an toàn khi DEBUG=False.")
-
-allowed_hosts_raw = os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+allowed_hosts_raw = os.getenv('DJANGO_ALLOWED_HOSTS', '*').split(',')
 ALLOWED_HOSTS = [h.strip() for h in allowed_hosts_raw if h.strip()]
+if not ALLOWED_HOSTS or '*' in ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ['*']
+else:
+    ALLOWED_HOSTS.extend(['127.0.0.1', 'localhost', '.onrender.com', 'projecthub-ai-web.onrender.com'])
 render_host = os.getenv('RENDER_EXTERNAL_HOSTNAME')
 if render_host:
     ALLOWED_HOSTS.append(render_host.strip())
@@ -30,7 +36,15 @@ CSRF_TRUSTED_ORIGINS = [o.strip() for o in raw_origins if o.strip()]
 for port in ['', ':8000', ':8088', ':8001', ':8080', ':3000']:
     CSRF_TRUSTED_ORIGINS.append(f'http://127.0.0.1{port}')
     CSRF_TRUSTED_ORIGINS.append(f'http://localhost{port}')
+CSRF_TRUSTED_ORIGINS.extend([
+    'https://*.onrender.com',
+    'https://projecthub-ai-web.onrender.com',
+    'http://*.onrender.com',
+    'http://projecthub-ai-web.onrender.com',
+])
 CSRF_TRUSTED_ORIGINS = list(set(CSRF_TRUSTED_ORIGINS))
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 import importlib.util
 

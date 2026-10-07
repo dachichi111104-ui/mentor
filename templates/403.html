@@ -1,0 +1,23 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}403 Forbidden - Truy cập bị Từ chối{% endblock %}
+
+{% block content %}
+<div class="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
+    <div class="w-16 h-16 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 flex items-center justify-center text-3xl mb-4">
+        <i class="fa-solid fa-lock"></i>
+    </div>
+    <h1 class="text-2xl font-bold text-slate-900 tracking-tight mb-2">403 - TRUY CẬP BỊ TỪ CHỐI</h1>
+    <p class="text-xs text-slate-600 max-w-md mb-6">
+        Bạn không có quyền hạn (Authorization) để truy cập đường dẫn này. Nhật ký hệ thống đã ghi nhận lại thao tác này.
+    </p>
+    <div class="flex items-center space-x-3">
+        <a href="{% url 'dashboard' %}" class="px-5 py-2 bg-navy-900 hover:bg-navy-950 text-white font-bold text-xs rounded-lg shadow-xs transition-all">
+            Trở về Dashboard
+        </a>
+        <a href="javascript:history.back()" class="px-5 py-2 bg-white border border-slate-300 text-slate-700 font-bold text-xs rounded-lg hover:bg-slate-50 transition-all">
+            Quay lại trang trước
+        </a>
+    </div>
+</div>
+{% endblock %}
