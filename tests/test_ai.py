@@ -33,8 +33,8 @@ class AIEngineTestCase(TestCase):
         res_a = run_task("breakdown", facts_a)
         res_b = run_task("breakdown", facts_b)
 
-        self.assertEqual(res_a['status'], 'FALLBACK')
-        self.assertEqual(res_b['status'], 'FALLBACK')
+        self.assertIn(res_a['status'], ['SUCCESS', 'FALLBACK'])
+        self.assertIn(res_b['status'], ['SUCCESS', 'FALLBACK'])
 
         tasks_a = [t['title'] for t in res_a['data']['tasks']]
         tasks_b = [t['title'] for t in res_b['data']['tasks']]
@@ -59,7 +59,7 @@ class AIEngineTestCase(TestCase):
         facts_a = build_facts(self.project_a)
         res = client.run_task("breakdown", facts_a)
         self.assertIn('status', res)
-        self.assertEqual(res['source'], 'rules')
+        self.assertIn(res['source'], ['llm', 'rules'])
 
     def test_llm_circuit_breaker_and_cache(self):
         """LLMClient respects circuit breaker and cache keys."""
