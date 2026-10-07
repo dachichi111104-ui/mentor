@@ -265,7 +265,6 @@ LOGGING = {
 }
 
 # Storage Configuration
-DEFAULT_FILE_STORAGE = os.getenv('DEFAULT_FILE_STORAGE', 'django.core.files.storage.FileSystemStorage')
 STORAGES = {
     "default": {
         "BACKEND": os.getenv('STORAGE_ENGINE', 'django.core.files.storage.FileSystemStorage'),
