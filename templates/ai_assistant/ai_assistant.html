@@ -93,29 +93,41 @@
     </div>
     {% endif %}
 
-    <!-- AI Feature Sub-Tabs -->
-    <div class="flex items-center space-x-1 border-b border-slate-200 overflow-x-auto">
-        <button @click="tab = 'breakdown'" :class="tab === 'breakdown' ? 'bg-white text-[#163B65] border-b-2 border-[#163B65] font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'" class="px-4 py-2.5 text-xs rounded-t-xl transition-all whitespace-nowrap">
-            <i class="fa-solid fa-list-check mr-1.5 text-amber-500"></i> AI Task Breakdown
-        </button>
-        <button @click="tab = 'summary'" :class="tab === 'summary' ? 'bg-white text-[#163B65] border-b-2 border-[#163B65] font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'" class="px-4 py-2.5 text-xs rounded-t-xl transition-all whitespace-nowrap">
-            <i class="fa-solid fa-file-lines mr-1.5 text-blue-500"></i> AI Weekly Summary
-        </button>
-        <button @click="tab = 'risk'" :class="tab === 'risk' ? 'bg-white text-[#163B65] border-b-2 border-[#163B65] font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'" class="px-4 py-2.5 text-xs rounded-t-xl transition-all whitespace-nowrap">
-            <i class="fa-solid fa-triangle-exclamation mr-1.5 text-rose-500"></i> AI Risk Warning
-        </button>
-        {% if request.user.is_mentor or request.user.is_admin_user %}
-        <button @click="tab = 'questions'" :class="tab === 'questions' ? 'bg-white text-[#163B65] border-b-2 border-[#163B65] font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'" class="px-4 py-2.5 text-xs rounded-t-xl transition-all whitespace-nowrap">
-            <i class="fa-solid fa-comments mr-1.5 text-purple-500"></i> AI Mentor Questions
-        </button>
-        {% endif %}
-        <button @click="tab = 'chat'" :class="tab === 'chat' ? 'bg-white text-[#163B65] border-b-2 border-[#163B65] font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'" class="px-4 py-2.5 text-xs rounded-t-xl transition-all whitespace-nowrap">
-            <i class="fa-solid fa-headset mr-1.5 text-emerald-500"></i> AI Chat (ai_chat)
-        </button>
-        <button @click="tab = 'history'" :class="tab === 'history' ? 'bg-white text-[#163B65] border-b-2 border-[#163B65] font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'" class="px-4 py-2.5 text-xs rounded-t-xl transition-all whitespace-nowrap">
-            <i class="fa-solid fa-clock-rotate-left mr-1.5 text-slate-500"></i> Lịch sử Tác vụ (ai_history)
-        </button>
-        <span class="px-2 py-1 bg-slate-100 text-slate-700 text-[10px] font-bold rounded-lg border border-slate-200 ml-auto">Nguồn AI: Tính từ dữ liệu hệ thống (Rules) | chưa dùng LLM (source_label)</span>
+    <!-- AI Feature Sub-Tabs Bar -->
+    <div class="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-2">
+        <div class="flex items-center gap-1 overflow-x-auto max-w-full p-0.5">
+            <button @click="tab = 'breakdown'" :class="tab === 'breakdown' ? 'bg-[#163B65] text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'" class="px-3 py-1.5 text-xs rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5">
+                <i class="fa-solid fa-list-check text-amber-400 text-xs"></i>
+                <span>Phân rã Task</span>
+            </button>
+            <button @click="tab = 'summary'" :class="tab === 'summary' ? 'bg-[#163B65] text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'" class="px-3 py-1.5 text-xs rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5">
+                <i class="fa-solid fa-file-lines text-blue-400 text-xs"></i>
+                <span>Báo cáo Tuần</span>
+            </button>
+            <button @click="tab = 'risk'" :class="tab === 'risk' ? 'bg-[#163B65] text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'" class="px-3 py-1.5 text-xs rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5">
+                <i class="fa-solid fa-triangle-exclamation text-rose-400 text-xs"></i>
+                <span>Cảnh báo Rủi ro</span>
+            </button>
+            {% if request.user.is_mentor or request.user.is_admin_user %}
+            <button @click="tab = 'questions'" :class="tab === 'questions' ? 'bg-[#163B65] text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'" class="px-3 py-1.5 text-xs rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5">
+                <i class="fa-solid fa-comments text-purple-400 text-xs"></i>
+                <span>Gợi ý Hỏi</span>
+            </button>
+            {% endif %}
+            <button @click="tab = 'chat'" :class="tab === 'chat' ? 'bg-[#163B65] text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'" class="px-3 py-1.5 text-xs rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5">
+                <i class="fa-solid fa-headset text-emerald-400 text-xs"></i>
+                <span>Trò chuyện AI</span>
+            </button>
+            <button @click="tab = 'history'" :class="tab === 'history' ? 'bg-[#163B65] text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'" class="px-3 py-1.5 text-xs rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5">
+                <i class="fa-solid fa-clock-rotate-left text-slate-400 text-xs"></i>
+                <span>Lịch sử Tác vụ</span>
+            </button>
+        </div>
+
+        <div class="px-2.5 py-1 bg-slate-50 text-slate-600 text-[10px] font-semibold rounded-xl border border-slate-200 flex items-center gap-1 whitespace-nowrap self-end md:self-auto">
+            <i class="fa-solid fa-microchip text-slate-400"></i>
+            <span>Dữ liệu Hệ thống & LLM</span>
+        </div>
     </div>
 
     <!-- TAB 1: AI TASK BREAKDOWN -->
