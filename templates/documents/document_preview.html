@@ -1,7 +1,6 @@
 {% extends "layouts/base.html" %}
 
 {% block title %}Xem Tài liệu: {{ doc.title }} - ProjectHub{% endblock %}
-{% block breadcrumb %}<a href="{% url 'project_documents' doc.project.id %}" class="hover:underline">{{ doc.project.code }}</a> / Xem Tài liệu{% endblock %}
 
 {% block content %}
 <div class="space-y-5">

@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from tasks.models import Task, TaskStatus
 from milestones.models import Milestone, MilestoneStatus
+from notifications.services import notify
 from notifications.models import Notification, NotificationType
 
 class Command(BaseCommand):
@@ -24,7 +25,7 @@ class Command(BaseCommand):
             
             if not exists and (task.assignee or task.created_by):
                 target_user = task.assignee if task.assignee else task.created_by
-                Notification.objects.create(
+                notify(
                     recipient=target_user,
                     sender=task.created_by,
                     title=f'Cảnh báo: Task quá hạn [{task.title}]',
@@ -53,7 +54,7 @@ class Command(BaseCommand):
                 ).exists()
                 
                 if not exists:
-                    Notification.objects.create(
+                    notify(
                         recipient=m.user,
                         sender=ms.project.created_by,
                         title=f'Cảnh báo: Milestone trễ hạn [{ms.name}]',

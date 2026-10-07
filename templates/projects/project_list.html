@@ -1,7 +1,6 @@
 {% extends "layouts/base.html" %}
 
 {% block title %}Danh sách Đồ án - ProjectHub AI{% endblock %}
-{% block breadcrumb %}<a href="{% url 'dashboard' %}" class="hover:text-[#163B65]">Bảng điều khiển</a> <i class="fa-solid fa-chevron-right text-[9px] text-slate-300 mx-1"></i> <span class="text-slate-900 font-bold">{% if request.user.is_student %}Đồ án của tôi{% elif request.user.is_mentor %}Đồ án Hướng dẫn{% else %}Quản lý Đồ án{% endif %}</span>{% endblock %}
 
 {% block content %}
 <div class="space-y-6" x-data="{

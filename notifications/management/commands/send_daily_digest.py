@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from accounts.models import User, UserStatus
 from tasks.models import Task, TaskStatus
+from notifications.services import notify
 from notifications.models import Notification, NotificationType
 
 class Command(BaseCommand):
@@ -22,7 +23,7 @@ class Command(BaseCommand):
                 else:
                     msg += ". Vui long kiem tra tien do hom nay."
 
-                Notification.objects.create(
+                notify(
                     recipient=u,
                     title="[Daily Digest] Tong hop tien do cong viec hom nay",
                     message=msg,

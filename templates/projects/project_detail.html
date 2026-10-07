@@ -1,7 +1,6 @@
 {% extends "layouts/base.html" %}
 
 {% block title %}{{ project.name }} - ProjectHub AI{% endblock %}
-{% block breadcrumb %}<a href="{% url 'project_list' %}" class="hover:text-[#163B65] transition-colors">Đồ án của tôi</a> <i class="fa-solid fa-chevron-right text-[9px] text-slate-300 mx-1"></i> <span class="text-slate-900 font-bold">{{ project.code }}</span>{% endblock %}
 
 {% block content %}
 <div class="space-y-6" x-data="{ addMemberModal: false, editProjectModal: false }">

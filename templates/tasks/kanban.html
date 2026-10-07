@@ -1,7 +1,6 @@
 {% extends "layouts/base.html" %}
 
 {% block title %}Bảng Kanban - {{ project.name }}{% endblock %}
-{% block breadcrumb %}<a href="{% url 'project_list' %}" class="hover:text-[#163B65] transition-colors">Đồ án của tôi</a> <i class="fa-solid fa-chevron-right text-[9px] text-slate-300 mx-1"></i> <a href="{% url 'project_detail' project.id %}" class="hover:text-[#163B65] transition-colors">{{ project.code }}</a> <i class="fa-solid fa-chevron-right text-[9px] text-slate-300 mx-1"></i> <span class="text-slate-900 font-bold">Bảng Kanban</span>{% endblock %}
 
 {% block content %}
 <div class="space-y-6" x-data="{
