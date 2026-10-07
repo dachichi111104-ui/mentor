@@ -103,8 +103,9 @@ def ai_task_breakdown_ajax(request):
 
         return JsonResponse({
             'status': 'success',
+            'tasks': suggested_tasks,
             'suggested_tasks': suggested_tasks,
-            'source_label': 'AI Gợi ý dựa trên mô tả Đồ án từ CSDL'
+            'source_label': 'AI Gợi ý Phân rã Công việc cho Đồ án'
         })
 
     return JsonResponse({'status': 'error'}, status=400)
@@ -117,9 +118,14 @@ def ai_accept_tasks_ajax(request):
     """
     if request.method == 'POST':
         try:
-            data = json.loads(request.body.decode('utf-8'))
-            project_id = data.get('project_id')
-            tasks_to_create = data.get('tasks', [])
+            project_id = request.POST.get('project_id')
+            tasks_json = request.POST.get('tasks_json')
+            if project_id and tasks_json:
+                tasks_to_create = json.loads(tasks_json)
+            else:
+                data = json.loads(request.body.decode('utf-8'))
+                project_id = data.get('project_id')
+                tasks_to_create = data.get('tasks', [])
             
             project = get_object_or_404(Project, id=project_id)
             if not user_can_access_project(request.user, project):
@@ -139,7 +145,7 @@ def ai_accept_tasks_ajax(request):
                     )
                     created_count += 1
 
-            return JsonResponse({'status': 'success', 'created_count': created_count, 'message': f'Đã áp dụng tạo thành công {created_count} công việc thật vào Đồ án!'})
+            return JsonResponse({'status': 'success', 'created_count': created_count, 'message': f'Đã áp dụng tạo thành công {created_count} công việc vào Đồ án!'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
@@ -184,7 +190,8 @@ def ai_weekly_summary_ajax(request):
         return JsonResponse({
             'status': 'success',
             'summary': summary_text,
-            'source_label': 'AI Báo cáo tổng hợp dữ liệu thực tế 7 ngày qua từ CSDL'
+            'summary_html': summary_text,
+            'source_label': 'Báo cáo Tổng hợp Tiến độ Tuần'
         })
 
     return JsonResponse({'status': 'error'}, status=400)
@@ -202,7 +209,7 @@ def ai_risk_detection_ajax(request):
 
         # 2. LLM formatted summary
         prompt = (
-            f"Dưới đây là danh sách các rủi ro đã được phát hiện từ CSDL thật của đồ án {project.code}:\n"
+            f"Dưới đây là danh sách các rủi ro đã được phát hiện của đồ án {project.code}:\n"
             f"{json.dumps(risks, ensure_ascii=False)}\n"
             "Hãy tổng hợp và đưa ra lời giải thích cùng giải pháp điều phối ngắn gọn cho Nhóm sinh viên."
         )
@@ -220,7 +227,7 @@ def ai_risk_detection_ajax(request):
             'risks': risks,
             'analysis': analysis_text,
             'risk_html': analysis_text,
-            'source_label': 'Cảnh báo rủi ro tính toán từ quy tắc dữ liệu thật CSDL'
+            'source_label': 'Cảnh báo Rủi ro Tiến độ'
         })
 
     return JsonResponse({'status': 'error'}, status=400)
@@ -252,7 +259,8 @@ def ai_mentor_questions_ajax(request):
         return JsonResponse({
             'status': 'success',
             'questions': questions_text,
-            'source_label': 'AI Đề xuất câu hỏi tham khảo từ tiến độ Đồ án'
+            'questions_html': questions_text,
+            'source_label': 'Gợi ý Câu hỏi Phản biện cho Mentor'
         })
 
     return JsonResponse({'status': 'error'}, status=400)

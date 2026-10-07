@@ -27,27 +27,6 @@
         </div>
     </div>
 
-    <!-- Real AI Guide Card -->
-    <div class="p-5 bg-[#0F172A] text-white rounded-2xl border border-slate-800 shadow-md space-y-3">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-key text-amber-400"></i>
-                <h3 class="font-bold text-sm text-white">Kết nối Real LLM AI (Gemini / OpenAI / Pollinations)</h3>
-            </div>
-            <span class="px-2.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold rounded-full w-fit">
-                Pollinations Free Real LLM Active
-            </span>
-        </div>
-        <p class="text-xs text-slate-300 leading-relaxed">
-            Hệ thống đang hoạt động với <b>Pollinations AI Real LLM</b> tự động phản hồi không cần API key. Nếu có API Key cá nhân:
-        </p>
-        <div class="bg-[#1E293B] p-3 rounded-xl border border-slate-700/60 text-xs font-mono text-amber-300 space-y-1">
-            <p>1. Cấu hình biến môi trường trong file <b>.env</b> local hoặc Dashboard deploy.</p>
-            <p>2. Điền: <b>GEMINI_API_KEY</b>=AIzaSy... (hoặc <b>OPENAI_API_KEY</b>=sk-...)</p>
-            <p>3. Lưu & Khởi động lại — Hệ thống sẽ tự động gọi API Gemini 1.5 Flash / GPT-3.5!</p>
-        </div>
-    </div>
-
     {% if request.user.is_admin_user %}
     <div class="p-4 bg-purple-50 border border-purple-200 rounded-2xl text-xs text-purple-900 flex items-start space-x-3">
         <i class="fa-solid fa-user-shield text-purple-700 mt-0.5 text-base"></i>
@@ -66,7 +45,7 @@
             <i class="fa-solid fa-folder-tree text-[#163B65]"></i>
             <span>Chọn Đồ án áp dụng:</span>
         </label>
-        <select id="ai-project-select" class="px-3.5 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#163B65] flex-1 text-slate-900 font-semibold">
+        <select id="ai-project-select" onchange="window.location.href='?project_id=' + this.value" class="px-3.5 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#163B65] flex-1 text-slate-900 font-semibold">
             {% for p in projects %}
             <option value="{{ p.id }}" {% if selected_project and selected_project.id == p.id %}selected{% endif %}>
                 [{{ p.code }}] {{ p.name }}
@@ -86,9 +65,11 @@
         <button @click="tab = 'risk'" :class="tab === 'risk' ? 'bg-white text-[#163B65] border-b-2 border-[#163B65] font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'" class="px-4 py-2.5 text-xs rounded-t-xl transition-all whitespace-nowrap">
             <i class="fa-solid fa-triangle-exclamation mr-1.5 text-rose-500"></i> AI Risk Warning
         </button>
+        {% if request.user.is_mentor or request.user.is_admin_user %}
         <button @click="tab = 'questions'" :class="tab === 'questions' ? 'bg-white text-[#163B65] border-b-2 border-[#163B65] font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'" class="px-4 py-2.5 text-xs rounded-t-xl transition-all whitespace-nowrap">
             <i class="fa-solid fa-comments mr-1.5 text-purple-500"></i> AI Mentor Questions
         </button>
+        {% endif %}
     </div>
 
     <!-- TAB 1: AI TASK BREAKDOWN -->
@@ -98,6 +79,7 @@
             <p class="text-xs text-slate-500 mt-0.5">Nhập mô tả đồ án để AI phân tích và đề xuất danh sách task Kanban tiêu chuẩn.</p>
         </div>
 
+        {% if request.user.is_student or request.user.is_admin_user %}
         <div class="space-y-3">
             <input type="text" id="ai-breakdown-input" value="{% if selected_project %}{{ selected_project.name }}{% else %}Phát triển hệ thống phần mềm{% endif %}" 
                    class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#163B65]">
@@ -107,13 +89,21 @@
                 <span>Phân tích & Đề xuất Task</span>
             </button>
         </div>
+        {% else %}
+        <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 flex items-center gap-2">
+            <i class="fa-solid fa-info-circle text-slate-400"></i>
+            <span>Chức năng đề xuất Task dành cho Sinh viên thực hiện đồ án. Mentor xem danh sách các task đề xuất do sinh viên tạo.</span>
+        </div>
+        {% endif %}
 
         <div id="breakdown-results" class="space-y-3 hidden pt-3 border-t border-slate-100">
             <div class="flex items-center justify-between">
                 <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Danh sách Task AI Đề xuất</h3>
+                {% if request.user.is_student or request.user.is_admin_user %}
                 <button @click="acceptTasks()" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all">
                     <i class="fa-solid fa-circle-check mr-1.5"></i> Chấp nhận & Tạo các Task vào Database
                 </button>
+                {% endif %}
             </div>
 
             <div class="space-y-2" id="tasks-container"></div>
@@ -127,12 +117,32 @@
             <p class="text-xs text-slate-500 mt-0.5">AI tự động quét dữ liệu các task đã xong, task đang làm và các vấn đề quá hạn để xuất báo cáo cho Mentor.</p>
         </div>
 
+        {% if request.user.is_student or request.user.is_admin_user %}
         <button @click="runWeeklySummary()" class="px-5 py-2.5 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center space-x-2">
             <i class="fa-solid fa-file-lines text-amber-400"></i>
             <span>Xuất Báo cáo Bằng AI</span>
         </button>
+        {% endif %}
 
-        <div id="summary-result" class="pt-2"></div>
+        <div id="summary-result" class="pt-2">
+            {% if weekly_summaries %}
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <div class="flex items-center gap-2 text-xs font-bold text-slate-900">
+                        <i class="fa-solid fa-file-lines text-[#163B65]"></i>
+                        <span>Báo cáo tuần mới nhất (Tuần {{ weekly_summaries.first.week_number }}/{{ weekly_summaries.first.year }})</span>
+                    </div>
+                    <span class="text-[10px] text-slate-400">{{ weekly_summaries.first.created_at|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="text-xs text-slate-700 leading-relaxed whitespace-pre-line">{{ weekly_summaries.first.summary_text }}</div>
+            </div>
+            {% elif request.user.is_mentor %}
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 flex items-center gap-2">
+                <i class="fa-solid fa-info-circle text-slate-400"></i>
+                <span>Sinh viên nhóm này chưa thực hiện phân tích báo cáo tuần bằng AI.</span>
+            </div>
+            {% endif %}
+        </div>
     </div>
 
     <!-- TAB 3: AI RISK WARNING -->
@@ -142,26 +152,58 @@
             <p class="text-xs text-slate-500 mt-0.5">Phân tích dữ liệu deadline công việc và mốc thời gian Milestone thực tế.</p>
         </div>
 
+        {% if request.user.is_student or request.user.is_admin_user %}
         <button @click="runRiskDetection()" class="px-4 py-2 bg-rose-800 hover:bg-rose-900 text-white font-bold text-xs rounded-xl shadow-sm">
-            Kiểm tra Rủi ro Tiến độ
+            <i class="fa-solid fa-triangle-exclamation text-amber-300 mr-1.5"></i>
+            <span>Kiểm tra Rủi ro Tiến độ</span>
         </button>
+        {% endif %}
 
-        <div id="risk-result" class="pt-2"></div>
+        <div id="risk-result" class="pt-2">
+            {% if project_risks %}
+            <div class="p-4 bg-rose-50/50 border border-rose-200 rounded-xl space-y-3">
+                <div class="flex items-center gap-2 text-xs font-bold text-rose-900 border-b border-rose-200 pb-2">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
+                    <span>Cảnh báo rủi ro được phát hiện từ dữ liệu hệ thống:</span>
+                </div>
+                <div class="space-y-2">
+                    {% for risk in project_risks %}
+                    <div class="p-2.5 bg-white border border-rose-100 rounded-lg text-xs flex items-start gap-2">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 whitespace-nowrap">{{ risk.type }}</span>
+                        <div class="space-y-0.5">
+                            <p class="font-bold text-slate-900">{{ risk.title }}</p>
+                            <p class="text-[11px] text-slate-600">{{ risk.detail }}</p>
+                            <p class="text-[11px] text-slate-500 italic"><span class="font-bold">Đề xuất:</span> {{ risk.recommendation }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% elif request.user.is_mentor %}
+            <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center gap-2">
+                <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                <span>Chưa ghi nhận rủi ro trễ hạn nghiêm trọng trên đồ án này.</span>
+            </div>
+            {% endif %}
+        </div>
     </div>
 
     <!-- TAB 4: AI MENTOR QUESTIONS -->
+    {% if request.user.is_mentor or request.user.is_admin_user %}
     <div x-show="tab === 'questions'" class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
         <div class="border-b border-slate-100 pb-3">
             <h2 class="text-sm font-bold text-slate-900">Gợi ý Câu hỏi Phản biện cho Mentor (AI Mentor Questions)</h2>
             <p class="text-xs text-slate-500 mt-0.5">Gợi ý danh sách câu hỏi kiểm tra kiến trúc hệ thống, quy trình và bảo mật dành cho Mentor.</p>
         </div>
 
-        <button @click="runMentorQuestions()" class="px-4 py-2 bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs rounded-xl shadow-sm">
-            Gợi ý Câu hỏi Phản biện
+        <button @click="runMentorQuestions()" class="px-4 py-2 bg-purple-800 hover:bg-purple-900 text-white font-bold text-xs rounded-xl shadow-sm flex items-center space-x-2">
+            <i class="fa-solid fa-comments text-amber-300"></i>
+            <span>Tạo Gợi ý Câu hỏi Phản biện</span>
         </button>
 
         <div id="questions-result" class="pt-2"></div>
     </div>
+    {% endif %}
 
     <!-- CUSTOM UI SUCCESS MODAL FOR TASK CREATION -->
     <div x-show="successModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4">
@@ -189,17 +231,35 @@
     let globalAiTasks = [];
 
     function getSelectedProjectId() {
-        return document.getElementById('ai-project-select').value;
+        const select = document.getElementById('ai-project-select');
+        return select ? select.value : '';
     }
 
     function goToKanban() {
         const projectId = getSelectedProjectId();
-        window.location.href = `/projects/${projectId}/tasks/`;
+        if (projectId) {
+            window.location.href = `/projects/${projectId}/tasks/`;
+        }
+    }
+
+    function renderFormattedCard(content, iconClass, title, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = `
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                <div class="flex items-center gap-2 text-xs font-bold text-slate-900 border-b border-slate-200/80 pb-2">
+                    <i class="${iconClass} text-[#163B65]"></i>
+                    <span>${title}</span>
+                </div>
+                <div class="text-xs text-slate-700 leading-relaxed space-y-2 whitespace-pre-line">${content}</div>
+            </div>
+        `;
     }
 
     function runBreakdown() {
         const projectId = getSelectedProjectId();
-        const inputData = document.getElementById('ai-breakdown-input').value;
+        const inputElem = document.getElementById('ai-breakdown-input');
+        const inputData = inputElem ? inputElem.value : '';
         const formData = new FormData();
         formData.append('project_id', projectId);
         formData.append('project_name', inputData);
@@ -211,23 +271,31 @@
         }).then(res => res.json())
           .then(data => {
               if (data.status === 'success') {
-                  globalAiTasks = data.tasks;
+                  const tasks = data.suggested_tasks || data.tasks || [];
+                  globalAiTasks = tasks;
                   const container = document.getElementById('tasks-container');
-                  container.innerHTML = '';
-                  
-                  data.tasks.forEach((t, index) => {
-                      container.innerHTML += `
-                          <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-start justify-between text-xs">
-                              <div>
-                                  <h4 class="font-bold text-slate-900">${index + 1}. ${t.title}</h4>
-                                  <p class="text-[11px] text-slate-600 mt-0.5">${t.description}</p>
-                                  <span class="inline-block mt-1 px-2 py-0.5 bg-slate-200 text-slate-700 text-[10px] font-bold rounded-md">${t.labels}</span>
+                  if (container) {
+                      container.innerHTML = '';
+                      tasks.forEach((t, index) => {
+                          const badgeColor = t.priority === 'CRITICAL' ? 'bg-rose-100 text-rose-800' :
+                                            t.priority === 'HIGH' ? 'bg-amber-100 text-amber-800' :
+                                            t.priority === 'MEDIUM' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800';
+                          container.innerHTML += `
+                              <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-start justify-between text-xs gap-3">
+                                  <div class="space-y-1">
+                                      <h4 class="font-bold text-slate-900">${index + 1}. ${t.title}</h4>
+                                      <p class="text-[11px] text-slate-600 leading-relaxed">${t.description}</p>
+                                      <div class="flex items-center gap-2 pt-1">
+                                          <span class="px-2 py-0.5 bg-slate-200 text-slate-700 text-[10px] font-bold rounded-md"><i class="fa-solid fa-clock mr-1"></i>${t.estimated_hours || 8}h</span>
+                                          <span class="px-2 py-0.5 bg-slate-200 text-slate-700 text-[10px] font-bold rounded-md">${t.labels || 'Đề xuất AI'}</span>
+                                      </div>
+                                  </div>
+                                  <span class="px-2.5 py-1 text-[10px] font-bold rounded-lg ${badgeColor} whitespace-nowrap">${t.priority || 'MEDIUM'}</span>
                               </div>
-                              <span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-200 text-slate-800">${t.priority}</span>
-                          </div>
-                      `;
-                  });
-                  document.getElementById('breakdown-results').classList.remove('hidden');
+                          `;
+                      });
+                      document.getElementById('breakdown-results').classList.remove('hidden');
+                  }
               }
           });
     }
@@ -263,7 +331,8 @@
             body: formData
         }).then(res => res.json())
           .then(data => {
-              document.getElementById('summary-result').innerHTML = data.summary_html;
+              const text = data.summary || data.summary_html || 'Không có dữ liệu báo cáo.';
+              renderFormattedCard(text, 'fa-solid fa-file-lines', 'Báo cáo Tổng hợp Tiến độ Tuần bằng AI', 'summary-result');
           });
     }
 
@@ -278,7 +347,8 @@
             body: formData
         }).then(res => res.json())
           .then(data => {
-              document.getElementById('risk-result').innerHTML = data.risk_html;
+              const text = data.analysis || data.risk_html || 'Chưa ghi nhận rủi ro nghiêm trọng.';
+              renderFormattedCard(text, 'fa-solid fa-triangle-exclamation', 'Phân tích Rủi ro Tiến độ bằng AI', 'risk-result');
           });
     }
 
@@ -293,7 +363,8 @@
             body: formData
         }).then(res => res.json())
           .then(data => {
-              document.getElementById('questions-result').innerHTML = data.questions_html;
+              const text = data.questions || data.questions_html || 'Không có câu hỏi đề xuất.';
+              renderFormattedCard(text, 'fa-solid fa-comments', 'Gợi ý Câu hỏi Phản biện cho Mentor', 'questions-result');
           });
     }
 </script>

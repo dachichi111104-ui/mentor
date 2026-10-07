@@ -28,10 +28,10 @@
     <div class="space-y-1 pt-1">
         <div class="flex justify-between text-[10px] text-slate-400 font-semibold">
             <span>Subtasks</span>
-            <span>{{ task.checklist_progress }}%</span>
+            <span class="task-progress-text">{{ task.checklist_progress }}%</span>
         </div>
         <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-            <div class="h-full bg-navy-600 rounded-full" style="width: {{ task.checklist_progress }}%;"></div>
+            <div class="h-full bg-[#163B65] rounded-full task-progress-bar" style="width: {{ task.checklist_progress }}%;"></div>
         </div>
     </div>
     {% endif %}

@@ -96,6 +96,13 @@ def register_view(request):
 
 def logout_view(request):
     if request.user.is_authenticated:
+        from dashboard.models import TimeLog
+        active_log = TimeLog.objects.filter(user=request.user, ended_at__isnull=True).first()
+        if active_log:
+            active_log.ended_at = timezone.now()
+            active_log.duration = int((active_log.ended_at - active_log.started_at).total_seconds())
+            active_log.save()
+
         log_action(
             user=request.user,
             action=ActionType.LOGOUT,
