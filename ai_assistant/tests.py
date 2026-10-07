@@ -29,14 +29,14 @@ class AIAssistantTests(TestCase):
         self.assertEqual(json_data.get('status'), 'success')
         self.assertIn('risk_html', json_data)
 
-    def test_admin_cannot_access_ai_assistant(self):
+    def test_admin_can_access_ai_assistant(self):
         admin = User.objects.create_user(username='admin_ai', password='password123', role=UserRole.ADMIN)
         self.client.login(username='admin_ai', password='password123')
         
-        # Test Page GET returns 403
+        # Test Page GET returns 200
         res_page = self.client.get(reverse('ai_assistant_page'))
-        self.assertEqual(res_page.status_code, 403)
+        self.assertEqual(res_page.status_code, 200)
         
-        # Test AJAX POST returns 403
+        # Test AJAX POST returns 200
         res_ajax = self.client.post(reverse('ai_risk_detection'), {'project_id': self.project.id})
-        self.assertEqual(res_ajax.status_code, 403)
+        self.assertEqual(res_ajax.status_code, 200)

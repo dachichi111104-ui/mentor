@@ -38,7 +38,7 @@ def run_seed():
         username='admin',
         email='admin@projecthub.vn',
         password='admin123',
-        first_name='Hàng Không',
+        first_name='HVHK',
         last_name='Quản trị viên',
         role=UserRole.ADMIN,
         status=UserStatus.ACTIVE,

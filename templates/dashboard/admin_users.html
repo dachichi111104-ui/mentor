@@ -134,11 +134,11 @@
                                 {{ u.get_role_display }}
                             </span>
                         </td>
-                        <td class="p-3.5">
+                        <td class="p-3.5 whitespace-nowrap">
                             {% if u.status == 'ACTIVE' %}
-                            <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px] rounded-full">Hoạt động</span>
+                            <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px] rounded-full whitespace-nowrap inline-block">Hoạt động</span>
                             {% else %}
-                            <span class="px-2.5 py-1 bg-rose-50 text-rose-700 border border-rose-200 font-bold text-[10px] rounded-full">Đã khóa</span>
+                            <span class="px-2.5 py-1 bg-rose-50 text-rose-700 border border-rose-200 font-bold text-[10px] rounded-full whitespace-nowrap inline-block">Đã khóa</span>
                             {% endif %}
                         </td>
                         <td class="p-3.5 pr-5 text-right whitespace-nowrap">

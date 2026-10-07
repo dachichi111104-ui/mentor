@@ -70,7 +70,7 @@
                 <i class="fa-regular fa-calendar-plus text-slate-900"></i>
                 <span>Đặt Lịch Hẹn Mentor</span>
             </button>
-            <button @click="showEventModal = true" class="px-4 py-2.5 bg-[#173F91] hover:bg-[#123477] text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm uppercase tracking-wider">
+            <button @click="showEventModal = true" class="px-4 py-2.5 bg-[#163B65] hover:bg-[#0f2643] text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm uppercase tracking-wider">
                 <i class="fa-solid fa-plus text-amber-400"></i>
                 <span>Thêm Sự Kiện Mới</span>
             </button>
@@ -84,7 +84,7 @@
         <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
             <div class="flex items-center justify-between mb-5 border-b border-slate-100 pb-4">
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-[#173F91] flex items-center justify-center text-lg font-bold border border-blue-200">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-[#163B65] flex items-center justify-center text-lg font-bold border border-blue-200">
                         <i class="fa-solid fa-calendar-days"></i>
                     </div>
                     <div>
@@ -93,7 +93,7 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="px-3 py-1 bg-blue-50 text-[#173F91] font-bold text-xs rounded-lg border border-blue-200" x-text="events.length + ' Sự kiện'"></span>
+                    <span class="px-3 py-1 bg-blue-50 text-[#163B65] font-bold text-xs rounded-lg border border-blue-200" x-text="events.length + ' Sự kiện'"></span>
                 </div>
             </div>
 
@@ -119,7 +119,7 @@
                          class="p-2 rounded-xl border transition-all cursor-pointer flex flex-col justify-between min-h-[72px] hover:shadow-sm relative group">
                         
                         <div class="flex justify-between items-center">
-                            <span class="font-extrabold text-xs" :class="d.isToday ? 'text-[#173F91]' : 'text-slate-700'" x-text="d.day"></span>
+                            <span class="font-extrabold text-xs" :class="d.isToday ? 'text-[#163B65]' : 'text-slate-700'" x-text="d.day"></span>
                             <template x-if="d.events.length > 0">
                                 <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                             </template>
@@ -146,7 +146,7 @@
             <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
                 <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
                     <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-clock-rotate-left text-[#173F91]"></i>
+                        <i class="fa-solid fa-clock-rotate-left text-[#163B65]"></i>
                         Sự kiện Sắp tới (Upcoming)
                     </h3>
                 </div>
@@ -160,7 +160,7 @@
                             </div>
                             <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500">
                                 <span><i class="fa-regular fa-folder mr-1"></i> <span x-text="ev.project_name"></span></span>
-                                <span class="font-mono font-semibold text-[#173F91]"><i class="fa-regular fa-clock mr-1"></i> <span x-text="ev.start.split('T')[0]"></span></span>
+                                <span class="font-mono font-semibold text-[#163B65]"><i class="fa-regular fa-clock mr-1"></i> <span x-text="ev.start.split('T')[0]"></span></span>
                             </div>
                         </div>
                     </template>
@@ -181,7 +181,7 @@
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 border border-slate-200 relative">
             <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-200">
                 <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-calendar-day text-[#173F91] text-lg"></i>
+                    <i class="fa-solid fa-calendar-day text-[#163B65] text-lg"></i>
                     <h3 class="font-bold text-slate-900 text-base">Lịch ngày <span x-text="selectedDate"></span></h3>
                 </div>
                 <button @click="showDateDetailModal = false" class="text-slate-400 hover:text-slate-700 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -256,7 +256,7 @@
                 </div>
                 <div class="pt-2 flex justify-end gap-2">
                     <button type="button" @click="showEventModal = false" class="px-4 py-2.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl">Hủy</button>
-                    <button type="submit" class="px-5 py-2.5 bg-[#173F91] hover:bg-[#123477] text-white text-xs font-bold rounded-xl uppercase tracking-wider shadow-sm">Tạo Sự kiện</button>
+                    <button type="submit" class="px-5 py-2.5 bg-[#163B65] hover:bg-[#0f2643] text-white text-xs font-bold rounded-xl uppercase tracking-wider shadow-sm">Tạo Sự kiện</button>
                 </div>
             </form>
         </div>

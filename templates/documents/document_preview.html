@@ -10,9 +10,9 @@
     <div class="bg-white rounded p-5 border border-[#D9DEE8] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="space-y-1">
             <div class="flex items-center space-x-2">
-                <span class="px-2 py-0.5 bg-[#173F91] text-white font-mono font-bold text-[10px] rounded">{{ doc.project.code }}</span>
+                <span class="px-2 py-0.5 bg-[#163B65] text-white font-mono font-bold text-[10px] rounded">{{ doc.project.code }}</span>
                 <span class="px-2 py-0.5 bg-slate-100 text-[#172033] font-mono font-bold text-[10px] rounded border border-slate-200">v{{ doc.current_version }}</span>
-                <span class="px-2 py-0.5 bg-blue-50 text-[#173F91] font-semibold text-[10px] rounded border border-blue-200">{{ doc.get_file_type_display }}</span>
+                <span class="px-2 py-0.5 bg-blue-50 text-[#163B65] font-semibold text-[10px] rounded border border-blue-200">{{ doc.get_file_type_display }}</span>
             </div>
             <h1 class="text-lg font-bold text-[#172033] tracking-tight">{{ doc.title }}</h1>
             <p class="text-xs text-[#667085]">
@@ -28,7 +28,7 @@
                 <i class="fa-solid fa-arrow-left"></i>
                 <span>Quay lại</span>
             </a>
-            <a href="{% url 'document_download' doc.id %}" class="px-4 py-2 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded uppercase tracking-wider transition-colors flex items-center space-x-1.5">
+            <a href="{% url 'document_download' doc.id %}" class="px-4 py-2 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded uppercase tracking-wider transition-colors flex items-center space-x-1.5">
                 <i class="fa-solid fa-download"></i>
                 <span>Tải về Tệp</span>
             </a>
@@ -42,7 +42,7 @@
         <div class="w-full">
             <div class="mb-3 flex items-center justify-between text-xs text-[#667085] border-b border-slate-200 pb-2">
                 <span>Chế độ Xem trực tiếp File PDF</span>
-                <a href="{% url 'document_raw' doc.id %}" target="_blank" class="text-[#173F91] font-semibold hover:underline">Mở tab mới <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1"></i></a>
+                <a href="{% url 'document_raw' doc.id %}" target="_blank" class="text-[#163B65] font-semibold hover:underline">Mở tab mới <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1"></i></a>
             </div>
             <iframe src="{% url 'document_raw' doc.id %}" class="w-full h-[700px] rounded border border-[#D9DEE8]"></iframe>
         </div>
@@ -74,14 +74,14 @@
         <div class="w-full space-y-3" x-data="{ activeTab: 'embed' }">
             <div class="flex items-center justify-between text-xs text-[#667085] border-b border-slate-200 pb-2">
                 <div class="flex items-center space-x-2">
-                    <button @click="activeTab = 'embed'" :class="activeTab === 'embed' ? 'bg-[#173F91] text-white' : 'bg-slate-100 text-[#172033] hover:bg-slate-200'" class="px-3 py-1 rounded font-semibold text-xs transition-colors">
+                    <button @click="activeTab = 'embed'" :class="activeTab === 'embed' ? 'bg-[#163B65] text-white' : 'bg-slate-100 text-[#172033] hover:bg-slate-200'" class="px-3 py-1 rounded font-semibold text-xs transition-colors">
                         <i class="fa-solid fa-eye mr-1"></i> Xem trước trực tuyến
                     </button>
-                    <button @click="activeTab = 'download'" :class="activeTab === 'download' ? 'bg-[#173F91] text-white' : 'bg-slate-100 text-[#172033] hover:bg-slate-200'" class="px-3 py-1 rounded font-semibold text-xs transition-colors">
+                    <button @click="activeTab = 'download'" :class="activeTab === 'download' ? 'bg-[#163B65] text-white' : 'bg-slate-100 text-[#172033] hover:bg-slate-200'" class="px-3 py-1 rounded font-semibold text-xs transition-colors">
                         <i class="fa-solid fa-download mr-1"></i> Tải file về máy
                     </button>
                 </div>
-                <a href="{% url 'document_raw' doc.id %}" target="_blank" class="text-[#173F91] font-semibold hover:underline">Tải tệp gốc <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1"></i></a>
+                <a href="{% url 'document_raw' doc.id %}" target="_blank" class="text-[#163B65] font-semibold hover:underline">Tải tệp gốc <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1"></i></a>
             </div>
 
             <div x-show="activeTab === 'embed'">
@@ -89,7 +89,7 @@
             </div>
 
             <div x-show="activeTab === 'download'" class="w-full max-w-2xl mx-auto py-12 text-center space-y-5">
-                <div class="w-16 h-16 mx-auto rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-[#173F91] text-2xl shadow-xs">
+                <div class="w-16 h-16 mx-auto rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-[#163B65] text-2xl shadow-xs">
                     {% if doc.file_type == 'WORD' %}
                     <i class="fa-solid fa-file-word text-blue-700"></i>
                     {% elif doc.file_type == 'EXCEL' %}
@@ -105,7 +105,7 @@
                     <p class="text-xs text-[#667085]">Định dạng tệp: <span class="font-bold text-[#172033] uppercase">{{ file_extension }}</span> • Dung lượng: {{ doc.file_size }}</p>
                 </div>
                 <div class="pt-2 flex justify-center space-x-3">
-                    <a href="{% url 'document_download' doc.id %}" class="px-6 py-2.5 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-all shadow-xs flex items-center space-x-2">
+                    <a href="{% url 'document_download' doc.id %}" class="px-6 py-2.5 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-all shadow-xs flex items-center space-x-2">
                         <i class="fa-solid fa-download"></i>
                         <span>Tải về Tệp này ({{ doc.file_size }})</span>
                     </a>
@@ -133,7 +133,7 @@
             </div>
 
             <div class="pt-2 flex justify-center space-x-3">
-                <a href="{% url 'document_download' doc.id %}" class="px-6 py-2.5 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-all shadow-xs flex items-center space-x-2">
+                <a href="{% url 'document_download' doc.id %}" class="px-6 py-2.5 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-all shadow-xs flex items-center space-x-2">
                     <i class="fa-solid fa-download"></i>
                     <span>Tải về Tệp nén ({{ doc.file_size }})</span>
                 </a>

@@ -1,7 +1,7 @@
 {% extends "layouts/base.html" %}
 
 {% block title %}{{ project.name }} - ProjectHub AI{% endblock %}
-{% block breadcrumb %}<a href="{% url 'project_list' %}" class="hover:text-[#1E3A8A] transition-colors">Đồ án của tôi</a> <i class="fa-solid fa-chevron-right text-[9px] text-slate-300 mx-1"></i> <span class="text-slate-900 font-bold">{{ project.code }}</span>{% endblock %}
+{% block breadcrumb %}<a href="{% url 'project_list' %}" class="hover:text-[#163B65] transition-colors">Đồ án của tôi</a> <i class="fa-solid fa-chevron-right text-[9px] text-slate-300 mx-1"></i> <span class="text-slate-900 font-bold">{{ project.code }}</span>{% endblock %}
 
 {% block content %}
 <div class="space-y-6" x-data="{ addMemberModal: false }">
@@ -11,7 +11,7 @@
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <div class="flex items-center space-x-2.5 mb-1.5">
-                    <span class="px-2.5 py-0.5 bg-[#1E3A8A] text-white font-mono font-bold text-xs rounded-lg shadow-xs">Mã đồ án: {{ project.code }}</span>
+                    <span class="px-2.5 py-0.5 bg-[#163B65] text-white font-mono font-bold text-xs rounded-lg shadow-xs">Mã đồ án: {{ project.code }}</span>
                     <span class="px-2.5 py-0.5 text-xs font-bold rounded-lg border whitespace-nowrap
                     {% if project.status == 'IN_PROGRESS' %}bg-amber-50 text-amber-800 border-amber-200
                     {% elif project.status == 'REVIEW' %}bg-purple-50 text-purple-800 border-purple-200
@@ -24,7 +24,7 @@
             </div>
 
             <div class="flex items-center space-x-2.5">
-                <a href="{% url 'project_tasks' project.id %}" class="px-4 py-2 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold text-xs rounded-xl transition shadow-sm border border-blue-700 flex items-center space-x-1.5">
+                <a href="{% url 'project_tasks' project.id %}" class="px-4 py-2 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl transition shadow-sm border border-blue-700 flex items-center space-x-1.5">
                     <i class="fa-solid fa-square-poll-vertical text-amber-400"></i>
                     <span>Bảng Kanban</span>
                 </a>
@@ -43,7 +43,7 @@
             </div>
             <div>
                 <span class="text-slate-400 block font-medium">Giảng viên Hướng dẫn:</span>
-                <span class="font-bold text-[#1E3A8A]">{{ project.mentor.display_name|default:"Chưa phân công" }}</span>
+                <span class="font-bold text-[#163B65]">{{ project.mentor.display_name|default:"Chưa phân công" }}</span>
             </div>
             <div>
                 <span class="text-slate-400 block font-medium">Hạn hoàn thành:</span>
@@ -51,14 +51,14 @@
             </div>
             <div>
                 <span class="text-slate-400 block font-medium">Tiến độ tổng thể:</span>
-                <span class="font-bold text-[#1E3A8A]">{{ project.progress_percentage }}%</span>
+                <span class="font-bold text-[#163B65]">{{ project.progress_percentage }}%</span>
             </div>
         </div>
     </div>
 
     <!-- Navigation Sub-Tabs -->
     <div class="flex items-center space-x-1 border-b border-slate-200 overflow-x-auto text-xs font-semibold">
-        <a href="{% url 'project_detail' project.id %}" class="px-4 py-2.5 bg-white text-[#1E3A8A] border-b-2 border-[#1E3A8A] font-bold rounded-t-xl">
+        <a href="{% url 'project_detail' project.id %}" class="px-4 py-2.5 bg-white text-[#163B65] border-b-2 border-[#163B65] font-bold rounded-t-xl">
             Tổng quan (Overview)
         </a>
         <a href="{% url 'project_tasks' project.id %}" class="px-4 py-2.5 text-slate-600 hover:text-slate-900 transition">
@@ -82,9 +82,9 @@
             <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                     <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center">
-                        <i class="fa-solid fa-flag text-[#1E3A8A] mr-2"></i> Tiến độ các Milestone
+                        <i class="fa-solid fa-flag text-[#163B65] mr-2"></i> Tiến độ các Milestone
                     </h2>
-                    <a href="{% url 'project_milestones' project.id %}" class="text-xs font-bold text-[#1E3A8A] hover:underline">Quản lý Milestone</a>
+                    <a href="{% url 'project_milestones' project.id %}" class="text-xs font-bold text-[#163B65] hover:underline">Quản lý Milestone</a>
                 </div>
 
                 <div class="space-y-3">
@@ -115,7 +115,7 @@
             <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                     <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center">
-                        <i class="fa-solid fa-clipboard-check text-[#1E3A8A] mr-2"></i> Phản hồi Đánh giá từ Giảng viên
+                        <i class="fa-solid fa-clipboard-check text-[#163B65] mr-2"></i> Phản hồi Đánh giá từ Giảng viên
                     </h2>
                 </div>
 
@@ -144,9 +144,9 @@
             <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                     <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center">
-                        <i class="fa-solid fa-users text-[#1E3A8A] mr-2"></i> Thành viên Nhóm
+                        <i class="fa-solid fa-users text-[#163B65] mr-2"></i> Thành viên Nhóm
                     </h2>
-                    <button @click="addMemberModal = true" class="text-xs font-bold text-[#1E3A8A] hover:underline flex items-center gap-1">
+                    <button @click="addMemberModal = true" class="text-xs font-bold text-[#163B65] hover:underline flex items-center gap-1">
                         <i class="fa-solid fa-user-plus text-amber-500"></i>
                         <span>Mời thành viên</span>
                     </button>
@@ -163,7 +163,7 @@
                             </div>
                         </div>
                         <span class="px-2 py-0.5 text-[9px] font-bold rounded-md uppercase border whitespace-nowrap
-                        {% if m.role == 'LEADER' %}bg-[#1E3A8A] text-white border-blue-700{% else %}bg-slate-100 text-slate-700 border-slate-200{% endif %}">
+                        {% if m.role == 'LEADER' %}bg-[#163B65] text-white border-blue-700{% else %}bg-slate-100 text-slate-700 border-slate-200{% endif %}">
                             {{ m.get_role_display }}
                         </span>
                     </div>
@@ -173,11 +173,11 @@
 
             <!-- AI Tool Box -->
             <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
-                <h2 class="text-xs font-bold uppercase tracking-wider text-[#1E3A8A] flex items-center border-b border-slate-100 pb-3">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-[#163B65] flex items-center border-b border-slate-100 pb-3">
                     <i class="fa-solid fa-robot mr-2 text-amber-500"></i> Trợ lý Công cụ AI
                 </h2>
                 <p class="text-xs text-slate-500 leading-relaxed">Sử dụng AI phân rã công việc đồ án, tổng hợp báo cáo tiến độ tuần và phát hiện rủi ro trễ hạn.</p>
-                <a href="{% url 'ai_assistant_page' %}?project_id={{ project.id }}" class="block w-full py-2.5 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold text-xs text-center rounded-xl uppercase tracking-wider transition-all shadow-sm border border-blue-700">
+                <a href="{% url 'ai_assistant_page' %}?project_id={{ project.id }}" class="block w-full py-2.5 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs text-center rounded-xl uppercase tracking-wider transition-all shadow-sm border border-blue-700">
                     Mở Trợ lý AI cho Đồ án này
                 </a>
             </div>
@@ -191,7 +191,7 @@
         <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4" @click.away="addMemberModal = false">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <i class="fa-solid fa-user-plus text-[#1E3A8A]"></i>
+                    <i class="fa-solid fa-user-plus text-[#163B65]"></i>
                     <span>Mời Sinh viên vào Đồ án</span>
                 </h3>
                 <button @click="addMemberModal = false" class="text-slate-400 hover:text-slate-700 text-xs font-bold"><i class="fa-solid fa-xmark"></i></button>
@@ -200,7 +200,7 @@
                 {% csrf_token %}
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Chọn Sinh viên</label>
-                    <select name="user_id" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-[#1E3A8A]">
+                    <select name="user_id" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-[#163B65]">
                         {% for st in available_students %}
                         <option value="{{ st.id }}">{{ st.display_name }} ({{ st.email }})</option>
                         {% endfor %}
@@ -208,7 +208,7 @@
                 </div>
                 <div class="flex justify-end space-x-2 pt-2 border-t border-slate-100">
                     <button type="button" @click="addMemberModal = false" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-200 transition">Hủy bỏ</button>
-                    <button type="submit" class="px-5 py-2 bg-[#1E3A8A] text-white font-bold text-xs rounded-xl shadow-sm hover:bg-blue-900 transition flex items-center gap-1.5 border border-blue-700">
+                    <button type="submit" class="px-5 py-2 bg-[#163B65] text-white font-bold text-xs rounded-xl shadow-sm hover:bg-[#0f2643] transition flex items-center gap-1.5 border border-blue-700">
                         <i class="fa-solid fa-user-plus text-amber-400"></i>
                         <span>Thêm vào nhóm</span>
                     </button>

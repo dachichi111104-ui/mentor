@@ -355,12 +355,17 @@ def time_tracker_stop_view(request):
 
 @login_required
 def time_tracker_status_view(request):
+    today = timezone.now().date()
+    today_logs = TimeLog.objects.filter(user=request.user, started_at__date=today)
+    today_seconds = sum(l.duration or 0 for l in today_logs)
+
     active_log = TimeLog.objects.filter(user=request.user, ended_at__isnull=True).first()
     if active_log:
         elapsed = int((timezone.now() - active_log.started_at).total_seconds())
         return JsonResponse({
             'status': 'success',
             'is_running': True,
+            'today_seconds': today_seconds,
             'log': {
                 'id': active_log.id,
                 'project_id': active_log.project.id,
@@ -370,7 +375,16 @@ def time_tracker_status_view(request):
                 'elapsed_seconds': elapsed
             }
         })
-    return JsonResponse({'status': 'success', 'is_running': False})
+
+    last_log = TimeLog.objects.filter(user=request.user, ended_at__isnull=False).order_by('-ended_at').first()
+    last_duration = last_log.duration if last_log else 0
+
+    return JsonResponse({
+        'status': 'success',
+        'is_running': False,
+        'today_seconds': today_seconds,
+        'last_duration': last_duration
+    })
 
 
 @login_required

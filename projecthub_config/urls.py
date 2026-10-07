@@ -69,6 +69,7 @@ urlpatterns = [
     path('projects/create/', project_views.project_create_view, name='project_create'),
     path('projects/<int:project_id>/', project_views.project_detail_view, name='project_detail'),
     path('projects/<int:project_id>/edit/', project_views.project_edit_view, name='project_edit'),
+    path('projects/<int:project_id>/delete/', project_views.project_delete_view, name='project_delete'),
     path('projects/<int:project_id>/members/add/', project_views.project_add_member_view, name='project_add_member'),
     path('projects/<int:project_id>/member-accept/', project_views.project_member_accept_view, name='project_member_accept'),
     path('projects/<int:project_id>/mentor-accept/', project_views.project_mentor_accept_view, name='project_mentor_accept'),

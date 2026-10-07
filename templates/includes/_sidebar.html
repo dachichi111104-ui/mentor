@@ -138,7 +138,6 @@
         <div class="space-y-1">
             <span x-show="!sidebarCollapsed" class="px-3 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block mb-2">Hệ thống & AI</span>
 
-            {% if not request.user.is_admin_user %}
             <a href="{% url 'ai_assistant_page' %}"
                title="Trợ lý AI"
                {% if request.resolver_match.url_name == 'ai_assistant_page' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
@@ -150,7 +149,6 @@
                 </div>
                 <span x-show="!sidebarCollapsed" class="px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-full font-bold text-[9px] border border-amber-500/30">REAL</span>
             </a>
-            {% endif %}
 
             <a href="{% url 'settings' %}"
                title="Cài đặt hệ thống"

@@ -1,24 +1,32 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Danh sách Đồ án - ProjectHub{% endblock %}
-{% block breadcrumb %}Danh sách Đồ án{% endblock %}
+{% block title %}Danh sách Đồ án - ProjectHub AI{% endblock %}
+{% block breadcrumb %}<a href="{% url 'dashboard' %}" class="hover:text-[#163B65]">Bảng điều khiển</a> <i class="fa-solid fa-chevron-right text-[9px] text-slate-300 mx-1"></i> <span class="text-slate-900 font-bold">{% if request.user.is_student %}Đồ án của tôi{% elif request.user.is_mentor %}Đồ án Hướng dẫn{% else %}Quản lý Đồ án{% endif %}</span>{% endblock %}
 
 {% block content %}
-<div class="space-y-6" x-data="{ createModal: false }">
+<div class="space-y-6" x-data="{
+    createModal: false,
+    editModal: false,
+    editProj: { id: '', code: '', name: '', description: '', category: 'WEB', technology: '', mentor_id: '', end_date: '', status: 'PLANNING' },
+    openEdit(proj) {
+        this.editProj = { ...proj };
+        this.editModal = true;
+    }
+}">
 
     <!-- Header Card Banner -->
-    <div class="bg-white rounded-2xl p-6 border border-[#D9DEE8] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-center space-x-4">
-            <div class="w-12 h-12 rounded-2xl bg-[#173F91] text-amber-400 flex items-center justify-center text-xl font-bold shadow-xs">
+            <div class="w-12 h-12 rounded-2xl bg-[#163B65] text-amber-400 flex items-center justify-center text-xl font-bold shadow-xs">
                 <i class="fa-solid fa-folder-tree"></i>
             </div>
             <div>
-                <h1 class="text-xl font-bold text-[#172033] tracking-tight">Quản Lý Đồ Án Sinh Viên</h1>
-                <p class="text-xs text-[#667085] mt-0.5">Danh sách tổng hợp các đồ án, quy mô lứa nghiên cứu, mã số & tiến độ thực hiện</p>
+                <h1 class="text-xl font-bold text-slate-900 tracking-tight">{% if request.user.is_student %}Quản Lý Đồ Án Sinh Viên{% elif request.user.is_mentor %}Quản Lý Đồ Án Hướng Dẫn{% else %}Quản Lý Tất Cả Đồ Án{% endif %}</h1>
+                <p class="text-xs text-slate-500 mt-0.5">Danh sách tổng hợp các đồ án, mã số, tiến độ thực hiện và giảng viên hướng dẫn</p>
             </div>
         </div>
         {% if not request.user.is_admin_user %}
-        <button type="button" @click="createModal = true" class="px-5 py-2.5 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-all shadow-xs self-start sm:self-auto flex items-center space-x-1.5">
+        <button type="button" @click="createModal = true" class="px-5 py-2.5 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-all shadow-xs self-start sm:self-auto flex items-center space-x-1.5">
             <i class="fa-solid fa-plus text-amber-400 text-xs"></i>
             <span>Thêm Đồ Án Mới</span>
         </button>
@@ -26,15 +34,15 @@
     </div>
 
     <!-- Search & Filter Bar Card -->
-    <div class="bg-white rounded-2xl p-4 border border-[#D9DEE8] shadow-xs">
+    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
         <form method="get" class="flex flex-wrap items-center gap-3">
             <div class="relative flex-1 min-w-[240px]">
                 <input type="text" name="q" value="{{ query }}" placeholder="Tìm theo tên hoặc mã đồ án, công nghệ..." 
-                       class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-[#D9DEE8] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#173F91] focus:bg-white transition-all">
-                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-[#667085] text-xs"></i>
+                       class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65] focus:bg-white transition-all">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
             </div>
             
-            <select name="status" class="px-3 py-2 text-xs bg-slate-50 border border-[#D9DEE8] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#173F91] text-[#172033]">
+            <select name="status" class="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65] text-slate-700">
                 <option value="">Tất cả Trạng thái</option>
                 <option value="PLANNING" {% if status_filter == 'PLANNING' %}selected{% endif %}>Lập kế hoạch</option>
                 <option value="IN_PROGRESS" {% if status_filter == 'IN_PROGRESS' %}selected{% endif %}>Đang thực hiện</option>
@@ -42,7 +50,7 @@
                 <option value="COMPLETED" {% if status_filter == 'COMPLETED' %}selected{% endif %}>Hoàn thành</option>
             </select>
 
-            <select name="category" class="px-3 py-2 text-xs bg-slate-50 border border-[#D9DEE8] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#173F91] text-[#172033]">
+            <select name="category" class="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65] text-slate-700">
                 <option value="">Tất cả Thể loại</option>
                 <option value="WEB" {% if category_filter == 'WEB' %}selected{% endif %}>Phát triển Web</option>
                 <option value="MOBILE" {% if category_filter == 'MOBILE' %}selected{% endif %}>Di động (Mobile)</option>
@@ -50,33 +58,33 @@
                 <option value="IOT" {% if category_filter == 'IOT' %}selected{% endif %}>IoT</option>
             </select>
 
-            <button type="submit" class="px-5 py-2 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-all shadow-xs">
-                Lọc Đồ án
+            <button type="submit" class="px-5 py-2 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-all shadow-xs flex items-center gap-1.5 border border-[#0f2643]">
+                <i class="fa-solid fa-filter text-amber-400"></i>
+                <span>Lọc Đồ án</span>
             </button>
         </form>
     </div>
 
-
     {% if pending_invites %}
     <!-- Pending Invites Section -->
-    <div class="bg-amber-50 border border-amber-300 rounded p-4 space-y-3">
+    <div class="bg-amber-50 border border-amber-300 rounded-2xl p-4 space-y-3 shadow-xs">
         <div class="flex items-center space-x-2 text-amber-900">
             <i class="fa-solid fa-clock-rotate-left"></i>
             <h2 class="text-xs font-bold uppercase tracking-wider">Lời mời Hướng dẫn Đang chờ Xác nhận ({{ pending_invites.count }})</h2>
         </div>
         <div class="space-y-2">
             {% for proj in pending_invites %}
-            <div class="p-3 bg-white border border-amber-200 rounded flex items-center justify-between text-xs">
+            <div class="p-3.5 bg-white border border-amber-200 rounded-xl flex items-center justify-between text-xs shadow-xs">
                 <div>
-                    <span class="px-1.5 py-0.5 bg-amber-100 text-amber-900 font-mono font-bold text-[10px] rounded mr-1">[{{ proj.code }}]</span>
-                    <span class="font-bold text-[#172033]">{{ proj.name }}</span>
-                    <p class="text-[11px] text-[#667085] mt-0.5">Người đăng ký: {{ proj.created_by.display_name }}</p>
+                    <span class="px-2 py-0.5 bg-amber-100 text-amber-900 font-mono font-bold text-[10px] rounded-md mr-1">[{{ proj.code }}]</span>
+                    <span class="font-bold text-slate-900">{{ proj.name }}</span>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Người đăng ký: {{ proj.created_by.display_name }}</p>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <a href="{% url 'project_mentor_accept' proj.id %}" class="px-3 py-1.5 bg-[#198754] hover:bg-emerald-800 text-white font-bold text-xs rounded uppercase tracking-wider">
+                    <a href="{% url 'project_mentor_accept' proj.id %}" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shadow-xs">
                         Chấp nhận
                     </a>
-                    <a href="{% url 'project_mentor_reject' proj.id %}" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded border border-[#D9DEE8] uppercase tracking-wider">
+                    <a href="{% url 'project_mentor_reject' proj.id %}" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 transition">
                         Từ chối
                     </a>
                 </div>
@@ -87,59 +95,86 @@
     {% endif %}
 
     <!-- Projects Table -->
-    <div class="bg-white rounded border border-[#D9DEE8] overflow-hidden">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs text-[#172033]">
-                <thead class="bg-[#F5F7FA] text-[#172033] font-bold uppercase text-[10px] border-b border-[#D9DEE8]">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] border-b border-slate-200">
                     <tr>
-                        <th class="p-3">Mã & Tên Đồ án</th>
-                        <th class="p-3">Thể loại & Công nghệ</th>
-                        <th class="p-3">Mentor Hướng dẫn</th>
-                        <th class="p-3">Hạn chót</th>
-                        <th class="p-3">Tiến độ</th>
-                        <th class="p-3">Trạng thái</th>
-                        <th class="p-3 text-right whitespace-nowrap">Thao tác</th>
+                        <th class="p-3.5 pl-5">MÃ & TÊN ĐỒ ÁN</th>
+                        <th class="p-3.5">THỂ LOẠI & CÔNG NGHỆ</th>
+                        <th class="p-3.5">MENTOR HƯỚNG DẪN</th>
+                        <th class="p-3.5">HẠN CHÓT</th>
+                        <th class="p-3.5">TIẾN ĐỘ</th>
+                        <th class="p-3.5">TRẠNG THÁI</th>
+                        <th class="p-3.5 pr-5 text-right whitespace-nowrap">THAO TÁC</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-[#D9DEE8]">
+                <tbody class="divide-y divide-slate-100 font-medium">
                     {% for proj in projects %}
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-3">
-                            <span class="font-mono font-bold text-[10px] text-[#667085] block">{{ proj.code }}</span>
-                            <a href="{% url 'project_detail' proj.id %}" class="font-bold text-[#173F91] hover:underline">{{ proj.name }}</a>
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="p-3.5 pl-5">
+                            <span class="font-mono font-bold text-[10px] text-slate-400 block">{{ proj.code }}</span>
+                            <a href="{% url 'project_detail' proj.id %}" class="font-bold text-[#163B65] hover:underline block text-xs">
+                                {{ proj.name }}
+                            </a>
                         </td>
-                        <td class="p-3">
-                            <span class="font-semibold text-[#172033] block">{{ proj.get_category_display }}</span>
-                            <span class="text-[11px] text-[#667085]">{{ proj.technology }}</span>
+                        <td class="p-3.5">
+                            <span class="font-semibold text-slate-900 block">{{ proj.get_category_display }}</span>
+                            <span class="text-[11px] text-slate-500 font-mono">{{ proj.technology }}</span>
                         </td>
-                        <td class="p-3 font-medium">{{ proj.mentor.display_name|default:"Chưa chọn Mentor" }}</td>
-                        <td class="p-3 font-mono text-[#667085]">{{ proj.end_date|date:"d/m/Y" }}</td>
-                        <td class="p-3 w-32">
+                        <td class="p-3.5 font-bold text-slate-800">
+                            {{ proj.mentor.display_name|default:"Chưa gán Mentor" }}
+                        </td>
+                        <td class="p-3.5 font-mono text-slate-500 whitespace-nowrap">{{ proj.end_date|date:"d/m/Y"|default:"-" }}</td>
+                        <td class="p-3.5 w-36">
                             <div class="flex items-center space-x-2">
-                                <div class="w-full bg-slate-200 h-1.5 rounded overflow-hidden">
-                                    <div class="bg-[#173F91] h-full" style="width: {{ proj.progress_percentage }}%"></div>
+                                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200">
+                                    <div class="bg-[#163B65] h-full rounded-full" style="width: {{ proj.progress }}%"></div>
                                 </div>
-                                <span class="font-bold text-[11px]">{{ proj.progress_percentage }}%</span>
+                                <span class="font-bold text-[11px] text-slate-900">{{ proj.progress }}%</span>
                             </div>
                         </td>
-                        <td class="p-3 whitespace-nowrap">
-                            <span class="inline-block whitespace-nowrap px-2 py-0.5 text-[10px] font-bold rounded border
-                            {% if proj.status == 'IN_PROGRESS' %}bg-amber-50 text-amber-800 border-amber-200
-                            {% elif proj.status == 'REVIEW' %}bg-purple-50 text-purple-800 border-purple-200
-                            {% elif proj.status == 'COMPLETED' %}bg-emerald-50 text-emerald-800 border-emerald-200
+                        <td class="p-3.5 whitespace-nowrap">
+                            <span class="inline-block whitespace-nowrap px-2.5 py-1 text-[10px] font-bold rounded-full border
+                            {% if proj.status == 'IN_PROGRESS' %}bg-blue-50 text-blue-700 border-blue-200
+                            {% elif proj.status == 'REVIEW' %}bg-purple-50 text-purple-700 border-purple-200
+                            {% elif proj.status == 'COMPLETED' %}bg-emerald-50 text-emerald-700 border-emerald-200
                             {% else %}bg-slate-100 text-slate-700 border-slate-200{% endif %}">
                                 {{ proj.get_status_display }}
                             </span>
                         </td>
-                        <td class="p-3 text-right whitespace-nowrap">
-                            <a href="{% url 'project_detail' proj.id %}" class="px-2.5 py-1 bg-white text-[#173F91] border border-[#173F91] font-bold text-[11px] rounded hover:bg-blue-50 whitespace-nowrap">
-                                Xem chi tiết
+                        <td class="p-3.5 pr-5 text-right whitespace-nowrap space-x-1.5">
+                            <a href="{% url 'project_detail' proj.id %}" class="px-3 py-1.5 bg-white text-[#163B65] border border-[#163B65] font-bold text-[11px] rounded-xl hover:bg-blue-50 transition inline-flex items-center gap-1 shadow-xs">
+                                <i class="fa-solid fa-eye"></i> Xem
                             </a>
+
+                            {% if proj.created_by == request.user or request.user.is_admin_user %}
+                            <button type="button" @click="openEdit({
+                                id: '{{ proj.id }}',
+                                code: '{{ proj.code|escapejs }}',
+                                name: '{{ proj.name|escapejs }}',
+                                description: '{{ proj.description|escapejs }}',
+                                category: '{{ proj.category }}',
+                                technology: '{{ proj.technology|escapejs }}',
+                                mentor_id: '{{ proj.mentor.id|default:"" }}',
+                                end_date: '{{ proj.end_date|date:"Y-m-d"|default:"" }}',
+                                status: '{{ proj.status }}'
+                            })" class="px-3 py-1.5 bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 font-bold text-[11px] rounded-xl transition inline-flex items-center gap-1">
+                                <i class="fa-solid fa-pen"></i> Sửa
+                            </button>
+
+                            <form action="{% url 'project_delete' proj.id %}" method="post" class="inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa đồ án này và toàn bộ dữ liệu liên quan?')">
+                                {% csrf_token %}
+                                <button type="submit" class="px-2.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-[11px] rounded-xl border border-rose-200 transition">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </form>
+                            {% endif %}
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="p-8 text-center text-[#667085]">Không tìm thấy đồ án phù hợp.</td>
+                        <td colspan="7" class="p-8 text-center text-slate-400">Không tìm thấy đồ án phù hợp.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -148,10 +183,10 @@
     </div>
 
     <!-- CREATE PROJECT POPUP MODAL -->
-    <div x-show="createModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4">
-        <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 relative" @click.away="createModal = false">
+    <div x-show="createModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4" @click.self="createModal = false">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 relative">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div class="flex items-center space-x-2.5 text-[#173F91]">
+                <div class="flex items-center space-x-2.5 text-[#163B65]">
                     <div class="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-amber-500 font-bold border border-blue-200">
                         <i class="fa-solid fa-folder-plus"></i>
                     </div>
@@ -167,23 +202,23 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Mã đồ án *</label>
-                        <input type="text" name="code" placeholder="VD: PRJ-2026-AI" required class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#173F91]">
+                        <input type="text" name="code" placeholder="VD: PRJ-2026-AI" required class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]">
                     </div>
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-bold text-slate-700 mb-1">Tên đồ án *</label>
-                        <input type="text" name="name" placeholder="Tên đồ án đầy đủ..." required class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#173F91]">
+                        <input type="text" name="name" placeholder="Tên đồ án đầy đủ..." required class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Mô tả mục tiêu đồ án</label>
-                    <textarea name="description" rows="2" placeholder="Tóm tắt nội dung và yêu cầu chính..." class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#173F91]"></textarea>
+                    <textarea name="description" rows="2" placeholder="Tóm tắt nội dung và yêu cầu chính..." class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]"></textarea>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Thể loại *</label>
-                        <select name="category" required class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#173F91]">
+                        <select name="category" required class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]">
                             <option value="WEB">Phát triển Web</option>
                             <option value="MOBILE">Ứng dụng Di động</option>
                             <option value="AI_ML">AI / Machine Learning</option>
@@ -192,22 +227,107 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Công nghệ sử dụng</label>
-                        <input type="text" name="technology" placeholder="VD: Python, Django, ReactJS..." class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#173F91]">
+                        <input type="text" name="technology" placeholder="VD: Python, Django, ReactJS..." class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Chọn Mentor Hướng dẫn</label>
+                        <select name="mentor_id" class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]">
+                            <option value="">-- Chọn Mentor --</option>
+                            {% for m in mentors %}
+                            <option value="{{ m.id }}">{{ m.display_name }} ({{ m.specialization|default:"Giảng viên" }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Hạn chót bảo vệ đồ án</label>
-                        <input type="date" name="end_date" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#173F91]">
+                        <input type="date" name="end_date" class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]">
                     </div>
                 </div>
 
                 <div class="flex justify-end space-x-2 pt-2 border-t border-slate-100">
                     <button type="button" @click="createModal = false" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-200 transition">Hủy bỏ</button>
-                    <button type="submit" class="px-5 py-2 bg-[#173F91] hover:bg-[#123477] text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5 uppercase tracking-wider">
+                    <button type="submit" class="px-5 py-2 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5 border border-[#0f2643]">
                         <i class="fa-solid fa-check text-amber-400"></i>
                         <span>Tạo Đồ Án</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT PROJECT POPUP MODAL -->
+    <div x-show="editModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4" @click.self="editModal = false">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 relative">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center space-x-2.5 text-[#163B65]">
+                    <div class="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 font-bold border border-amber-200">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </div>
+                    <h3 class="text-sm font-bold text-slate-900">Chỉnh Sửa Thông Tin Đồ Án</h3>
+                </div>
+                <button type="button" @click="editModal = false" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition-colors" title="Đóng modal">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <form method="post" :action="'/projects/' + editProj.id + '/edit/'" class="space-y-4">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Mã đồ án *</label>
+                        <input type="text" name="code" x-model="editProj.code" required class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Tên đồ án *</label>
+                        <input type="text" name="name" x-model="editProj.name" required class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Mô tả mục tiêu đồ án</label>
+                    <textarea name="description" x-model="editProj.description" rows="2" class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Thể loại *</label>
+                        <select name="category" x-model="editProj.category" required class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]">
+                            <option value="WEB">Phát triển Web</option>
+                            <option value="MOBILE">Ứng dụng Di động</option>
+                            <option value="AI_ML">AI / Machine Learning</option>
+                            <option value="IOT">IoT & Phần cứng</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Công nghệ sử dụng</label>
+                        <input type="text" name="technology" x-model="editProj.technology" class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Trạng thái Đồ án</label>
+                        <select name="status" x-model="editProj.status" class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]">
+                            <option value="PLANNING">Lập kế hoạch</option>
+                            <option value="IN_PROGRESS">Đang thực hiện</option>
+                            <option value="REVIEW">Chờ Review</option>
+                            <option value="COMPLETED">Hoàn thành</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Hạn chót bảo vệ đồ án</label>
+                        <input type="date" name="end_date" x-model="editProj.end_date" class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]">
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-2 border-t border-slate-100">
+                    <button type="button" @click="editModal = false" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-200 transition">Hủy bỏ</button>
+                    <button type="submit" class="px-5 py-2 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5 border border-[#0f2643]">
+                        <i class="fa-solid fa-save text-amber-400"></i>
+                        <span>Lưu Thay Đổi</span>
                     </button>
                 </div>
             </form>
