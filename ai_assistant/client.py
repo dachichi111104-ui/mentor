@@ -36,7 +36,7 @@ class AIClient:
                         'Content-Type': 'application/json',
                     }
                     payload = {'facts': facts, 'user_message': user_message}
-                    resp = requests.post(url, json=payload, headers=headers, timeout=10)
+                    resp = requests.post(url, json=payload, headers=headers, timeout=1.5)
                     if resp.status_code == 200:
                         return resp.json()
                     logger.warning(f"AI Microservice returned HTTP {resp.status_code}: {resp.text[:200]}")

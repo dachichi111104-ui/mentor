@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="space-y-6" x-data="{
-    createModal: false,
+    createModal: {% if request.GET.create %}true{% else %}false{% endif %},
     editModal: false,
     editProj: { id: '', code: '', name: '', description: '', category: 'WEB', technology: '', mentor_id: '', end_date: '', status: 'PLANNING' },
     openEdit(proj) {

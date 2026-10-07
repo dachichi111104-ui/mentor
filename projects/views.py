@@ -82,9 +82,11 @@ def project_detail_view(request, project_id):
     return render(request, 'projects/project_detail.html', context)
 
 @login_required
-@require_POST
 @require_can('project.create')
 def project_create_view(request):
+    if request.method == 'GET':
+        return redirect('/projects/?create=1')
+
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'application/json' in request.headers.get('accept', '')
     form = ProjectForm(request.POST)
 
