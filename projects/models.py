@@ -75,6 +75,10 @@ class Project(models.Model):
         completed_tasks = self.tasks.filter(status='DONE').count()
         return int((completed_tasks / total_tasks) * 100)
 
+    @property
+    def progress(self):
+        return self.progress_percentage
+
 class MemberRole(models.TextChoices):
     LEADER = 'LEADER', 'Trưởng nhóm'
     MEMBER = 'MEMBER', 'Thành viên'

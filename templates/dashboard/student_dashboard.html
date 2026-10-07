@@ -164,7 +164,7 @@ function studentTimerComponent() {
                     <div class="space-y-2">
                         <select x-model="selectedProjectId" class="w-full text-xs bg-slate-800/90 text-white border border-slate-700 rounded-xl px-3 py-2 focus:outline-none focus:border-amber-400">
                             {% for proj in my_projects %}
-                            <option value="{{ proj.id }}">{{ proj.code }} - {{ proj.title|truncatechars:28 }}</option>
+                            <option value="{{ proj.id }}">{{ proj.code }} - {{ proj.name|truncatechars:28 }}</option>
                             {% empty %}
                             <option value="">Chưa có đồ án</option>
                             {% endfor %}
@@ -251,12 +251,13 @@ function studentTimerComponent() {
                     {% for proj in my_projects %}
                     <tr class="hover:bg-slate-50/80 transition-colors">
                         <td class="p-3.5 pl-5">
-                            <a href="{% url 'project_detail' proj.id %}" class="font-bold text-[#163B65] hover:underline block">
-                                {{ proj.code }} - {{ proj.title }}
+                            <span class="font-mono font-bold text-[10px] text-slate-400 block">{{ proj.code }}</span>
+                            <a href="{% url 'project_detail' proj.id %}" class="font-bold text-[#163B65] hover:underline block text-xs">
+                                {{ proj.name }}
                             </a>
                         </td>
                         <td class="p-3.5">
-                            <span class="px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md font-mono text-[11px] border border-slate-200">
+                            <span class="px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md font-medium text-[11px] border border-slate-200 inline-block whitespace-normal leading-tight max-w-[160px]">
                                 {{ proj.get_category_display }}
                             </span>
                         </td>
@@ -275,11 +276,11 @@ function studentTimerComponent() {
                                 <span class="font-bold text-slate-900 text-[11px]">{{ proj.progress }}%</span>
                             </div>
                         </td>
-                        <td class="p-3.5">
-                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border
+                        <td class="p-3.5 whitespace-nowrap">
+                            <span class="inline-block whitespace-nowrap px-2.5 py-1 rounded-full text-[10px] font-bold border
                             {% if proj.status == 'COMPLETED' %}bg-emerald-50 text-emerald-700 border-emerald-200
                             {% elif proj.status == 'IN_PROGRESS' %}bg-blue-50 text-blue-700 border-blue-200
-                            {% elif proj.status == 'UNDER_REVIEW' %}bg-purple-50 text-purple-700 border-purple-200
+                            {% elif proj.status == 'REVIEW' or proj.status == 'UNDER_REVIEW' %}bg-purple-50 text-purple-700 border-purple-200
                             {% else %}bg-amber-50 text-amber-700 border-amber-200{% endif %}">
                                 {{ proj.get_status_display }}
                             </span>

@@ -230,9 +230,7 @@
                         <span>Trang chủ</span>
                     </a>
                     <i class="fa-solid fa-chevron-right text-[9px] text-slate-400"></i>
-                    <a href="{% url 'dashboard' %}" class="hover:text-[#163B65] transition font-medium">Bảng điều khiển</a>
-                    <i class="fa-solid fa-chevron-right text-[9px] text-slate-400"></i>
-                    <span class="text-slate-900 font-bold">{% block breadcrumb %}Cổng thông tin{% endblock %}</span>
+                    <span class="text-slate-900 font-bold flex items-center gap-2">{% block breadcrumb %}Cổng thông tin{% endblock %}</span>
                 </nav>
                 {% endif %}
 

@@ -6,6 +6,7 @@
 {% block content %}
 <div class="space-y-6" x-data="{
     createTaskModal: false,
+    editTaskModal: false,
     selectedTask: null,
     showDrawer: false,
     filterMode: 'ALL',
@@ -247,7 +248,18 @@
                             <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-[#163B65] border border-blue-200" x-text="selectedTask.status_display"></span>
                             <h2 class="text-lg font-bold text-slate-900 mt-2" x-text="selectedTask.title"></h2>
                         </div>
-                        <button @click="showDrawer = false" class="text-slate-400 hover:text-slate-700 text-xl font-bold"><i class="fa-solid fa-xmark"></i></button>
+                        <div class="flex items-center space-x-2">
+                            <button type="button" @click="editTaskModal = true" class="px-2.5 py-1.5 bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 font-bold text-xs rounded-xl transition inline-flex items-center gap-1">
+                                <i class="fa-solid fa-pen"></i> Sửa Task
+                            </button>
+                            <form :action="`/tasks/${selectedTask.id}/delete/`" method="post" class="inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa công việc này?')">
+                                {% csrf_token %}
+                                <button type="submit" class="px-2.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-xs rounded-xl border border-rose-200 transition inline-flex items-center gap-1">
+                                    <i class="fa-solid fa-trash-can"></i> Xóa
+                                </button>
+                            </form>
+                            <button @click="showDrawer = false" class="text-slate-400 hover:text-slate-700 text-xl font-bold ml-1"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
                     </div>
 
                     <!-- Checklist Section -->
@@ -295,6 +307,75 @@
                         </div>
                     </div>
                 </div>
+    <!-- Edit Task Modal -->
+    <div x-show="editTaskModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm" @click.self="editTaskModal = false">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-[#163B65]"></i>
+                    <span>Chỉnh sửa Công việc</span>
+                </h3>
+                <button type="button" @click="editTaskModal = false" class="text-slate-400 hover:text-slate-700 text-xs font-bold"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <template x-if="selectedTask">
+                <form :action="`/tasks/${selectedTask.id}/edit/`" method="post" class="space-y-4">
+                    {% csrf_token %}
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Tiêu đề Công việc *</label>
+                        <input type="text" name="title" :value="selectedTask.title" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#163B65]">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Mô tả chi tiết</label>
+                        <textarea name="description" rows="3" :value="selectedTask.description" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#163B65]"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Mức ưu tiên</label>
+                            <select name="priority" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#163B65]">
+                                <option value="LOW" :selected="selectedTask.priority === 'LOW'">Thấp (Low)</option>
+                                <option value="MEDIUM" :selected="selectedTask.priority === 'MEDIUM'">Trung bình (Medium)</option>
+                                <option value="HIGH" :selected="selectedTask.priority === 'HIGH'">Cao (High)</option>
+                                <option value="CRITICAL" :selected="selectedTask.priority === 'CRITICAL'">Khẩn cấp (Critical)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Trạng thái</label>
+                            <select name="status" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#163B65]">
+                                <option value="TODO" :selected="selectedTask.status === 'TODO'">Cần làm (TODO)</option>
+                                <option value="IN_PROGRESS" :selected="selectedTask.status === 'IN_PROGRESS'">Đang làm (IN_PROGRESS)</option>
+                                <option value="REVIEW" :selected="selectedTask.status === 'REVIEW'">Chờ Review (REVIEW)</option>
+                                <option value="DONE" :selected="selectedTask.status === 'DONE'">Hoàn thành (DONE)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Người thực hiện</label>
+                            <select name="assignee_id" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#163B65]">
+                                <option value="">-- Chưa giao --</option>
+                                {% for m in members %}
+                                <option value="{{ m.user.id }}">{{ m.user.display_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Hạn hoàn thành</label>
+                            <input type="date" name="due_date" :value="selectedTask.due_date" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#163B65]">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-2 pt-3 border-t border-slate-100">
+                        <button type="button" @click="editTaskModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition">Hủy bỏ</button>
+                        <button type="submit" class="px-5 py-2 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center space-x-1.5 border border-blue-700">
+                            <i class="fa-solid fa-check text-amber-400"></i>
+                            <span>Lưu thay đổi</span>
+                        </button>
+                    </div>
+                </form>
             </template>
         </div>
     </div>

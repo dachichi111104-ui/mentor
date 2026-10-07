@@ -140,7 +140,7 @@
                 <div class="flex items-center space-x-2 flex-1 justify-end">
                     <select x-model="chatProjectId" @change="fetchMessages()" class="px-3 py-1.5 bg-slate-800 text-white border border-slate-700 rounded-xl text-xs font-semibold focus:outline-none max-w-[200px] truncate">
                         {% for proj in my_projects %}
-                        <option value="{{ p.id }}">{{ proj.code }} - {{ proj.name }}</option>
+                        <option value="{{ proj.id }}">{{ proj.code }} - {{ proj.name }}</option>
                         {% empty %}
                         <option value="">-- Chưa có đồ án --</option>
                         {% endfor %}
@@ -177,7 +177,7 @@
 
             <!-- Input Bar -->
             <div class="p-3 bg-white border-t border-slate-200 flex items-center gap-2 shrink-0">
-                <input type="text" x-model="newMessage" @keydown.enter="sendMessage()" placeholder="Nhập tin nhắn..." class="flex-1 px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#163B65] focus:bg-white transition-all">
+                <input type="text" x-model="newMessage" @keydown.enter.prevent="sendMessage()" placeholder="Nhập tin nhắn..." class="flex-1 px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#163B65] focus:bg-white transition-all">
                 <button type="button" @click="sendMessage()" class="px-4 py-2 bg-[#163B65] hover:bg-[#0f2643] text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5 border border-[#0f2643]">
                     <span>Gửi</span>
                     <i class="fa-solid fa-paper-plane text-amber-400 text-xs"></i>

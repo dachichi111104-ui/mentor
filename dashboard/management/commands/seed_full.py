@@ -56,7 +56,7 @@ class Command(BaseCommand):
             username='admin',
             defaults={
                 'email': 'admin@vau.edu.vn',
-                'first_name': 'Hàng Không',
+                'first_name': 'HVHK',
                 'last_name': 'Quản trị viên',
                 'role': UserRole.ADMIN,
                 'status': UserStatus.ACTIVE,
@@ -67,6 +67,8 @@ class Command(BaseCommand):
                 'bio': 'Quản trị viên hệ thống Cổng Quản lý Đồ án ProjectHub AI HVHK'
             }
         )
+        admin.first_name = 'HVHK'
+        admin.last_name = 'Quản trị viên'
         admin.set_password('admin123')
         admin.save()
         UserPreference.objects.get_or_create(user=admin)
@@ -100,14 +102,14 @@ class Command(BaseCommand):
 
         # 3. STUDENTS (8 Students)
         students_data = [
-            ('student', 'trinhln@vau.edu.vn', 'Ngọc Trinh', 'Lê', '20120001', 'KTPM2022', 'Python Django, Tailwind CSS, AI Assistant'),
-            ('hanndn', 'hanndn@vau.edu.vn', 'Doãn Ngọc Hân', 'Nguyễn', '20120002', 'KTPM2022', 'ERD Schema, RESTful API, PostgreSQL'),
-            ('nghitdg', 'nghitdg@vau.edu.vn', 'Đàm Gia Nghi', 'Trần', '20120003', 'KTPM2022', 'UI/UX Design, Alpine.js, Chart.js'),
-            ('tructtt', 'tructtt@vau.edu.vn', 'Thị Thanh Trúc', 'Phạm', '20120004', 'KTPM2022', 'Prompt Engineering, Celery Background Jobs'),
-            ('tuyetnlh', 'tuyetnlh@vau.edu.vn', 'Lâm Huyền Tuyết', 'Nguyễn', '20120005', 'KTPM2022', 'QA/QC Software Testing, System Documentation'),
-            ('minhnn', 'minhnn@vau.edu.vn', 'Nhật Minh', 'Nguyễn', '20120006', 'KHMT2022', 'Machine Learning, Pandas, Scikit-Learn'),
-            ('tuana', 'tuana@vau.edu.vn', 'Anh Tuấn', 'Trịnh', '20120007', 'HTTT2022', 'System Analysis, Agile Scrum Workflow'),
-            ('lannt', 'lannt@vau.edu.vn', 'Phương Lan', 'Đỗ', '20120008', 'KTPM2022', 'Frontend Integration, Vue.js, Tailwind'),
+            ('student', 'trinhln@vau.edu.vn', 'Ngọc Trinh', 'Lê', '2431540114', '24ĐHTT02', 'Python Django, Tailwind CSS, AI Assistant'),
+            ('hanndn', 'hanndn@vau.edu.vn', 'Doãn Ngọc Hân', 'Nguyễn', '2431540093', '24ĐHTT02', 'ERD Schema, RESTful API, PostgreSQL'),
+            ('nghitdg', 'nghitdg@vau.edu.vn', 'Đàm Gia Nghi', 'Trần', '2431540080', '24ĐHTT02', 'UI/UX Design, Alpine.js, Chart.js'),
+            ('tructtt', 'tructtt@vau.edu.vn', 'Thị Thanh Trúc', 'Phạm', '2431540102', '24ĐHTT02', 'Prompt Engineering, Celery Background Jobs'),
+            ('tuyetnlh', 'tuyetnlh@vau.edu.vn', 'Lâm Huyền Tuyết', 'Nguyễn', '2431540137', '24ĐHTT03', 'QA/QC Software Testing, System Documentation'),
+            ('minhnn', 'minhnn@vau.edu.vn', 'Nhật Minh', 'Nguyễn', '2431540006', '24ĐHTT03', 'Machine Learning, Pandas, Scikit-Learn'),
+            ('tuana', 'tuana@vau.edu.vn', 'Anh Tuấn', 'Trịnh', '2431540007', '24ĐHTT02', 'System Analysis, Agile Scrum Workflow'),
+            ('lannt', 'lannt@vau.edu.vn', 'Phương Lan', 'Đỗ', '2431540008', '24ĐHTT02', 'Frontend Integration, Vue.js, Tailwind'),
         ]
         students = []
         for username, email, first_name, last_name, st_id, cls_name, sks in students_data:
@@ -123,9 +125,12 @@ class Command(BaseCommand):
                     'class_name': cls_name,
                     'department': 'Khoa Công nghệ Thông tin',
                     'skills': sks,
-                    'bio': f'Sinh viên {cls_name} Khoa CNTT - Học viện Hàng không Việt Nam.'
+                    'bio': f'Sinh viên Khóa 2024 ({cls_name}) - Khoa Công nghệ Thông tin - Học viện Hàng không Việt Nam.'
                 }
             )
+            st.student_id = st_id
+            st.class_name = cls_name
+            st.bio = f'Sinh viên Khóa 2024 ({cls_name}) - Khoa Công nghệ Thông tin - Học viện Hàng không Việt Nam.'
             st.set_password('student123')
             st.save()
             UserPreference.objects.get_or_create(user=st)
