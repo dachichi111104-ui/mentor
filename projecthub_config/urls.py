@@ -95,6 +95,7 @@ urlpatterns = [
     path('tasks/<int:task_id>/checklist/add/', task_views.task_checklist_add_view, name='task_checklist_add'),
     path('tasks/checklist/<int:item_id>/toggle/', task_views.task_checklist_toggle_view, name='task_checklist_toggle'),
     path('tasks/checklist/<int:item_id>/delete/', task_views.task_checklist_delete_view, name='task_checklist_delete'),
+    path('tasks/checklist/<int:item_id>/edit/', task_views.task_checklist_edit_view, name='task_checklist_edit'),
 
     # Milestones & Calendar
     path('projects/<int:project_id>/milestones/', milestone_views.project_milestones_view, name='project_milestones'),

@@ -41,7 +41,7 @@ def breadcrumbs(request):
         obj = request.breadcrumb_obj
         if hasattr(obj, 'code') and hasattr(obj, 'name'):
             name = obj.name[:40] + ('...' if len(obj.name) > 40 else '')
-            result.append({'title': f"{obj.code} — {name}", 'url': None})
+            result.append({'title': f"{obj.code} - {name}", 'url': None})
         elif hasattr(obj, 'title'):
             result.append({'title': str(obj.title)[:40], 'url': None})
 

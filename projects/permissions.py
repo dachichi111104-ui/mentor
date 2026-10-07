@@ -321,15 +321,15 @@ PERMISSION_MATRIX = {
         'label': 'Bấm giờ làm việc'
     },
     'ai.view': {
-        'roles': {'ADMIN', 'LEADER', 'MEMBER', 'MENTOR'},
+        'roles': {'ADMIN', 'LEADER', 'MEMBER', 'MENTOR', 'STUDENT'},
         'label': 'Xem trợ lý AI'
     },
     'ai.chat': {
-        'roles': {'ADMIN', 'LEADER', 'MEMBER', 'MENTOR'},
+        'roles': {'ADMIN', 'LEADER', 'MEMBER', 'MENTOR', 'STUDENT'},
         'label': 'Trò chuyện với AI'
     },
     'ai.generate': {
-        'roles': {'ADMIN', 'LEADER', 'MEMBER', 'MENTOR'},
+        'roles': {'ADMIN', 'LEADER', 'MEMBER', 'MENTOR', 'STUDENT'},
         'label': 'Yêu cầu AI phân tích'
     },
     'ai.apply': {
@@ -341,7 +341,7 @@ PERMISSION_MATRIX = {
         'label': 'Áp dụng danh sách nhiệm vụ AI'
     },
     'ai.propose': {
-        'roles': {'ADMIN', 'LEADER', 'MEMBER', 'MENTOR'},
+        'roles': {'ADMIN', 'LEADER', 'MEMBER', 'MENTOR', 'STUDENT'},
         'label': 'Gửi đề xuất AI cho trưởng nhóm'
     },
     'ai.proposal.resolve': {

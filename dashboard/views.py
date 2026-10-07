@@ -501,13 +501,14 @@ def analytics_data_json_view(request):
     ontime_count = sum(1 for t in done_with_due if t.completed_at and t.completed_at.date() <= t.due_date)
     ontime_rate = int((ontime_count / done_with_due.count() * 100)) if done_with_due.exists() else 0
 
-    # Average cycle time
-    done_tasks = tasks.filter(status=TaskStatus.DONE, completed_at__isnull=False)
-    if done_tasks.exists():
-        total_cycle_days = sum((t.completed_at - t.created_at).days for t in done_tasks)
-        avg_cycle_time = f"{round(total_cycle_days / done_tasks.count(), 1)} ngày"
+    # Average cycle time (guaranteed non-negative)
+    valid_done_tasks = [t for t in tasks.filter(status=TaskStatus.DONE, completed_at__isnull=False) if t.completed_at >= t.created_at]
+    if valid_done_tasks:
+        total_cycle_days = sum((t.completed_at - t.created_at).total_seconds() / 86400.0 for t in valid_done_tasks)
+        avg_days = max(0.0, total_cycle_days / len(valid_done_tasks))
+        avg_cycle_time = f"{round(avg_days, 1)} ngày"
     else:
-        avg_cycle_time = "—"
+        avg_cycle_time = "-"
 
     # Top contributors in visible projects
     visible_user_ids = set()

@@ -317,3 +317,21 @@ def task_checklist_delete_view(request, item_id):
         'status': 'success',
         'progress': task.checklist_progress
     })
+
+@login_required
+@require_POST
+def task_checklist_edit_view(request, item_id):
+    item = get_object_or_404(TaskChecklistItem, id=item_id)
+    if not can(request.user, 'checklist.manage', item.task):
+        return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+
+    title = request.POST.get('title', '').strip()
+    if title:
+        item.title = title
+        item.save()
+        return JsonResponse({
+            'status': 'success',
+            'item': {'id': item.id, 'title': item.title, 'is_completed': item.is_completed}
+        })
+    return JsonResponse({'status': 'error', 'message': 'Tiêu đề không được để trống'}, status=400)
+

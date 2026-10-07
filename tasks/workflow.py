@@ -41,6 +41,11 @@ def transition(task, new_status, actor, reason=None, force=False):
         if role in ['ADMIN', 'LEADER', 'MENTOR']:
             valid = True
 
+    # Student dragging directly to DONE -> redirect to REVIEW for teacher approval
+    elif new_status == TaskStatus.DONE and role not in ['ADMIN', 'LEADER', 'MENTOR']:
+        new_status = TaskStatus.REVIEW
+        valid = True
+
     # REVIEW -> IN_PROGRESS (Yêu cầu làm lại - require reason >= 10 chars)
     elif old_status == TaskStatus.REVIEW and new_status == TaskStatus.IN_PROGRESS:
         if role in ['ADMIN', 'LEADER', 'MENTOR']:
