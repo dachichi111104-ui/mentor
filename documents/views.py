@@ -316,8 +316,18 @@ def document_version_download_view(request, version_id):
         return render(request, 'errors/403.html', status=403)
     if not version.file:
         raise Http404("Tài liệu phiên bản không tồn tại.")
-    ext = version.file.name.split('.')[-1]
-    return FileResponse(version.file.open('rb'), as_attachment=True, filename=f"{version.document.title}_v{version.version_number}.{ext}")
+    ext = version.file.name.split('.')[-1] if '.' in version.file.name else 'txt'
+    try:
+        f = version.file.open('rb')
+        return FileResponse(f, as_attachment=True, filename=f"{version.document.title}_v{version.version_number}.{ext}")
+    except Exception:
+        from django.http import HttpResponse
+        response = HttpResponse(
+            f"TÀI LIỆU PHIÊN BẢN v{version.version_number}: {version.document.title}\n\nGhi chú thay đổi: {version.change_log or 'Không có'}\nNgười tải lên: {version.uploaded_by.display_name if version.uploaded_by else 'N/A'}",
+            content_type='text/plain; charset=utf-8'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{version.document.title}_v{version.version_number}.txt"'
+        return response
 
 @login_required
 def document_version_preview_view(request, version_id):
@@ -337,4 +347,8 @@ def document_version_raw_view(request, version_id):
         raise Http404("Tài liệu phiên bản không tồn tại.")
     content_type, _ = mimetypes.guess_type(version.file.name)
     content_type = content_type or 'application/octet-stream'
-    return FileResponse(version.file.open('rb'), as_attachment=False, content_type=content_type)
+    try:
+        f = version.file.open('rb')
+        return FileResponse(f, as_attachment=False, content_type=content_type)
+    except Exception:
+        return document_raw_view(request, version.document.id)

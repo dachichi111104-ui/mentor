@@ -163,12 +163,9 @@
                                 <i class="fa-solid fa-pen"></i> Sửa
                             </button>
 
-                            <form action="{% url 'project_delete' proj.id %}" method="post" class="inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa đồ án này và toàn bộ dữ liệu liên quan?')">
-                                {% csrf_token %}
-                                <button type="submit" class="px-2.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-[11px] rounded-xl border border-rose-200 transition">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            </form>
+                            <button type="button" @click="$dispatch('open-confirm-modal', { title: 'Xóa Đồ án {{ proj.code|escapejs }}', message: 'Hành động này sẽ xóa vĩnh viễn đồ án {{ proj.name|escapejs }} và toàn bộ dữ liệu liên quan.', url: '{% url "project_delete" proj.id %}', matchText: '{{ proj.code|escapejs }}' })" class="px-2.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-[11px] rounded-xl border border-rose-200 transition">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
                             {% endif %}
                         </td>
                     </tr>

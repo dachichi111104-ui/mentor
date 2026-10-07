@@ -141,6 +141,10 @@ def admin_toggle_user_status_view(request, user_id):
         return render(request, 'errors/403.html', status=403)
         
     user_to_toggle = get_object_or_404(User, id=user_id)
+    if user_to_toggle == request.user:
+        messages.error(request, 'Bạn không thể tự khóa tài khoản của chính mình.')
+        return redirect('admin_users')
+
     if user_to_toggle.status == UserStatus.ACTIVE:
         user_to_toggle.status = UserStatus.SUSPENDED
         messages.warning(request, f'Đã khóa tài khoản {user_to_toggle.display_name}.')
@@ -169,6 +173,17 @@ def admin_user_change_role_view(request, user_id):
     if request.method == 'POST':
         user_obj = get_object_or_404(User, id=user_id)
         new_role = request.POST.get('role')
+
+        if user_obj == request.user and new_role != UserRole.ADMIN:
+            messages.error(request, 'Bạn không thể tự hạ vai trò Quản trị viên của chính mình.')
+            return redirect('admin_users')
+
+        if user_obj.role == UserRole.ADMIN and new_role != UserRole.ADMIN:
+            admin_count = User.objects.filter(role=UserRole.ADMIN).count()
+            if admin_count <= 1:
+                messages.error(request, 'Không thể hạ quyền Quản trị viên duy nhất còn lại trong hệ thống.')
+                return redirect('admin_users')
+
         if new_role in [UserRole.STUDENT, UserRole.MENTOR, UserRole.ADMIN]:
             old_role_display = user_obj.get_role_display()
             user_obj.role = new_role
@@ -176,10 +191,10 @@ def admin_user_change_role_view(request, user_id):
             messages.success(request, f'Đã đổi vai trò tài khoản {user_obj.username} từ {old_role_display} sang {user_obj.get_role_display()}.')
             ActivityLog.objects.create(
                 user=request.user,
-                action=ActionType.UPDATE_TASK,
+                action=ActionType.SYSTEM_CONFIG,
                 entity_type='UserRole',
                 entity_id=str(user_obj.id),
-                description=f'Cập nhật vai trò người dùng {user_obj.username} thành {user_obj.get_role_display()}',
+                description=f'Thay đổi vai trò người dùng {user_obj.username} từ {old_role_display} sang {user_obj.get_role_display()}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
     return redirect('admin_users')

@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.utils import timezone
 from accounts.forms import CustomLoginForm, CustomRegisterForm, ProfileUpdateForm
 from accounts.models import User, UserStatus, UserRole
 from audit_log.models import ActionType
@@ -71,20 +72,14 @@ def register_view(request):
                 selected_role = UserRole.STUDENT
             user.role = selected_role
             
-            user.status = UserStatus.ACTIVE
-            user.save()
-
-            log_action(
-                user=user,
-                action=ActionType.LOGIN,
-                entity_type='User',
-                entity_id=user.id,
-                description=f'Đăng ký tài khoản {user.get_role_display()} mới',
-                request=request
-            )
-
-            # Do NOT auto-login. Require user to log in manually first.
-            messages.success(request, f'Tạo tài khoản {user.get_role_display()} thành công! Vui lòng đăng nhập để tiếp tục.')
+            if selected_role == UserRole.MENTOR:
+                user.status = UserStatus.SUSPENDED
+                user.save()
+                messages.warning(request, 'Tài khoản Giảng viên / Mentor đã tạo thành công và đang chờ Quản trị viên (Admin) phê duyệt trước khi đăng nhập.')
+            else:
+                user.status = UserStatus.ACTIVE
+                user.save()
+                messages.success(request, f'Tạo tài khoản {user.get_role_display()} thành công! Vui lòng đăng nhập để tiếp tục.')
             return redirect('login')
 
         else:

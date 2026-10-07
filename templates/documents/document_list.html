@@ -85,12 +85,9 @@
                             </button>
 
                             {% if doc.uploaded_by == request.user or doc.project.mentor == request.user or request.user.is_admin_user %}
-                            <form action="{% url 'document_delete' doc.id %}" method="post" class="inline" onsubmit="return confirm('Bạn có chắc muốn xóa tài liệu này?')">
-                                {% csrf_token %}
-                                <button type="submit" class="px-2.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg text-[11px] font-bold border border-rose-200 transition">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            </form>
+                            <button type="button" @click="$dispatch('open-confirm-modal', { title: 'Xóa tài liệu', message: 'Bạn có chắc muốn xóa tài liệu {{ doc.title|escapejs }}?', url: '{% url "document_delete" doc.id %}' })" class="px-2.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg text-[11px] font-bold border border-rose-200 transition">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
                             {% endif %}
                         </td>
                     </tr>

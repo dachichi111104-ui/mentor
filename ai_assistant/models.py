@@ -7,6 +7,7 @@ class AIPromptType(models.TextChoices):
     WEEKLY_SUMMARY = 'WEEKLY_SUMMARY', 'Báo cáo tuần (AI Weekly Summary)'
     RISK_DETECTION = 'RISK_DETECTION', 'Cảnh báo rủi ro (AI Risk Detection)'
     MENTOR_QUESTIONS = 'MENTOR_QUESTIONS', 'Gợi ý câu hỏi Mentor (AI Questions)'
+    CHAT = 'CHAT', 'Trò chuyện AI (AI Chat)'
 
 class AIRequest(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='ai_requests', verbose_name="Người yêu cầu")

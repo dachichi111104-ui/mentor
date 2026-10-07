@@ -139,22 +139,48 @@ def calendar_events_json_view(request):
 @login_required
 def event_create_view(request):
     from milestones.models import Event, EventType, EventStatus
+    from django.utils.dateparse import parse_datetime, parse_date
     if request.method == 'POST':
         project_id = request.POST.get('project_id')
         title = request.POST.get('title')
         event_type = request.POST.get('event_type', EventType.MEETING)
         start_str = request.POST.get('start')
+        end_str = request.POST.get('end')
         link = request.POST.get('link', '')
+        description = request.POST.get('description', '')
+
+        if not project_id or not title or not start_str:
+            messages.error(request, 'Vui lòng nhập đầy đủ tiêu đề, đồ án và thời gian bắt đầu.')
+            return redirect('calendar')
 
         project = get_object_or_404(Project, id=project_id)
         if not user_can_access_project(request.user, project):
-            return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+            return render(request, 'errors/403.html', status=403)
+
+        parsed_start = parse_datetime(start_str) or parse_date(start_str)
+        if not parsed_start:
+            try:
+                parsed_start = timezone.datetime.fromisoformat(start_str)
+            except Exception:
+                messages.error(request, 'Định dạng thời gian bắt đầu không hợp lệ.')
+                return redirect('calendar')
+
+        parsed_end = None
+        if end_str:
+            parsed_end = parse_datetime(end_str) or parse_date(end_str)
+            if not parsed_end:
+                try:
+                    parsed_end = timezone.datetime.fromisoformat(end_str)
+                except Exception:
+                    parsed_end = None
 
         ev = Event.objects.create(
             project=project,
             title=title,
+            description=description,
             event_type=event_type,
-            start=start_str,
+            start=parsed_start,
+            end=parsed_end,
             link=link,
             created_by=request.user,
             status=EventStatus.ACCEPTED
@@ -167,18 +193,31 @@ def event_create_view(request):
 @login_required
 def appointment_book_view(request):
     from milestones.models import Event, EventType, EventStatus
+    from django.utils.dateparse import parse_datetime, parse_date
     if request.method == 'POST':
         project_id = request.POST.get('project_id')
         title = request.POST.get('title')
         start_str = request.POST.get('start')
         link = request.POST.get('link', '')
 
+        if not project_id or not title or not start_str:
+            messages.error(request, 'Vui lòng điền thông tin đồ án, tiêu đề và thời gian hẹn.')
+            return redirect('calendar')
+
         project = get_object_or_404(Project, id=project_id)
+        parsed_start = parse_datetime(start_str) or parse_date(start_str)
+        if not parsed_start:
+            try:
+                parsed_start = timezone.datetime.fromisoformat(start_str)
+            except Exception:
+                messages.error(request, 'Định dạng thời gian hẹn không hợp lệ.')
+                return redirect('calendar')
+
         ev = Event.objects.create(
             project=project,
             title=f'Lịch hẹn Mentor: {title}',
             event_type=EventType.MEETING,
-            start=start_str,
+            start=parsed_start,
             link=link,
             created_by=request.user,
             status=EventStatus.PENDING

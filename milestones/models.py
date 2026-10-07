@@ -27,6 +27,18 @@ class Milestone(models.Model):
         return f"{self.project.code} - {self.name}"
 
     @property
+    def title(self):
+        return self.name
+
+    @property
+    def is_completed(self):
+        return self.status == MilestoneStatus.COMPLETED
+
+    @property
+    def progress(self):
+        return self.progress_percentage
+
+    @property
     def is_overdue(self):
         if self.status != MilestoneStatus.COMPLETED and self.due_date < timezone.now().date():
             return True

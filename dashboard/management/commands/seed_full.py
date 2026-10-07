@@ -31,25 +31,27 @@ class Command(BaseCommand):
 
         if reset:
             self.stdout.write(self.style.WARNING("Xoa du lieu cu theo co --reset..."))
-            ActivityLog.objects.all().delete()
-            WeeklySummary.objects.all().delete()
-            AIRequest.objects.all().delete()
-            TimeLog.objects.all().delete()
-            Notification.objects.all().delete()
-            Feedback.objects.all().delete()
-            DocumentVersion.objects.all().delete()
-            Document.objects.all().delete()
-            Message.objects.all().delete()
-            TaskComment.objects.all().delete()
-            TaskChecklistItem.objects.all().delete()
-            Task.objects.all().delete()
-            Sprint.objects.all().delete()
-            BoardColumn.objects.all().delete()
-            Board.objects.all().delete()
-            Milestone.objects.all().delete()
-            Event.objects.all().delete()
-            ProjectMember.objects.all().delete()
-            Project.objects.all().delete()
+            from django.db import transaction
+            with transaction.atomic():
+                ActivityLog.objects.all().delete()
+                WeeklySummary.objects.all().delete()
+                AIRequest.objects.all().delete()
+                TimeLog.objects.all().delete()
+                Notification.objects.all().delete()
+                Feedback.objects.all().delete()
+                DocumentVersion.objects.all().delete()
+                Document.objects.all().delete()
+                Message.objects.all().delete()
+                TaskComment.objects.all().delete()
+                TaskChecklistItem.objects.all().delete()
+                Task.objects.all().delete()
+                Sprint.objects.all().delete()
+                BoardColumn.objects.all().delete()
+                Board.objects.all().delete()
+                Milestone.objects.all().delete()
+                Event.objects.all().delete()
+                ProjectMember.objects.all().delete()
+                Project.objects.all().delete()
 
         # 1. ADMIN USER
         admin, _ = User.objects.get_or_create(
@@ -151,50 +153,44 @@ class Command(BaseCommand):
 
         projects = []
         for code, name, cat, tech, st, mt, mt_st in projects_spec:
-            p, _ = Project.objects.get_or_create(
+            p = Project.objects.create(
                 code=code,
-                defaults={
-                    'name': name,
-                    'description': f'Đồ án nghiên cứu ứng dụng cho Khoa CNTT Học viện Hàng không Việt Nam.',
-                    'category': cat,
-                    'technology': tech,
-                    'status': st,
-                    'created_by': leader,
-                    'mentor': mt,
-                    'mentor_status': mt_st,
-                    'start_date': today - timedelta(days=30),
-                    'end_date': today + timedelta(days=60),
-                }
+                name=name,
+                description=f'Đồ án nghiên cứu ứng dụng cho Khoa CNTT Học viện Hàng không Việt Nam.',
+                category=cat,
+                technology=tech,
+                status=st,
+                created_by=leader,
+                mentor=mt,
+                mentor_status=mt_st,
+                start_date=today - timedelta(days=30),
+                end_date=today + timedelta(days=60),
             )
             projects.append(p)
 
             # Assign Project Members
-            ProjectMember.objects.get_or_create(project=p, user=leader, defaults={'role': MemberRole.LEADER, 'status': MemberStatus.ACCEPTED})
+            ProjectMember.objects.create(project=p, user=leader, role=MemberRole.LEADER, status=MemberStatus.ACCEPTED)
             for s_idx in range(1, 4):
-                ProjectMember.objects.get_or_create(project=p, user=students[s_idx], defaults={'role': MemberRole.MEMBER, 'status': MemberStatus.ACCEPTED})
+                ProjectMember.objects.create(project=p, user=students[s_idx], role=MemberRole.MEMBER, status=MemberStatus.ACCEPTED)
 
         main_project = projects[0] # PRJ-2026-AI
 
         # 5. SPRINTS
-        sprint1, _ = Sprint.objects.get_or_create(
+        sprint1 = Sprint.objects.create(
             project=main_project,
             name='Sprint 1: Phân tích & Thiết kế CSDL',
-            defaults={
-                'goal': 'Hoàn thành ERD schema, SRS và khởi tạo bộ khung Django 5',
-                'start_date': today - timedelta(days=20),
-                'end_date': today - timedelta(days=5),
-                'is_active': False
-            }
+            goal='Hoàn thành ERD schema, SRS và khởi tạo bộ khung Django 5',
+            start_date=today - timedelta(days=20),
+            end_date=today - timedelta(days=5),
+            is_active=False
         )
-        sprint2, _ = Sprint.objects.get_or_create(
+        sprint2 = Sprint.objects.create(
             project=main_project,
             name='Sprint 2: Xây dựng Kanban & Trợ lý AI',
-            defaults={
-                'goal': 'Tích hợp Kanban drag-drop, Time tracker và 5 endpoint AI',
-                'start_date': today - timedelta(days=4),
-                'end_date': today + timedelta(days=10),
-                'is_active': True
-            }
+            goal='Tích hợp Kanban drag-drop, Time tracker và 5 endpoint AI',
+            start_date=today - timedelta(days=4),
+            end_date=today + timedelta(days=10),
+            is_active=True
         )
 
         # 6. TASKS & CHECKLISTS (≥ 40 Tasks across projects)
@@ -214,30 +210,28 @@ class Command(BaseCommand):
         tasks = []
         for idx, (t_title, status, prio, assignee) in enumerate(task_titles):
             for p in projects[:4]:
-                t, _ = Task.objects.get_or_create(
+                t = Task.objects.create(
                     project=p,
                     title=f'{t_title} ({p.code})',
-                    defaults={
-                        'description': f'Chi tiết công việc thuộc {p.name} do {assignee.display_name} phụ trách.',
-                        'status': status,
-                        'priority': prio,
-                        'assignee': assignee,
-                        'created_by': leader,
-                        'sprint': sprint2 if p == main_project else None,
-                        'due_date': today + timedelta(days=(idx - 3)),
-                        'labels': 'backend,django,ai' if idx % 2 == 0 else 'frontend,ui,tailwind',
-                        'order_index': idx
-                    }
+                    description=f'Chi tiết công việc thuộc {p.name} do {assignee.display_name} phụ trách.',
+                    status=status,
+                    priority=prio,
+                    assignee=assignee,
+                    created_by=leader,
+                    sprint=sprint2 if p == main_project else None,
+                    due_date=today + timedelta(days=(idx - 3)),
+                    labels='backend,django,ai' if idx % 2 == 0 else 'frontend,ui,tailwind',
+                    order_index=idx
                 )
                 tasks.append(t)
 
                 # Checklists
-                TaskChecklistItem.objects.get_or_create(task=t, title='Khảo sát hiện trạng', defaults={'is_completed': True})
-                TaskChecklistItem.objects.get_or_create(task=t, title='Lập tài liệu kỹ thuật', defaults={'is_completed': status == TaskStatus.DONE})
-                TaskChecklistItem.objects.get_or_create(task=t, title='Review cùng Mentor', defaults={'is_completed': status == TaskStatus.DONE})
+                TaskChecklistItem.objects.create(task=t, title='Khảo sát hiện trạng', is_completed=True)
+                TaskChecklistItem.objects.create(task=t, title='Lập tài liệu kỹ thuật', is_completed=(status == TaskStatus.DONE))
+                TaskChecklistItem.objects.create(task=t, title='Review cùng Mentor', is_completed=(status == TaskStatus.DONE))
 
                 # Task Comments
-                TaskComment.objects.get_or_create(
+                TaskComment.objects.create(
                     task=t,
                     user=mentors[0],
                     content=f'Mentor đã kiểm tra công việc "{t.title}". Tiến độ rất chuẩn xác!'
@@ -245,78 +239,64 @@ class Command(BaseCommand):
 
         # 7. MILESTONES & EVENTS (≥ 12 Milestones, ≥ 20 Events)
         for p in projects:
-            Milestone.objects.get_or_create(
+            Milestone.objects.create(
                 project=p,
                 name=f'Mốc 1: Khởi động & Nộp Báo cáo SRS ({p.code})',
-                defaults={
-                    'description': 'Nộp bản vẽ kiến trúc hệ thống và tài liệu mô tả yêu cầu.',
-                    'start_date': today - timedelta(days=25),
-                    'due_date': today - timedelta(days=5),
-                    'status': MilestoneStatus.COMPLETED
-                }
+                description='Nộp bản vẽ kiến trúc hệ thống và tài liệu mô tả yêu cầu.',
+                start_date=today - timedelta(days=25),
+                due_date=today - timedelta(days=5),
+                status=MilestoneStatus.COMPLETED
             )
-            Milestone.objects.get_or_create(
+            Milestone.objects.create(
                 project=p,
                 name=f'Mốc 2: Nghiệm thu Giai đoạn 1 & Demo ({p.code})',
-                defaults={
-                    'description': 'Báo cáo trực tiếp với Mentor về tiến độ và kết quả chạy thử nghiệm.',
-                    'start_date': today - timedelta(days=4),
-                    'due_date': today + timedelta(days=15),
-                    'status': MilestoneStatus.IN_PROGRESS
-                }
+                description='Báo cáo trực tiếp với Mentor về tiến độ và kết quả chạy thử nghiệm.',
+                start_date=today - timedelta(days=4),
+                due_date=today + timedelta(days=15),
+                status=MilestoneStatus.IN_PROGRESS
             )
 
-            Event.objects.get_or_create(
+            Event.objects.create(
                 project=p,
                 title=f'Họp Review Tiến độ Tuần với Mentor ({p.code})',
-                defaults={
-                    'event_type': EventType.MEETING,
-                    'start': timezone.now() + timedelta(days=2),
-                    'end': timezone.now() + timedelta(days=2, hours=2),
-                    'created_by': leader,
-                    'status': EventStatus.ACCEPTED
-                }
+                event_type=EventType.MEETING,
+                start=timezone.now() + timedelta(days=2),
+                end=timezone.now() + timedelta(days=2, hours=2),
+                created_by=leader,
+                status=EventStatus.ACCEPTED
             )
 
         # 8. DOCUMENTS WITH REAL GENERATED FILES ON DISK
         for p in projects[:3]:
-            # Generate sample real file content on disk
             pdf_content = b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF"
             
-            doc, created = Document.objects.get_or_create(
+            doc = Document.objects.create(
                 project=p,
                 title=f'Báo cáo Thuyết minh Đồ án SRS ({p.code})',
-                defaults={
-                    'file_type': FileCategory.PDF,
-                    'uploaded_by': leader,
-                    'file_size': '1.2 MB',
-                    'description': f'Tài liệu mô tả yêu cầu phần mềm SRS và sơ đồ kiến trúc hệ thống {p.name}.',
-                    'current_version': 1
-                }
+                file_type=FileCategory.PDF,
+                uploaded_by=leader,
+                file_size='1.2 MB',
+                description=f'Tài liệu mô tả yêu cầu phần mềm SRS và sơ đồ kiến trúc hệ thống {p.name}.',
+                current_version=1
             )
-            if created or not doc.file:
-                doc.file.save(f"SRS_{p.code}.pdf", ContentFile(pdf_content), save=True)
+            doc.file.save(f"SRS_{p.code}.pdf", ContentFile(pdf_content), save=True)
 
-            DocumentVersion.objects.get_or_create(
+            DocumentVersion.objects.create(
                 document=doc,
                 version_number=1,
-                defaults={
-                    'file': doc.file,
-                    'uploaded_by': leader,
-                    'change_log': 'Khởi tạo phiên bản v1 ban đầu.'
-                }
+                file=doc.file,
+                uploaded_by=leader,
+                change_log='Khởi tạo phiên bản v1 ban đầu.'
             )
 
         # 9. REVIEWS & FEEDBACKS
         for p in projects[:3]:
-            Feedback.objects.get_or_create(
+            Feedback.objects.create(
                 project=p,
                 mentor=p.mentor or mentors[0],
-                defaults={
-                    'content': f'Đồ án {p.code} tiến độ rất tốt. Nhóm làm việc trách nhiệm và đầy đủ.',
-                    'rating': 5,
-                    'status': ReviewStatus.APPROVED
-                }
+                content=f'Đồ án {p.code} tiến độ rất tốt. Nhóm làm việc trách nhiệm và đầy đủ.',
+                rating=5,
+                status=ReviewStatus.APPROVED
             )
 
         # 10. CHAT MESSAGES (≥ 40 messages)

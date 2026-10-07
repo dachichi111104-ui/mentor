@@ -71,9 +71,9 @@
                     </div>
                 </div>
 
-                <a href="{% url 'milestone_delete' ms.id %}" onclick="return confirm('Bạn có chắc muốn xóa Milestone này?')" class="text-rose-600 hover:text-rose-800 text-xs p-1">
+                <button type="button" @click="$dispatch('open-confirm-modal', { title: 'Xóa mốc Milestone', message: 'Bạn có chắc chắn muốn xóa mốc tiến độ {{ ms.name|escapejs }}?', url: '{% url "milestone_delete" ms.id %}' })" class="text-rose-600 hover:text-rose-800 text-xs p-1">
                     <i class="fa-solid fa-trash-can"></i>
-                </a>
+                </button>
             </div>
         </div>
         {% empty %}

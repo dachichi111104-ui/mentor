@@ -1,39 +1,79 @@
-{% comment %}
-Reusable Modal Backdrop Wrapper Component
-Usage in template:
-<div x-data="{ open: false }">
-    ...
-    {% include "includes/_modal.html" with modal_id="myModal" title="Tiêu đề modal" body_template="..." %}
-</div>
-{% endcomment %}
-<div x-show="{{ show_binding|default:'open' }}"
-     x-cloak
-     x-transition:enter="transition ease-out duration-300"
-     x-transition:enter-start="opacity-0"
-     x-transition:enter-end="opacity-100"
-     x-transition:leave="transition ease-in duration-200"
-     x-transition:leave-start="opacity-100"
-     x-transition:leave-end="opacity-0"
-     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-    <div @click.away="{{ show_binding|default:'open' }} = false"
-         x-transition:enter="transition ease-out duration-300 transform"
-         x-transition:enter-start="opacity-0 scale-95 translate-y-2"
-         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-         x-transition:leave="transition ease-in duration-200 transform"
-         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-         x-transition:leave-end="opacity-0 scale-95 translate-y-2"
-         class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 relative">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 class="text-base font-bold text-slate-900 tracking-tight flex items-center space-x-2">
-                {% if modal_icon %}<i class="fa-solid {{ modal_icon }} text-accent-primary"></i>{% endif %}
-                <span>{{ modal_title|default:"Thông báo" }}</span>
-            </h3>
-            <button @click="{{ show_binding|default:'open' }} = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors">
-                <i class="fa-solid fa-xmark text-xs"></i>
-            </button>
-        </div>
-        <div class="text-xs text-slate-600 leading-relaxed">
-            {{ modal_content|safe }}
+<!-- Global Confirmation & Action Modal Component -->
+<div x-data="{
+    confirmOpen: false,
+    confirmTitle: 'Xác nhận xóa',
+    confirmMessage: 'Bạn có chắc chắn muốn thực hiện hành động này?',
+    confirmActionUrl: '',
+    confirmMethod: 'POST',
+    requireMatchText: '',
+    typedMatchText: '',
+    openConfirm(title, msg, url, method='POST', matchText='') {
+        this.confirmTitle = title || 'Xác nhận thực hiện';
+        this.confirmMessage = msg || 'Bạn có chắc chắn muốn tiếp tục?';
+        this.confirmActionUrl = url;
+        this.confirmMethod = method || 'POST';
+        this.requireMatchText = matchText || '';
+        this.typedMatchText = '';
+        this.confirmOpen = true;
+    }
+}" 
+@open-confirm-modal.window="openConfirm($event.detail.title, $event.detail.message, $event.detail.url, $event.detail.method || 'POST', $event.detail.matchText || '')"
+@keydown.escape.window="confirmOpen = false">
+
+    <!-- Modal backdrop -->
+    <div x-show="confirmOpen" 
+         x-cloak 
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+        
+        <div @click.away="confirmOpen = false" 
+             x-transition:enter="transition ease-out duration-200 transform"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150 transform"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-slate-900">
+            
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center space-x-3 text-rose-600">
+                    <div class="w-10 h-10 rounded-2xl bg-rose-50 flex items-center justify-center font-bold text-lg border border-rose-200 shrink-0">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <h3 class="text-sm font-extrabold text-slate-900 tracking-tight" x-text="confirmTitle"></h3>
+                </div>
+                <button type="button" @click="confirmOpen = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-600 leading-relaxed" x-text="confirmMessage"></p>
+            
+            <template x-if="requireMatchText">
+                <div class="space-y-1.5 pt-2">
+                    <label class="block text-[11px] font-bold text-slate-700">
+                        Vui lòng nhập lại <span class="font-mono text-rose-600 font-extrabold" x-text="requireMatchText"></span> để xác nhận xóa:
+                    </label>
+                    <input type="text" x-model="typedMatchText" placeholder="Nhập chính xác để xác nhận" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-rose-500 font-mono">
+                </div>
+            </template>
+
+            <form :action="confirmActionUrl" :method="confirmMethod" class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+                {% csrf_token %}
+                <button type="button" @click="confirmOpen = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">Hủy bỏ</button>
+                <button type="submit" 
+                        :disabled="requireMatchText && typedMatchText.trim() !== requireMatchText.trim()" 
+                        :class="requireMatchText && typedMatchText.trim() !== requireMatchText.trim() ? 'opacity-50 cursor-not-allowed bg-rose-400' : 'hover:bg-rose-700 bg-rose-600'" 
+                        class="px-4 py-2 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-trash-can"></i>
+                    <span>Xác nhận Xóa</span>
+                </button>
+            </form>
         </div>
     </div>
 </div>

@@ -268,12 +268,9 @@
                             <button type="button" @click="if(selectedTask) editTaskModal = true" class="px-2.5 py-1.5 bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 font-bold text-xs rounded-xl transition inline-flex items-center gap-1">
                                 <i class="fa-solid fa-pen"></i> Sửa Task
                             </button>
-                            <form :action="selectedTask ? `/tasks/${selectedTask.id}/delete/` : '#'" method="post" class="inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa công việc này?')">
-                                {% csrf_token %}
-                                <button type="submit" class="px-2.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-xs rounded-xl border border-rose-200 transition inline-flex items-center gap-1">
-                                    <i class="fa-solid fa-trash-can"></i> Xóa
-                                </button>
-                            </form>
+                            <button type="button" @click="if(selectedTask) $dispatch('open-confirm-modal', { title: 'Xóa công việc', message: `Bạn có chắc chắn muốn xóa task '${selectedTask.title}'?`, url: `/tasks/${selectedTask.id}/delete/` })" class="px-2.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-xs rounded-xl border border-rose-200 transition inline-flex items-center gap-1">
+                                <i class="fa-solid fa-trash-can"></i> Xóa
+                            </button>
                             <button @click="showDrawer = false" class="text-slate-400 hover:text-slate-700 text-xl font-bold ml-1"><i class="fa-solid fa-xmark"></i></button>
                         </div>
                     </div>

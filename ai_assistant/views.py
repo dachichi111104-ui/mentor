@@ -6,12 +6,13 @@ from django.http import JsonResponse
 from django.utils import timezone
 
 from projects.models import Project, ProjectMember
-from projects.permissions import user_can_access_project
+from projects.permissions import user_can_access_project, user_is_leader_or_admin
 from tasks.models import Task, TaskStatus, TaskPriority
 from milestones.models import Milestone
 from ai_assistant.models import AIRequest, AIPromptType, WeeklySummary
 from ai_assistant.services import LLMService, compute_project_risks
-from audit_log.models import ActionType, ActivityLog
+from ai_assistant.metrics import calculate_project_metrics
+from notifications.models import Notification, NotificationType
 
 @login_required
 def ai_assistant_page_view(request):
@@ -30,18 +31,36 @@ def ai_assistant_page_view(request):
     if not selected_project and projects.exists():
         selected_project = projects.first()
 
-    ai_history = AIRequest.objects.filter(project=selected_project) if selected_project else AIRequest.objects.all()[:30]
-    weekly_summaries = WeeklySummary.objects.filter(project=selected_project) if selected_project else WeeklySummary.objects.all()[:10]
+    # Per-project isolated history - NEVER leak other projects' history!
+    if selected_project:
+        ai_history = AIRequest.objects.filter(project=selected_project)[:20]
+        weekly_summaries = WeeklySummary.objects.filter(project=selected_project)[:10]
+        project_metrics = calculate_project_metrics(selected_project)
+        project_risks = project_metrics.get('risks', [])
+    else:
+        ai_history = AIRequest.objects.none()
+        weekly_summaries = WeeklySummary.objects.none()
+        project_metrics = {}
+        project_risks = []
 
-    # Pre-compute risks using deterministic DB rules
-    project_risks = compute_project_risks(selected_project) if selected_project else []
+    # Overview table metrics for Mentor/Admin
+    projects_overview = []
+    if user.is_mentor or user.is_admin_user:
+        for p in projects[:15]:
+            p_metrics = calculate_project_metrics(p)
+            projects_overview.append({
+                'project': p,
+                'metrics': p_metrics
+            })
 
     return render(request, 'ai_assistant/ai_assistant.html', {
         'projects': projects,
         'selected_project': selected_project,
-        'ai_history': ai_history[:20],
+        'ai_history': ai_history,
         'weekly_summaries': weekly_summaries,
         'project_risks': project_risks,
+        'project_metrics': project_metrics,
+        'projects_overview': projects_overview,
     })
 
 @login_required
@@ -60,7 +79,7 @@ def ai_task_breakdown_ajax(request):
         prompt = (
             f"Hãy phân rã các công việc cho đồ án '{project_name}'. "
             f"Các task hiện có: {', '.join(existing_tasks[:5]) if existing_tasks else 'Chưa có'}. "
-            "Trả về danh sách 5 task mới gợi ý dưới dạng JSON array các object với keys: title, description, priority (CRITICAL/HIGH/MEDIUM/LOW), estimated_hours."
+            "Trả về danh sách 5 task mới gợi ý dưới dạng JSON array các object với keys: title, description, priority (CRITICAL/HIGH/MEDIUM/LOW), estimated_hours, labels."
         )
 
         output_text = LLMService.call_llm(
@@ -74,32 +93,7 @@ def ai_task_breakdown_ajax(request):
         try:
             suggested_tasks = json.loads(output_text)
         except Exception:
-            suggested_tasks = [
-                {
-                    'title': f'Thiết kế CSDL & Phân quyền RBAC cho {project_name}',
-                    'description': 'Lập sơ đồ CSDL, ràng buộc bảng và cấu hình quyền truy cập theo vai trò.',
-                    'priority': 'CRITICAL',
-                    'estimated_hours': 8
-                },
-                {
-                    'title': 'Phát triển RESTful API Core Backend',
-                    'description': 'Xây dựng các API cho phép lấy dữ liệu, cập nhật trạng thái và xử lý lỗi.',
-                    'priority': 'HIGH',
-                    'estimated_hours': 12
-                },
-                {
-                    'title': 'Tích hợp Giao diện Bảng Kanban kéo thả',
-                    'description': 'Thiết kế giao diện bảng Kanban tương tác thời gian thực với Alpine.js.',
-                    'priority': 'HIGH',
-                    'estimated_hours': 10
-                },
-                {
-                    'title': 'Viết tài liệu Hướng dẫn Sử dụng & Kiểm thử Hệ thống',
-                    'description': 'Thực hiện kiểm thử đơn vị, tạo file tài liệu nghiệm thu và hoàn thiện đồ án.',
-                    'priority': 'MEDIUM',
-                    'estimated_hours': 6
-                }
-            ]
+            suggested_tasks = []
 
         return JsonResponse({
             'status': 'success',
@@ -115,6 +109,7 @@ def ai_accept_tasks_ajax(request):
     """
     Creates real Task objects in DB when user clicks "Áp dụng" on AI suggestions.
     Guarantees AI only suggests, humans decide.
+    Leader/Admin can create directly. Members/Mentors click "Đề xuất" -> sends notification to Leader.
     """
     if request.method == 'POST':
         try:
@@ -131,23 +126,56 @@ def ai_accept_tasks_ajax(request):
             if not user_can_access_project(request.user, project):
                 return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
+            # Limit max 10 tasks per request
+            tasks_to_create = tasks_to_create[:10]
+            existing_titles = set(project.tasks.values_list('title', flat=True))
+
+            # Permission check: Leader or Admin applies directly
+            is_leader_or_admin = user_is_leader_or_admin(request.user, project)
+            if not is_leader_or_admin:
+                # Member or Mentor proposed tasks -> Notify Leader
+                leader_mem = project.memberships.filter(role='LEADER').first()
+                if leader_mem:
+                    Notification.objects.create(
+                        recipient=leader_mem.user,
+                        sender=request.user,
+                        title=f'Đề xuất Task AI mới cho Đồ án [{project.code}]',
+                        message=f'{request.user.display_name} đã gửi đề xuất {len(tasks_to_create)} công việc từ AI Assistant.',
+                        link=f'/projects/{project.id}/tasks/',
+                        notification_type=NotificationType.SYSTEM
+                    )
+                return JsonResponse({
+                    'status': 'proposed',
+                    'created_count': 0,
+                    'message': f'Đã gửi đề xuất {len(tasks_to_create)} công việc tới Nhóm trưởng đồ án xem xét!'
+                })
+
             created_count = 0
             for t_data in tasks_to_create:
-                title = t_data.get('title')
-                if title:
+                title = str(t_data.get('title', '')).strip()[:255]
+                if title and title not in existing_titles:
+                    priority = t_data.get('priority', TaskPriority.MEDIUM)
+                    if priority not in TaskPriority.values:
+                        priority = TaskPriority.MEDIUM
+
                     Task.objects.create(
                         project=project,
                         title=title,
-                        description=t_data.get('description', ''),
-                        priority=t_data.get('priority', TaskPriority.MEDIUM),
+                        description=t_data.get('description', '') or '',
+                        priority=priority,
                         created_by=request.user,
                         status=TaskStatus.TODO
                     )
+                    existing_titles.add(title)
                     created_count += 1
 
-            return JsonResponse({'status': 'success', 'created_count': created_count, 'message': f'Đã áp dụng tạo thành công {created_count} công việc vào Đồ án!'})
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+            return JsonResponse({
+                'status': 'success',
+                'created_count': created_count,
+                'message': f'Đã áp dụng tạo thành công {created_count} công việc vào Cơ sở dữ liệu Đồ án!'
+            })
+        except Exception:
+            return JsonResponse({'status': 'error', 'message': 'Lỗi khi áp dụng đề xuất công việc.'}, status=400)
 
     return JsonResponse({'status': 'error'}, status=400)
 
@@ -160,23 +188,14 @@ def ai_weekly_summary_ajax(request):
             return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
         now = timezone.now()
-        week_ago = now - timezone.timedelta(days=7)
-        done_count = project.tasks.filter(status=TaskStatus.DONE, updated_at__gte=week_ago).count()
-        new_count = project.tasks.filter(created_at__gte=week_ago).count()
-        stuck_count = project.tasks.filter(status__in=[TaskStatus.IN_PROGRESS, TaskStatus.REVIEW], updated_at__lt=week_ago).count()
-
-        prompt = (
-            f"Hãy viết báo cáo tóm tắt tiến độ tuần cho Đồ án '{project.code} - {project.name}'. "
-            f"Dữ liệu trong 7 ngày qua: {done_count} công việc hoàn thành, {new_count} công việc mới được tạo, {stuck_count} công việc đang bị kẹt. "
-            f"Tiến độ tổng thể hiện tại đạt {project.progress}%."
-        )
+        prompt = f"Hãy tổng hợp báo cáo tiến độ tuần chi tiết cho đồ án {project.code} - {project.name}."
 
         summary_text = LLMService.call_llm(
             prompt=prompt,
             prompt_type=AIPromptType.WEEKLY_SUMMARY,
             user=request.user,
             project=project,
-            input_data=f"Progress: {project.progress}%, Done: {done_count}, New: {new_count}, Stuck: {stuck_count}"
+            input_data=f"Project: {project.code}"
         )
 
         year, week_num, _ = now.isocalendar()
@@ -204,15 +223,8 @@ def ai_risk_detection_ajax(request):
         if not user_can_access_project(request.user, project):
             return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
-        # 1. Deterministic Rule-Based Risk Evaluation from DB
         risks = compute_project_risks(project)
-
-        # 2. LLM formatted summary
-        prompt = (
-            f"Dưới đây là danh sách các rủi ro đã được phát hiện của đồ án {project.code}:\n"
-            f"{json.dumps(risks, ensure_ascii=False)}\n"
-            "Hãy tổng hợp và đưa ra lời giải thích cùng giải pháp điều phối ngắn gọn cho Nhóm sinh viên."
-        )
+        prompt = f"Dưới đây là danh sách các rủi ro tiến độ được phát hiện cho đồ án {project.code}. Hãy tổng hợp giải pháp."
 
         analysis_text = LLMService.call_llm(
             prompt=prompt,
@@ -240,20 +252,14 @@ def ai_mentor_questions_ajax(request):
         if not user_can_access_project(request.user, project):
             return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
-        stuck_tasks = list(project.tasks.filter(status__in=[TaskStatus.IN_PROGRESS, TaskStatus.REVIEW]).values_list('title', flat=True))
-
-        prompt = (
-            f"Hãy đưa ra 5 câu hỏi gợi ý cho Giảng viên Mentor khi họp với Sinh viên đồ án {project.code}.\n"
-            f"Tiến độ hiện tại: {project.progress}%. Công việc đang làm/chờ review: {', '.join(stuck_tasks[:3]) if stuck_tasks else 'Đang triển khai'}.\n"
-            "Mỗi câu hỏi tập trung vào giải quyết vấn đề kỹ thuật và tiến độ nộp bài."
-        )
+        prompt = f"Hãy gợi ý 5 câu hỏi phản biện chuyên sâu cho Mentor khi họp với Sinh viên đồ án {project.code}."
 
         questions_text = LLMService.call_llm(
             prompt=prompt,
             prompt_type=AIPromptType.MENTOR_QUESTIONS,
             user=request.user,
             project=project,
-            input_data=f"Progress: {project.progress}%, Stuck: {stuck_tasks}"
+            input_data=f"Project: {project.code}"
         )
 
         return JsonResponse({
@@ -267,19 +273,25 @@ def ai_mentor_questions_ajax(request):
 
 @login_required
 def ai_chat_ajax(request):
+    """
+    Interactive Project AI Chat endpoint.
+    Strictly checks user permission for the specified project.
+    Prevents IDOR and context leakage across projects.
+    """
     if request.method == 'POST':
-        prompt = request.POST.get('prompt')
+        prompt = request.POST.get('prompt', '').strip()
         project_id = request.POST.get('project_id')
-        project = None
-        if project_id:
-            project = Project.objects.filter(id=project_id).first()
+        
+        if not prompt or not project_id:
+            return JsonResponse({'status': 'error', 'message': 'Thiếu thông tin đồ án hoặc câu hỏi.'}, status=400)
 
-        if not prompt:
-            return JsonResponse({'status': 'error', 'message': 'Prompt rỗng'}, status=400)
+        project = get_object_or_404(Project, id=project_id)
+        if not user_can_access_project(request.user, project):
+            return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
         response_text = LLMService.call_llm(
             prompt=prompt,
-            prompt_type=AIPromptType.TASK_BREAKDOWN,
+            prompt_type=AIPromptType.CHAT,
             user=request.user,
             project=project,
             input_data=prompt
@@ -288,7 +300,29 @@ def ai_chat_ajax(request):
         return JsonResponse({
             'status': 'success',
             'response': response_text,
-            'source_label': 'Trợ lý AI ProjectHub VAU'
+            'source_label': f'AI Assistant [{project.code}]'
         })
 
     return JsonResponse({'status': 'error'}, status=400)
+
+@login_required
+def ai_health_status_view(request):
+    """
+    Admin health status monitor for AI Service provider configuration.
+    """
+    if not request.user.is_admin_user:
+        return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+
+    from ai_assistant.providers import LLMProvider
+    provider, model, key_set = LLMProvider.get_configured_provider()
+    
+    last_req = AIRequest.objects.first()
+
+    return JsonResponse({
+        'status': 'healthy',
+        'provider': provider,
+        'model': model,
+        'api_key_configured': bool(key_set),
+        'last_request_time': last_req.created_at.strftime('%Y-%m-%d %H:%M') if last_req else 'Chưa có',
+        'total_ai_requests': AIRequest.objects.count()
+    })
