@@ -1,4 +1,4 @@
-import os
+import os, sys
 from django.core.management.base import BaseCommand
 from accounts.models import User, UserRole, UserStatus
 
@@ -6,6 +6,9 @@ class Command(BaseCommand):
     help = "Creates or updates initial superuser/admin safely from environment variables."
 
     def handle(self, *args, **options):
+        if hasattr(sys.stdout, 'reconfigure'):
+            sys.stdout.reconfigure(encoding='utf-8')
+
         username = os.getenv("ADMIN_USERNAME", "admin")
         email = os.getenv("ADMIN_EMAIL", "admin@vau.edu.vn")
         password = os.getenv("ADMIN_PASSWORD")
