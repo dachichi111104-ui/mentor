@@ -45,14 +45,54 @@
             <i class="fa-solid fa-folder-tree text-[#163B65]"></i>
             <span>Chọn Đồ án áp dụng:</span>
         </label>
-        <select id="ai-project-select" onchange="window.location.href='?project_id=' + this.value" class="px-3.5 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#163B65] flex-1 text-slate-900 font-semibold">
-            {% for p in projects %}
-            <option value="{{ p.id }}" {% if selected_project and selected_project.id == p.id %}selected{% endif %}>
-                [{{ p.code }}] {{ p.name }}
-            </option>
-            {% endfor %}
-        </select>
+        <div class="flex items-center gap-3 flex-1">
+            <select id="ai-project-select" onchange="window.location.href='?project_id=' + this.value" class="px-3.5 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#163B65] flex-1 text-slate-900 font-semibold">
+                {% for p in projects %}
+                <option value="{{ p.id }}" {% if selected_project and selected_project.id == p.id %}selected{% endif %}>
+                    [{{ p.code }}] {{ p.name }}
+                </option>
+                {% endfor %}
+            </select>
+            {% if project_metrics.risk_score is not None %}
+            <span class="px-3 py-1 text-xs font-bold rounded-xl border whitespace-nowrap {% if project_metrics.risk_score >= 60 %}bg-rose-50 text-rose-800 border-rose-200{% elif project_metrics.risk_score >= 30 %}bg-amber-50 text-amber-800 border-amber-200{% else %}bg-emerald-50 text-emerald-800 border-emerald-200{% endif %}">
+                Điểm rủi ro: {{ project_metrics.risk_score }}/100
+            </span>
+            {% endif %}
+        </div>
     </div>
+
+    {% if proposals %}
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-3">
+        <div class="flex items-center justify-between border-b border-amber-200/60 pb-2">
+            <h3 class="text-xs font-bold text-amber-900 flex items-center gap-2">
+                <i class="fa-solid fa-lightbulb text-amber-600"></i>
+                <span>Đề xuất AI đang chờ duyệt ({{ proposals.count }})</span>
+            </h3>
+        </div>
+        <div class="space-y-2">
+            {% for prop in proposals %}
+            <div class="bg-white p-3 rounded-xl border border-amber-100 flex items-center justify-between text-xs gap-3">
+                <div>
+                    <span class="font-bold text-slate-900">Đề xuất bởi: {{ prop.proposed_by.display_name }}</span>
+                    <p class="text-[11px] text-slate-600">Loại: {{ prop.kind }} | {{ prop.created_at|date:"d/m/Y H:i" }}</p>
+                </div>
+                {% if request.user.is_admin_user or request.user == selected_project.created_by %}
+                <div class="flex items-center gap-2">
+                    <button onclick="handleProposalAction({{ prop.id }}, 'apply')" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[11px] rounded-lg shadow-xs">
+                        Duyệt & Áp dụng
+                    </button>
+                    <button onclick="handleProposalAction({{ prop.id }}, 'reject')" class="px-3 py-1.5 bg-rose-700 hover:bg-rose-800 text-white font-bold text-[11px] rounded-lg shadow-xs">
+                        Từ chối
+                    </button>
+                </div>
+                {% else %}
+                <span class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-[10px] font-bold">Chờ Trưởng nhóm/Admin duyệt</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
     <!-- AI Feature Sub-Tabs -->
     <div class="flex items-center space-x-1 border-b border-slate-200 overflow-x-auto">
@@ -230,6 +270,16 @@
 <script>
     let globalAiTasks = [];
 
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     function getSelectedProjectId() {
         const select = document.getElementById('ai-project-select');
         return select ? select.value : '';
@@ -242,16 +292,34 @@
         }
     }
 
+    function handleProposalAction(proposalId, action) {
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        fetch(`/ai/proposals/${proposalId}/${action}/`, {
+            method: 'POST',
+            body: formData
+        }).then(res => res.json())
+          .then(data => {
+              if (data.status === 'success') {
+                  window.location.reload();
+              } else {
+                  alert(data.message || 'Lỗi xử lý đề xuất');
+              }
+          });
+    }
+
     function renderFormattedCard(content, iconClass, title, containerId) {
         const container = document.getElementById(containerId);
         if (!container) return;
+        const safeTitle = escapeHtml(title);
+        const safeContent = typeof content === 'string' ? escapeHtml(content) : JSON.stringify(content);
         container.innerHTML = `
             <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
                 <div class="flex items-center gap-2 text-xs font-bold text-slate-900 border-b border-slate-200/80 pb-2">
                     <i class="${iconClass} text-[#163B65]"></i>
-                    <span>${title}</span>
+                    <span>${safeTitle}</span>
                 </div>
-                <div class="text-xs text-slate-700 leading-relaxed space-y-2 whitespace-pre-line">${content}</div>
+                <div class="text-xs text-slate-700 leading-relaxed space-y-2 whitespace-pre-line">${safeContent}</div>
             </div>
         `;
     }
@@ -283,14 +351,14 @@
                           container.innerHTML += `
                               <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-start justify-between text-xs gap-3">
                                   <div class="space-y-1">
-                                      <h4 class="font-bold text-slate-900">${index + 1}. ${t.title}</h4>
-                                      <p class="text-[11px] text-slate-600 leading-relaxed">${t.description}</p>
+                                      <h4 class="font-bold text-slate-900">${index + 1}. ${escapeHtml(t.title)}</h4>
+                                      <p class="text-[11px] text-slate-600 leading-relaxed">${escapeHtml(t.description)}</p>
                                       <div class="flex items-center gap-2 pt-1">
-                                          <span class="px-2 py-0.5 bg-slate-200 text-slate-700 text-[10px] font-bold rounded-md"><i class="fa-solid fa-clock mr-1"></i>${t.estimated_hours || 8}h</span>
-                                          <span class="px-2 py-0.5 bg-slate-200 text-slate-700 text-[10px] font-bold rounded-md">${t.labels || 'Đề xuất AI'}</span>
+                                          <span class="px-2 py-0.5 bg-slate-200 text-slate-700 text-[10px] font-bold rounded-md"><i class="fa-solid fa-clock mr-1"></i>${escapeHtml(t.estimated_hours || 8)}h</span>
+                                          <span class="px-2 py-0.5 bg-slate-200 text-slate-700 text-[10px] font-bold rounded-md">${escapeHtml(t.labels || 'Đề xuất AI')}</span>
                                       </div>
                                   </div>
-                                  <span class="px-2.5 py-1 text-[10px] font-bold rounded-lg ${badgeColor} whitespace-nowrap">${t.priority || 'MEDIUM'}</span>
+                                  <span class="px-2.5 py-1 text-[10px] font-bold rounded-lg ${badgeColor} whitespace-nowrap">${escapeHtml(t.priority || 'MEDIUM')}</span>
                               </div>
                           `;
                       });
@@ -312,9 +380,9 @@
             body: formData
         }).then(res => res.json())
           .then(data => {
-              if (data.status === 'success') {
+              if (data.status === 'success' || data.status === 'proposed') {
                   const alpineData = Alpine.$data(document.querySelector('[x-data]'));
-                  alpineData.createdCount = data.created_count;
+                  alpineData.createdCount = data.created_count || globalAiTasks.length;
                   alpineData.successModal = true;
               }
           });
@@ -368,4 +436,5 @@
           });
     }
 </script>
+
 {% endblock %}

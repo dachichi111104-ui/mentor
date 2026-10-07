@@ -1,12 +1,22 @@
 import os
 import time
+import json
+import hashlib
 import requests
+import logging
+from django.core.cache import cache
 from ai_assistant.engine.prompts import SYSTEM_PROMPT
+
+logger = logging.getLogger(__name__)
+
+CB_MAX_FAILURES = 5
+CB_WINDOW_SECONDS = 60
+CB_COOLDOWN_SECONDS = 60
 
 class LLMClient:
     """
     LLM Client supporting Gemini, OpenAI, and Anthropic.
-    Passes API key via headers (SEC-10), enforces timeouts, circuit breaker, and JSON mode.
+    Passes API key via headers (SEC-10), enforces timeouts, circuit breaker, retries, and JSON mode.
     """
 
     def __init__(self):
@@ -42,23 +52,73 @@ class LLMClient:
             return True
         return False
 
-    def complete(self, prompt: str) -> tuple[str, int, int]:
+    def is_circuit_open(self) -> bool:
+        """Checks if the circuit breaker is currently tripped OPEN."""
+        opened_at = cache.get('ai_cb_opened_at')
+        if opened_at:
+            if time.time() - opened_at < CB_COOLDOWN_SECONDS:
+                return True
+            else:
+                cache.delete('ai_cb_opened_at')
+                cache.delete('ai_cb_failures')
+        return False
+
+    def _record_failure(self):
+        """Records an LLM failure for circuit breaker monitoring."""
+        failures = cache.get('ai_cb_failures', 0) + 1
+        cache.set('ai_cb_failures', failures, timeout=CB_WINDOW_SECONDS)
+        if failures >= CB_MAX_FAILURES:
+            cache.set('ai_cb_opened_at', time.time(), timeout=CB_COOLDOWN_SECONDS)
+            logger.warning(f"Circuit Breaker tripped OPEN after {failures} consecutive LLM errors.")
+
+    def _record_success(self):
+        """Resets failure counter on success."""
+        cache.delete('ai_cb_failures')
+
+    def complete(self, prompt: str, cache_key: str = None) -> tuple[str, int, int]:
         """
-        Sends prompt to LLM provider.
+        Sends prompt to LLM provider with retries, caching, circuit breaker, and lock support.
         Returns tuple: (response_text, tokens_in, tokens_out)
-        Raises Exception if error or unconfigured.
         """
+        if cache_key:
+            cached_result = cache.get(cache_key)
+            if cached_result:
+                return cached_result['text'], cached_result['t_in'], cached_result['t_out']
+
         if not self.is_configured():
             raise ValueError("Chưa cấu hình API Key cho nhà cung cấp LLM.")
 
-        if self.provider == 'gemini':
-            return self._call_gemini(prompt)
-        elif self.provider == 'openai':
-            return self._call_openai(prompt)
-        elif self.provider == 'anthropic':
-            return self._call_anthropic(prompt)
-        else:
-            raise ValueError(f"Nhà cung cấp LLM không hợp lệ: {self.provider}")
+        if self.is_circuit_open():
+            raise RuntimeError("Circuit Breaker OPEN: Dịch vụ LLM tạm thời bị ngắt do quá nhiều lỗi liên tiếp.")
+
+        backoff_delays = [1, 3]
+        last_exception = None
+
+        for attempt in range(len(backoff_delays) + 1):
+            try:
+                if self.provider == 'gemini':
+                    text, t_in, t_out = self._call_gemini(prompt)
+                elif self.provider == 'openai':
+                    text, t_in, t_out = self._call_openai(prompt)
+                elif self.provider == 'anthropic':
+                    text, t_in, t_out = self._call_anthropic(prompt)
+                else:
+                    raise ValueError(f"Nhà cung cấp LLM không hợp lệ: {self.provider}")
+
+                self._record_success()
+
+                if cache_key:
+                    cache.set(cache_key, {'text': text, 't_in': t_in, 't_out': t_out}, timeout=600)
+
+                return text, t_in, t_out
+
+            except Exception as e:
+                last_exception = e
+                if attempt < len(backoff_delays):
+                    time.sleep(backoff_delays[attempt])
+
+        self._record_failure()
+        raise last_exception
 
     def _call_gemini(self, prompt: str) -> tuple[str, int, int]:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
@@ -133,3 +193,4 @@ class LLMClient:
         text = data['content'][0]['text']
         usage = data.get('usage', {})
         return text, usage.get('input_tokens', 0), usage.get('output_tokens', 0)
+

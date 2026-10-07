@@ -51,3 +51,57 @@ class AIEngineTestCase(TestCase):
         self.assertIn('risk_level', metrics)
         self.assertGreaterEqual(metrics['risk_score'], 0)
         self.assertLessEqual(metrics['risk_score'], 100)
+
+    def test_ai_client_fallback(self):
+        """AIClient falls back to in-process execution when service is not configured."""
+        from ai_assistant.client import AIClient
+        client = AIClient()
+        facts_a = build_facts(self.project_a)
+        res = client.run_task("breakdown", facts_a)
+        self.assertIn('status', res)
+        self.assertEqual(res['source'], 'rules')
+
+    def test_llm_circuit_breaker_and_cache(self):
+        """LLMClient respects circuit breaker and cache keys."""
+        from ai_assistant.engine.llm import LLMClient
+        from django.core.cache import cache
+
+        client = LLMClient()
+        cache_key = "ai:test_task:12345"
+        cache.set(cache_key, {'text': '{"test": true}', 't_in': 10, 't_out': 20}, timeout=600)
+
+        text, t_in, t_out = client.complete("test prompt", cache_key=cache_key)
+        self.assertEqual(text, '{"test": true}')
+        self.assertEqual(t_in, 10)
+        self.assertEqual(t_out, 20)
+
+    def test_ai_propose_and_apply_flow(self):
+        """Students propose tasks, and leader/admin applies or rejects them."""
+        self.client.force_login(self.leader)
+        response = self.client.post('/ai/propose/', {
+            'project_id': self.project_a.id,
+            'kind': 'task_breakdown',
+            'payload': '{"tasks": [{"title": "Task AI 1", "priority": "HIGH"}]}'
+        })
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['status'], 'success')
+        proposal_id = data['proposal_id']
+
+        # Apply proposal as leader
+        response = self.client.post(f'/ai/proposals/{proposal_id}/apply/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], 'success')
+        self.assertTrue(self.project_a.tasks.filter(title="Task AI 1").exists())
+
+    def test_ai_history_and_overview_api(self):
+        """Endpoints return JSON list for visible projects."""
+        self.client.force_login(self.leader)
+        res_h = self.client.get('/ai/history/')
+        self.assertEqual(res_h.status_code, 200)
+        self.assertEqual(res_h.json()['status'], 'success')
+
+        res_o = self.client.get('/ai/overview/')
+        self.assertEqual(res_o.status_code, 200)
+        self.assertEqual(res_o.json()['status'], 'success')
+

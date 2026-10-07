@@ -46,10 +46,13 @@ class WeeklySummary(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='weekly_summaries', verbose_name="Đồ án")
     week_number = models.IntegerField(verbose_name="Tuần thứ")
     year = models.IntegerField(verbose_name="Năm")
+    iso_year = models.IntegerField(verbose_name="Năm ISO", null=True, blank=True)
+    iso_week = models.IntegerField(verbose_name="Tuần ISO", null=True, blank=True)
     summary_text = models.TextField(verbose_name="Nội dung tóm tắt tiến độ")
     rating = models.CharField(max_length=20, default='FAIR', verbose_name="Đánh giá chung (GOOD/FAIR/AT_RISK)")
     source = models.CharField(max_length=20, default='rules', verbose_name="Nguồn (llm/rules)")
     model = models.CharField(max_length=100, blank=True, null=True, verbose_name="Model LLM")
+    generated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='generated_weekly_summaries', verbose_name="Người tạo")
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -59,8 +62,16 @@ class WeeklySummary(models.Model):
         verbose_name = "Tóm tắt tiến độ tuần"
         verbose_name_plural = "Danh sách Tóm tắt tiến độ tuần"
 
+    def save(self, *args, **kwargs):
+        if self.year and not self.iso_year:
+            self.iso_year = self.year
+        if self.week_number and not self.iso_week:
+            self.iso_week = self.week_number
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Tóm tắt Tuần {self.week_number}/{self.year} - {self.project.code}"
+
 
 class AIProposalStatus(models.TextChoices):
     PENDING = 'PENDING', 'Chờ duyệt'

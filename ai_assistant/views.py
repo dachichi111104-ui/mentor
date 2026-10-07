@@ -356,3 +356,227 @@ def ai_health_test_ajax(request):
         'status': 'success',
         'test_result': result
     })
+
+@login_required
+@require_POST
+def ai_apply_ajax(request):
+    try:
+        project_id = request.POST.get('project_id')
+        tasks_json = request.POST.get('tasks_json')
+        if project_id and tasks_json:
+            tasks_to_create = json.loads(tasks_json)
+        else:
+            data = json.loads(request.body.decode('utf-8'))
+            project_id = data.get('project_id')
+            tasks_to_create = data.get('tasks', [])
+
+        project = get_object_or_404(Project, id=project_id)
+        if not can(request.user, 'ai.apply', project):
+            return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+
+        tasks_to_create = tasks_to_create[:10]
+        existing_titles = set(project.tasks.values_list('title', flat=True))
+        created_count = 0
+        skipped = []
+
+        for t_data in tasks_to_create:
+            title = str(t_data.get('title', '')).strip()[:255]
+            if not title or title in existing_titles:
+                skipped.append({'title': title, 'reason': 'Đã tồn tại hoặc rỗng'})
+                continue
+
+            priority = t_data.get('priority', TaskPriority.MEDIUM)
+            if priority not in TaskPriority.values:
+                priority = TaskPriority.MEDIUM
+
+            Task.objects.create(
+                project=project,
+                title=title,
+                description=t_data.get('description', '') or '',
+                priority=priority,
+                created_by=request.user,
+                status=TaskStatus.TODO
+            )
+            existing_titles.add(title)
+            created_count += 1
+
+        log_action(
+            user=request.user,
+            action=ActionType.AI_APPLY,
+            entity_type='Project',
+            entity_id=project.id,
+            description=f"Áp dụng {created_count} task từ AI cho đồ án {project.code}",
+            project=project
+        )
+
+        return JsonResponse({
+            'status': 'success',
+            'created_count': created_count,
+            'skipped': skipped,
+            'message': f'Đã áp dụng thành công {created_count} task!'
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': f'Lỗi áp dụng task: {str(e)}'}, status=400)
+
+@login_required
+@require_POST
+def ai_propose_ajax(request):
+    try:
+        project_id = request.POST.get('project_id')
+        kind = request.POST.get('kind', 'task_breakdown')
+        payload_str = request.POST.get('payload')
+        if payload_str:
+            payload = json.loads(payload_str)
+        else:
+            data = json.loads(request.body.decode('utf-8'))
+            project_id = data.get('project_id')
+            kind = data.get('kind', 'task_breakdown')
+            payload = data.get('payload', {})
+
+        project = get_object_or_404(Project, id=project_id)
+        if not can(request.user, 'ai.generate', project):
+            return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+
+        proposal = AIProposal.objects.create(
+            project=project,
+            proposed_by=request.user,
+            kind=kind,
+            payload=payload,
+            status=AIProposalStatus.PENDING
+        )
+
+        recipients = set()
+        if project.created_by:
+            recipients.add(project.created_by)
+        for m in project.memberships.filter(role='LEADER', status='ACCEPTED'):
+            recipients.add(m.user)
+
+        for rec in recipients:
+            Notification.objects.create(
+                recipient=rec,
+                sender=request.user,
+                title=f'Đề xuất AI mới cho Đồ án [{project.code}]',
+                message=f'{request.user.display_name} đã gửi đề xuất AI mới.',
+                link=f'/ai/assistant/?project_id={project.id}',
+                notification_type=NotificationType.SYSTEM
+            )
+
+        return JsonResponse({
+            'status': 'success',
+            'proposal_id': proposal.id,
+            'message': 'Đã khởi tạo đề xuất thành công!'
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@login_required
+@require_POST
+def ai_proposal_action_ajax(request, proposal_id, action):
+    proposal = get_object_or_404(AIProposal, id=proposal_id)
+    if not can(request.user, 'ai.apply', proposal.project):
+        return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+
+    if action == 'apply':
+        tasks_to_create = proposal.payload.get('tasks', [])
+        existing_titles = set(proposal.project.tasks.values_list('title', flat=True))
+        created_count = 0
+        for t_data in tasks_to_create:
+            title = str(t_data.get('title', '')).strip()[:255]
+            if not title or title in existing_titles:
+                continue
+            priority = t_data.get('priority', TaskPriority.MEDIUM)
+            if priority not in TaskPriority.values:
+                priority = TaskPriority.MEDIUM
+            Task.objects.create(
+                project=proposal.project,
+                title=title,
+                description=t_data.get('description', '') or '',
+                priority=priority,
+                created_by=proposal.proposed_by,
+                status=TaskStatus.TODO
+            )
+            existing_titles.add(title)
+            created_count += 1
+
+        proposal.status = AIProposalStatus.APPLIED
+        proposal.resolved_by = request.user
+        proposal.resolved_at = timezone.now()
+        proposal.note = f"Đã duyệt và áp dụng {created_count} task."
+        proposal.save()
+
+        Notification.objects.create(
+            recipient=proposal.proposed_by,
+            sender=request.user,
+            title=f'Đề xuất AI đã được duyệt [{proposal.project.code}]',
+            message=f'Đề xuất AI của bạn đã được {request.user.display_name} duyệt và áp dụng {created_count} task.',
+            link=f'/ai/assistant/?project_id={proposal.project.id}',
+            notification_type=NotificationType.SYSTEM
+        )
+
+        return JsonResponse({'status': 'success', 'proposal_status': proposal.status, 'created_count': created_count})
+
+    elif action == 'reject':
+        proposal.status = AIProposalStatus.REJECTED
+        proposal.resolved_by = request.user
+        proposal.resolved_at = timezone.now()
+        proposal.note = "Đã từ chối đề xuất."
+        proposal.save()
+
+        Notification.objects.create(
+            recipient=proposal.proposed_by,
+            sender=request.user,
+            title=f'Đề xuất AI bị từ chối [{proposal.project.code}]',
+            message=f'Đề xuất AI của bạn đã bị từ chối.',
+            link=f'/ai/assistant/?project_id={proposal.project.id}',
+            notification_type=NotificationType.SYSTEM
+        )
+
+        return JsonResponse({'status': 'success', 'proposal_status': proposal.status})
+
+    return JsonResponse({'status': 'error', 'message': 'Hành động không hợp lệ.'}, status=400)
+
+@login_required
+def ai_history_api(request):
+    p_id = request.GET.get('project_id')
+    projects = visible_projects(request.user)
+    if p_id:
+        reqs = AIRequest.objects.filter(project_id=p_id, project__in=projects)
+    else:
+        reqs = AIRequest.objects.filter(project__in=projects)
+
+    reqs = reqs[:50]
+    data = [{
+        'id': r.id,
+        'prompt_type': r.prompt_type,
+        'user': r.user.display_name,
+        'project_id': r.project_id,
+        'project_code': r.project.code if r.project else '',
+        'source': r.source,
+        'provider': r.provider,
+        'model': r.model,
+        'status': r.status,
+        'latency_ms': r.latency_ms,
+        'created_at': r.created_at.strftime('%Y-%m-%d %H:%M:%S')
+    } for r in reqs]
+
+    return JsonResponse({'status': 'success', 'history': data})
+
+@login_required
+def ai_overview_api(request):
+    projects = visible_projects(request.user)[:20]
+    overview = []
+    for p in projects:
+        facts = build_facts(p)
+        metrics = calculate_metrics(facts)
+        pending_proposals = AIProposal.objects.filter(project=p, status=AIProposalStatus.PENDING).count()
+        overview.append({
+            'project_id': p.id,
+            'project_code': p.code,
+            'project_name': p.name,
+            'risk_score': metrics.get('risk_score', 0),
+            'risk_level': metrics.get('risk_level', 'LOW'),
+            'overdue_count': len(metrics.get('tasks', {}).get('overdue', [])),
+            'pending_proposals': pending_proposals,
+        })
+    return JsonResponse({'status': 'success', 'overview': overview})
+
