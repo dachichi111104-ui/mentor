@@ -4,9 +4,9 @@ from django.utils import timezone
 from tasks.models import Task, TaskStatus, TaskPriority
 from milestones.models import MilestoneStatus
 from ai_assistant.models import AIRequest, AIPromptType
-from ai_assistant.context import build_project_context
-from ai_assistant.metrics import calculate_project_metrics
-from ai_assistant.providers import LLMProvider
+from ai_assistant.facts_builder import build_facts as build_project_context
+from ai_assistant.engine.rules import calculate_metrics as calculate_project_metrics
+from ai_assistant.engine.llm import LLMClient
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,8 @@ def compute_project_risks(project):
     """
     Returns deterministic risk list computed from database state for a project.
     """
-    metrics = calculate_project_metrics(project)
+    facts = build_project_context(project)
+    metrics = calculate_project_metrics(facts)
     return metrics.get('risks', [])
 
 class LLMService:
@@ -24,7 +25,7 @@ class LLMService:
         
         # 1. Build Isolated Facts Context
         p_context = build_project_context(project) if project else {}
-        p_metrics = calculate_project_metrics(project) if project else {}
+        p_metrics = calculate_project_metrics(p_context) if project else {}
 
         # 2. System Prompt enforcing ground-truth facts
         system_prompt = (
@@ -37,20 +38,36 @@ class LLMService:
         if p_context:
             system_prompt += f"\nDỮ LIỆU ĐỒ ÁN HIỆN TẠI:\n{json.dumps(p_context, ensure_ascii=False, default=str)}\n"
 
-        # 3. Call LLM Provider
-        raw_output, source_label = LLMProvider.call(prompt, system_prompt=system_prompt)
+        client = LLMClient()
+        raw_output = ""
+        source_label = "Tính từ dữ liệu hệ thống (Rules)"
+        if client.is_configured():
+            try:
+                raw_output, _, _ = client.complete(f"{system_prompt}\nUser request: {prompt}")
+                source_label = f"AI ({client.model})"
+            except Exception as e:
+                logger.warning(f"LLM call failed: {e}")
+                raw_output = ""
+
         parsed_data = None
         status = 'SUCCESS'
 
         if raw_output:
-            parsed_data = LLMProvider.parse_json_safely(raw_output)
+            try:
+                from ai_assistant.engine.parse import extract_json_block
+                parsed_data = json.loads(extract_json_block(raw_output))
+            except Exception:
+                parsed_data = None
 
-        # 4. Fallback generator from DB fact pack if LLM unavailable or parse failed for JSON prompt types
         if not raw_output or (prompt_type in [AIPromptType.TASK_BREAKDOWN] and not parsed_data):
             status = 'FALLBACK'
             source_label = 'Tính từ dữ liệu hệ thống (Rules)'
             raw_output = LLMService._generate_dynamic_fallback(prompt_type, project, p_context, p_metrics)
-            parsed_data = LLMProvider.parse_json_safely(raw_output)
+            try:
+                from ai_assistant.engine.parse import extract_json_block
+                parsed_data = json.loads(extract_json_block(raw_output))
+            except Exception:
+                parsed_data = None
 
         # 5. Log into AIRequest table
         latency_ms = int((timezone.now() - start_time).total_seconds() * 1000)

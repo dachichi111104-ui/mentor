@@ -1,4 +1,5 @@
 import mimetypes
+import hashlib
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.clickjacking import xframe_options_sameorigin
@@ -46,6 +47,11 @@ def validate_uploaded_file(file_obj):
         file_obj.seek(0)
         if not header.startswith(expected_header):
             return False, f"Tệp tin .{ext} không khớp với chữ ký nhị phân thực tế."
+
+    file_obj.seek(0)
+    file_sha256 = hashlib.sha256(file_obj.read()).hexdigest()
+    file_obj.seek(0)
+    file_obj.sha256 = file_sha256
 
     return True, None
 
@@ -328,3 +334,27 @@ def document_version_preview_view(request, version_id):
 def document_version_raw_view(request, version_id):
     version = get_object_or_404(DocumentVersion, id=version_id)
     return document_raw_view(request, version.document.id)
+
+@login_required
+@require_POST
+def document_rollback_view(request, document_id, version_id):
+    doc = get_object_or_404(Document, id=document_id)
+    if not can(request.user, 'document.rollback', doc):
+        return render(request, 'errors/403.html', status=403)
+
+    target_version = get_object_or_404(DocumentVersion, id=version_id, document=doc)
+    doc.file = target_version.file
+    doc.current_version = target_version.version_number
+    doc.save()
+
+    log_action(
+        user=request.user,
+        action=ActionType.UPLOAD_DOCUMENT,
+        entity_type='Document',
+        entity_id=doc.id,
+        description=f'Khôi phục tài liệu "{doc.title}" về phiên bản v{target_version.version_number}',
+        project=doc.project,
+        request=request
+    )
+    messages.success(request, f'Đã khôi phục tài liệu "{doc.title}" về phiên bản v{target_version.version_number}.')
+    return redirect('project_documents', project_id=doc.project.id)

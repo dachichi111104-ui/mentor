@@ -183,6 +183,14 @@ def admin_user_create_view(request):
             messages.error(request, f'Tên đăng nhập "{username}" đã tồn tại.')
             return redirect('admin_users')
 
+        from django.contrib.auth.password_validation import validate_password
+        from django.core.exceptions import ValidationError
+        try:
+            validate_password(password)
+        except ValidationError as e:
+            messages.error(request, "; ".join(e.messages))
+            return redirect('admin_users')
+
         user = User.objects.create_user(
             username=username,
             email=email,

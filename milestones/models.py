@@ -86,3 +86,30 @@ class Event(models.Model):
     def __str__(self):
         return f"[{self.get_event_type_display()}] {self.title} ({self.start.strftime('%d/%m/%Y %H:%M')})"
 
+
+class AppointmentStatus(models.TextChoices):
+    PENDING = 'PENDING', 'Chờ xác nhận'
+    ACCEPTED = 'ACCEPTED', 'Đã đồng ý'
+    DECLINED = 'DECLINED', 'Từ chối'
+    CANCELLED = 'CANCELLED', 'Đã hủy'
+
+
+class Appointment(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='appointments', verbose_name="Đồ án")
+    student = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='student_appointments', verbose_name="Sinh viên")
+    mentor = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='mentor_appointments', verbose_name="Mentor / Giảng viên")
+    title = models.CharField(max_length=255, verbose_name="Tiêu đề cuộc hẹn")
+    notes = models.TextField(blank=True, null=True, verbose_name="Ghi chú / Nội dung")
+    start_time = models.DateTimeField(verbose_name="Thời gian bắt đầu")
+    end_time = models.DateTimeField(verbose_name="Thời gian kết thúc")
+    status = models.CharField(max_length=20, choices=AppointmentStatus.choices, default=AppointmentStatus.PENDING, verbose_name="Trạng thái")
+    location = models.CharField(max_length=255, blank=True, null=True, verbose_name="Địa điểm / Link")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['start_time']
+        verbose_name = "Lịch hẹn Mentor"
+        verbose_name_plural = "Danh sách Lịch hẹn Mentor"
+
+    def __str__(self):
+        return f"Lịch hẹn {self.title} - {self.mentor.display_name} ({self.status})"

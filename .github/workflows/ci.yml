@@ -39,16 +39,19 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
-      - name: Run Linters & Checks
+      - name: Run Linters & Security Checks
         run: |
           python manage.py check
+          python manage.py check --deploy
           python manage.py makemigrations --check
+          pyflakes .
+          python scripts/check_secrets.py
           python scripts/lint_enums.py
           python scripts/lint_views.py
           python scripts/lint_templates.py
           python scripts/lint_ai_prompts.py
 
-      - name: Run Tests
+      - name: Run Tests with Coverage
         env:
           DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/projecthub_db
           DJANGO_SECRET_KEY: ci-secret-key-testing-only-12345
@@ -56,4 +59,5 @@ jobs:
           SEED_DEMO: "1"
         run: |
           python manage.py migrate
-          python manage.py test
+          coverage run manage.py test ai_assistant.tasks
+          coverage report

@@ -21,30 +21,11 @@
     </div>
 
     <!-- Admin Metric Cards -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-white rounded p-4 border border-[#D9DEE8]">
-            <p class="text-[10px] font-bold text-[#667085] uppercase tracking-wider">Tổng Người dùng</p>
-            <p class="text-2xl font-bold text-[#172033] mt-0.5">{{ total_users }}</p>
-            <span class="text-[10px] text-[#667085] mt-1 block">{{ students_count }} Sinh viên • {{ mentors_count }} Mentor</span>
-        </div>
-
-        <div class="bg-white rounded p-4 border border-[#D9DEE8]">
-            <p class="text-[10px] font-bold text-[#667085] uppercase tracking-wider">Tổng Đồ án</p>
-            <p class="text-2xl font-bold text-[#163B65] mt-0.5">{{ total_projects }}</p>
-            <span class="text-[10px] text-amber-700 font-semibold mt-1 block">{{ active_projects }} Đồ án đang thực hiện</span>
-        </div>
-
-        <div class="bg-white rounded p-4 border border-[#D9DEE8]">
-            <p class="text-[10px] font-bold text-[#667085] uppercase tracking-wider">Đồ án Hoàn thành</p>
-            <p class="text-2xl font-bold text-[#198754] mt-0.5">{{ completed_projects }}</p>
-            <span class="text-[10px] text-[#667085] mt-1 block">Nghiệm thu tốt nghiệp</span>
-        </div>
-
-        <div class="bg-white rounded p-4 border border-[#D9DEE8]">
-            <p class="text-[10px] font-bold text-[#667085] uppercase tracking-wider">Nhật ký Audit Log</p>
-            <p class="text-2xl font-bold text-[#172033] mt-0.5">Audit Log</p>
-            <a href="{% url 'admin_audit_log' %}" class="text-[10px] text-[#163B65] font-bold hover:underline mt-1 block">Xem Log chi tiết →</a>
-        </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {% include "includes/_stat_card.html" with title="Tổng Người dùng" value=total_users subtitle="Sinh viên & Mentor" icon="fa-users" icon_bg="bg-blue-50 text-[#163B65]" href="/dashboard/admin/users/" %}
+        {% include "includes/_stat_card.html" with title="Tổng Đồ án" value=total_projects subtitle="Đồ án toàn trường" icon="fa-folder-tree" icon_bg="bg-indigo-50 text-indigo-800" href="/projects/" %}
+        {% include "includes/_stat_card.html" with title="Đồ án Hoàn thành" value=completed_projects subtitle="Nghiệm thu tốt nghiệp" icon="fa-circle-check" icon_bg="bg-emerald-50 text-emerald-800" href="/projects/?status=COMPLETED" %}
+        {% include "includes/_stat_card.html" with title="Nhật ký Audit Log" value=audit_logs.count subtitle="Giám sát hệ thống" icon="fa-clock-rotate-left" icon_bg="bg-purple-50 text-purple-800" href="/dashboard/admin/audit-log/" %}
     </div>
 
     <!-- Audit Log Preview & Administrative Quick Links -->

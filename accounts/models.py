@@ -96,6 +96,10 @@ class User(AbstractUser):
         return self.role == UserRole.MENTOR
 
     @property
+    def is_active_mentor(self):
+        return self.role == UserRole.MENTOR and self.status == UserStatus.ACTIVE
+
+    @property
     def is_admin_user(self):
         return self.role == UserRole.ADMIN or self.is_superuser
 

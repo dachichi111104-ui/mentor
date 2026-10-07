@@ -16,18 +16,7 @@ class TaskStatus(models.TextChoices):
     REVIEW = 'REVIEW', 'Đang Review'
     DONE = 'DONE', 'Hoàn thành'
 
-class Board(models.Model):
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='boards', verbose_name="Đồ án")
-    name = models.CharField(max_length=255, default="Bảng Kanban Đồ án", verbose_name="Tên Bảng")
-    description = models.TextField(blank=True, null=True, verbose_name="Mô tả")
-    created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        verbose_name = "Bảng Kanban"
-        verbose_name_plural = "Danh sách Bảng Kanban"
-
-    def __str__(self):
-        return f"{self.project.code} - {self.name}"
 
 class Sprint(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='sprints', verbose_name="Đồ án")
@@ -46,25 +35,10 @@ class Sprint(models.Model):
     def __str__(self):
         return f"{self.project.code} - {self.name}"
 
-class BoardColumn(models.Model):
-    board = models.ForeignKey(Board, on_delete=models.CASCADE, related_name='columns', verbose_name="Bảng Kanban")
-    title = models.CharField(max_length=100, verbose_name="Tên cột")
-    status_code = models.CharField(max_length=50, choices=TaskStatus.choices, default=TaskStatus.TODO, verbose_name="Mã trạng thái tương ứng")
-    order_index = models.IntegerField(default=0, verbose_name="Thứ tự hiển thị")
-
-    class Meta:
-        ordering = ['order_index']
-        verbose_name = "Cột Bảng Kanban"
-        verbose_name_plural = "Danh sách Cột Bảng Kanban"
-
-    def __str__(self):
-        return f"{self.board.name} - Cột {self.title}"
-
 class Task(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', verbose_name="Đồ án")
     milestone = models.ForeignKey(Milestone, on_delete=models.SET_NULL, null=True, blank=True, related_name='tasks', verbose_name="Milestone")
     sprint = models.ForeignKey(Sprint, on_delete=models.SET_NULL, null=True, blank=True, related_name='tasks', verbose_name="Sprint (Scrum)")
-    board_column = models.ForeignKey(BoardColumn, on_delete=models.SET_NULL, null=True, blank=True, related_name='tasks', verbose_name="Cột Kanban")
     
     title = models.CharField(max_length=255, verbose_name="Tiêu đề công việc")
     description = models.TextField(blank=True, null=True, verbose_name="Chi tiết công việc")

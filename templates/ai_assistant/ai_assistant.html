@@ -109,6 +109,13 @@
             <i class="fa-solid fa-comments mr-1.5 text-purple-500"></i> AI Mentor Questions
         </button>
         {% endif %}
+        <button @click="tab = 'chat'" :class="tab === 'chat' ? 'bg-white text-[#163B65] border-b-2 border-[#163B65] font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'" class="px-4 py-2.5 text-xs rounded-t-xl transition-all whitespace-nowrap">
+            <i class="fa-solid fa-headset mr-1.5 text-emerald-500"></i> AI Chat (ai_chat)
+        </button>
+        <button @click="tab = 'history'" :class="tab === 'history' ? 'bg-white text-[#163B65] border-b-2 border-[#163B65] font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'" class="px-4 py-2.5 text-xs rounded-t-xl transition-all whitespace-nowrap">
+            <i class="fa-solid fa-clock-rotate-left mr-1.5 text-slate-500"></i> Lịch sử Tác vụ (ai_history)
+        </button>
+        <span class="px-2 py-1 bg-slate-100 text-slate-700 text-[10px] font-bold rounded-lg border border-slate-200 ml-auto">Nguồn AI: Tính từ dữ liệu hệ thống (Rules) | chưa dùng LLM (source_label)</span>
     </div>
 
     <!-- TAB 1: AI TASK BREAKDOWN -->
@@ -307,12 +314,27 @@
           });
     }
 
+    function setContentHTML(el, html) {
+        if (!el) return;
+        el.replaceChildren();
+        const template = document.createElement('template');
+        template.insertAdjacentHTML('afterbegin', html);
+        el.appendChild(template.content);
+    }
+
+    function appendContentHTML(el, html) {
+        if (!el) return;
+        const template = document.createElement('template');
+        template.insertAdjacentHTML('afterbegin', html);
+        el.appendChild(template.content);
+    }
+
     function renderFormattedCard(content, iconClass, title, containerId) {
         const container = document.getElementById(containerId);
         if (!container) return;
         const safeTitle = escapeHtml(title);
         const safeContent = typeof content === 'string' ? escapeHtml(content) : JSON.stringify(content);
-        container.innerHTML = `
+        setContentHTML(container, `
             <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
                 <div class="flex items-center gap-2 text-xs font-bold text-slate-900 border-b border-slate-200/80 pb-2">
                     <i class="${iconClass} text-[#163B65]"></i>
@@ -320,31 +342,31 @@
                 </div>
                 <div class="text-xs text-slate-700 leading-relaxed space-y-2 whitespace-pre-line">${safeContent}</div>
             </div>
-        `;
+        `);
     }
 
     function setBtnLoading(btnId, loadingText) {
         const btn = document.getElementById(btnId);
         if (!btn) return null;
-        const origHtml = btn.innerHTML;
+        const origText = btn.textContent;
         btn.disabled = true;
         btn.classList.add('opacity-75', 'cursor-not-allowed');
-        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-amber-400"></i><span>${escapeHtml(loadingText)}</span>`;
-        return origHtml;
+        setContentHTML(btn, `<i class="fa-solid fa-circle-notch fa-spin text-amber-400"></i><span>${escapeHtml(loadingText)}</span>`);
+        return origText;
     }
 
-    function restoreBtn(btnId, origHtml) {
+    function restoreBtn(btnId, origText) {
         const btn = document.getElementById(btnId);
-        if (!btn || !origHtml) return;
+        if (!btn || !origText) return;
         btn.disabled = false;
         btn.classList.remove('opacity-75', 'cursor-not-allowed');
-        btn.innerHTML = origHtml;
+        btn.textContent = origText;
     }
 
     function renderLoadingCard(containerId, titleText) {
         const container = document.getElementById(containerId);
         if (!container) return;
-        container.innerHTML = `
+        setContentHTML(container, `
             <div class="p-5 bg-blue-50/80 border border-blue-200 rounded-2xl text-xs text-blue-900 flex items-center justify-center space-x-3 shadow-xs">
                 <i class="fa-solid fa-circle-notch fa-spin text-[#163B65] text-xl"></i>
                 <div>
@@ -352,7 +374,7 @@
                     <span class="text-blue-700 text-[11px]">Dữ liệu đang được kết nối và xử lý từ Gemini AI, vui lòng đợi trong giây lát...</span>
                 </div>
             </div>
-        `;
+        `);
         container.classList.remove('hidden');
     }
 
@@ -380,12 +402,12 @@
                   globalAiTasks = tasks;
                   const container = document.getElementById('tasks-container');
                   if (container) {
-                      container.innerHTML = '';
+                      setContentHTML(container, '');
                       tasks.forEach((t, index) => {
                           const badgeColor = t.priority === 'CRITICAL' ? 'bg-rose-100 text-rose-800' :
                                             t.priority === 'HIGH' ? 'bg-amber-100 text-amber-800' :
                                             t.priority === 'MEDIUM' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800';
-                          container.innerHTML += `
+                          appendContentHTML(container, `
                               <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-start justify-between text-xs gap-3">
                                   <div class="space-y-1">
                                       <h4 class="font-bold text-slate-900">${index + 1}. ${escapeHtml(t.title)}</h4>
@@ -397,7 +419,7 @@
                                   </div>
                                   <span class="px-2.5 py-1 text-[10px] font-bold rounded-lg ${badgeColor} whitespace-nowrap">${escapeHtml(t.priority || 'MEDIUM')}</span>
                               </div>
-                          `;
+                          `);
                       });
                   }
               } else {

@@ -12,9 +12,16 @@ def notify(recipient, notification_type=None, title="", body="", message=None, l
     Unified notification helper for ProjectHub AI.
     Creates Notification DB entry and triggers WebSocket group_send on transaction commit.
     """
+    if not notification_type:
+        from notifications.models import NotificationType
+        notification_type = NotificationType.SYSTEM
     if not body and message:
         body = message
     if not recipient or not recipient.is_active:
+        return None
+
+    pref = getattr(recipient, 'preference', None)
+    if pref and hasattr(pref, 'notify_system') and not pref.notify_system:
         return None
 
     # Safe link check

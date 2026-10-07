@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from projects.models import Project, ProjectMember, ProjectStatus, ProjectCategory, MemberRole, MemberStatus, MentorStatus, Message
 from projects.permissions import visible_projects, require_can, can
+from projects.forms import ProjectForm
 from accounts.models import User, UserRole, UserStatus
 from audit_log.models import ActionType, ActivityLog
 from audit_log.utils import log_action
@@ -84,40 +85,25 @@ def project_detail_view(request, project_id):
 @require_POST
 @require_can('project.create')
 def project_create_view(request):
-    code = request.POST.get('code', '').strip().upper()
-    name = request.POST.get('name', '').strip()
-    description = request.POST.get('description', '').strip()
-    category = request.POST.get('category', ProjectCategory.WEB)
-    technology = request.POST.get('technology', '').strip()
-    mentor_id = request.POST.get('mentor_id') or request.POST.get('mentor')
-    start_date = request.POST.get('start_date') or timezone.now().date()
-    end_date = request.POST.get('end_date') or (timezone.now() + timezone.timedelta(days=90)).date()
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'application/json' in request.headers.get('accept', '')
+    form = ProjectForm(request.POST)
 
-    if not code or not name:
-        messages.error(request, 'Vui lòng nhập đầy đủ Mã và Tên đồ án!')
+    if not form.is_valid():
+        if is_ajax:
+            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+        first_err = list(form.errors.values())[0][0] if form.errors else 'Vui lòng kiểm tra lại thông tin nhập!'
+        messages.error(request, first_err)
         return redirect('project_list')
 
-    if Project.objects.filter(code=code).exists():
-        messages.error(request, f'Mã đồ án "{code}" đã tồn tại trong hệ thống!')
-        return redirect('project_list')
-
-    mentor_user = None
-    if mentor_id:
-        mentor_user = User.objects.filter(id=mentor_id, role=UserRole.MENTOR, status=UserStatus.ACTIVE).first()
-
-    project = Project.objects.create(
-        code=code,
-        name=name,
-        description=description,
-        category=category,
-        technology=technology,
-        start_date=start_date,
-        end_date=end_date,
-        created_by=request.user,
-        mentor=mentor_user,
-        mentor_status=MentorStatus.PENDING if mentor_user else MentorStatus.NONE,
-        status=ProjectStatus.PLANNING
-    )
+    project = form.save(commit=False)
+    project.code = project.code.strip().upper()
+    project.created_by = request.user
+    project.status = ProjectStatus.PLANNING
+    if project.mentor:
+        project.mentor_status = MentorStatus.PENDING
+    else:
+        project.mentor_status = MentorStatus.NONE
+    project.save()
 
     ProjectMember.objects.create(
         project=project,
@@ -137,6 +123,8 @@ def project_create_view(request):
     )
 
     messages.success(request, f'Tạo đồ án "{project.name}" thành công!')
+    if is_ajax:
+        return JsonResponse({'status': 'success', 'project_id': project.id, 'redirect_url': f'/projects/{project.id}/'})
     return redirect('project_detail', project_id=project.id)
 
 @login_required
@@ -146,32 +134,21 @@ def project_edit_view(request, project_id):
     if not can(request.user, 'project.edit', project):
         return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
-    name = request.POST.get('name', '').strip()
-    if name:
-        project.name = name
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'application/json' in request.headers.get('accept', '')
+    form = ProjectForm(request.POST, instance=project)
 
-    code = request.POST.get('code', '').strip().upper()
-    if code and code != project.code:
-        if Project.objects.filter(code=code).exclude(id=project.id).exists():
-            messages.error(request, f'Mã đồ án "{code}" đã được dùng bởi đồ án khác!')
-            return redirect('project_detail', project_id=project.id)
-        project.code = code
+    if not form.is_valid():
+        if is_ajax:
+            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+        first_err = list(form.errors.values())[0][0] if form.errors else 'Dữ liệu không hợp lệ!'
+        messages.error(request, first_err)
+        return redirect('project_detail', project_id=project.id)
 
-    project.description = request.POST.get('description', project.description)
-    project.category = request.POST.get('category', project.category)
-    project.technology = request.POST.get('technology', project.technology)
-
-    mentor_id = request.POST.get('mentor_id')
-    if mentor_id:
-        mentor_user = User.objects.filter(id=mentor_id, role=UserRole.MENTOR, status=UserStatus.ACTIVE).first()
-        if mentor_user and project.mentor != mentor_user:
-            project.mentor = mentor_user
-            project.mentor_status = MentorStatus.PENDING
-
-    end_date = request.POST.get('end_date')
-    if end_date:
-        project.end_date = end_date
-
+    old_mentor = project.mentor
+    project = form.save(commit=False)
+    project.code = project.code.strip().upper()
+    if project.mentor and project.mentor != old_mentor:
+        project.mentor_status = MentorStatus.PENDING
     project.save()
 
     log_action(
@@ -185,6 +162,8 @@ def project_edit_view(request, project_id):
     )
 
     messages.success(request, f'Cập nhật đồ án "{project.name}" thành công!')
+    if is_ajax:
+        return JsonResponse({'status': 'success', 'project_id': project.id})
     return redirect('project_detail', project_id=project.id)
 
 @login_required

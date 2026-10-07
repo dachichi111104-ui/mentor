@@ -2,6 +2,8 @@ from django import forms
 from milestones.models import Milestone
 
 class MilestoneForm(forms.ModelForm):
+    description = forms.CharField(required=False, widget=forms.Textarea)
+
     class Meta:
         model = Milestone
         fields = ['name', 'description', 'start_date', 'due_date']

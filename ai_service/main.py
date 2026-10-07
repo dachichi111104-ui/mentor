@@ -20,11 +20,9 @@ app = FastAPI(
 )
 
 AI_SERVICE_TOKEN = os.getenv("AI_SERVICE_TOKEN")
-if not AI_SERVICE_TOKEN:
-    if os.getenv("DJANGO_DEBUG") == "True" or "test" in sys.argv or any("pytest" in a for a in sys.argv):
-        AI_SERVICE_TOKEN = "dev-secret-token"
-    else:
-        raise RuntimeError("AI_SERVICE_TOKEN environment variable is required.")
+if not AI_SERVICE_TOKEN and not ("test" in sys.argv or any("pytest" in a for a in sys.argv)):
+    raise RuntimeError("AI_SERVICE_TOKEN environment variable is required.")
+AI_SERVICE_TOKEN = AI_SERVICE_TOKEN or "test-token-env"
 
 def verify_token(authorization: Optional[str] = Header(None)):
     if not authorization:

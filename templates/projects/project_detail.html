@@ -1,8 +1,12 @@
 {% extends "layouts/base.html" %}
+{% load permissions_tags %}
 
 {% block title %}{{ project.name }} - ProjectHub AI{% endblock %}
 
 {% block content %}
+{% can_user request.user 'project.edit' project as can_edit_project %}
+{# breadcrumb navigation #}
+{% include "includes/_breadcrumb.html" with breadcrumbs=breadcrumbs %}
 <div class="space-y-6" x-data="{ addMemberModal: false, editProjectModal: false }">
 
     <!-- Top Banner Summary -->

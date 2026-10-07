@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.contrib import messages
 from tasks.models import Task, TaskComment, TaskStatus, TaskPriority, TaskChecklistItem
 from tasks.workflow import transition
+from tasks.forms import TaskForm
 from projects.models import Project, ProjectMember, MemberStatus
 from projects.permissions import require_can, can
 from milestones.models import Milestone
@@ -51,42 +52,21 @@ def my_tasks_view(request):
 @require_can('task.create')
 def task_create_view(request, project_id):
     project = get_object_or_404(Project, id=project_id)
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'application/json' in request.headers.get('accept', '')
 
-    title = request.POST.get('title', '').strip()
-    if not title:
-        messages.error(request, 'Vui lòng nhập tiêu đề công việc!')
+    form = TaskForm(request.POST, project=project)
+    if not form.is_valid():
+        if is_ajax:
+            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+        first_err = list(form.errors.values())[0][0] if form.errors else 'Vui lòng nhập đúng thông tin công việc!'
+        messages.error(request, first_err)
         return redirect('project_tasks', project_id=project.id)
 
-    description = request.POST.get('description', '').strip()
-    priority = request.POST.get('priority', TaskPriority.MEDIUM)
-    if priority not in TaskPriority.values:
-        priority = TaskPriority.MEDIUM
-
-    assignee_id = request.POST.get('assignee_id')
-    assignee = None
-    if assignee_id:
-        mem = project.memberships.filter(user_id=assignee_id, status=MemberStatus.ACCEPTED).first()
-        if mem:
-            assignee = mem.user
-
-    milestone_id = request.POST.get('milestone_id')
-    milestone = None
-    if milestone_id:
-        milestone = project.milestones.filter(id=milestone_id).first()
-
-    due_date = request.POST.get('due_date') or None
-
-    task = Task.objects.create(
-        project=project,
-        title=title,
-        description=description,
-        priority=priority,
-        assignee=assignee,
-        milestone=milestone,
-        due_date=due_date,
-        created_by=request.user,
-        status=TaskStatus.TODO
-    )
+    task = form.save(commit=False)
+    task.project = project
+    task.created_by = request.user
+    task.status = TaskStatus.TODO
+    task.save()
 
     log_action(
         user=request.user,
@@ -109,8 +89,9 @@ def task_create_view(request, project_id):
             project=project
         )
 
-
     messages.success(request, f'Tạo task "{task.title}" thành công!')
+    if is_ajax:
+        return JsonResponse({'status': 'success', 'task_id': task.id})
     return redirect('project_tasks', project_id=project.id)
 
 @login_required
@@ -191,35 +172,16 @@ def task_edit_view(request, task_id):
     if not can(request.user, 'task.edit', task):
         return JsonResponse({'status': 'error', 'message': 'Bạn không có quyền chỉnh sửa task này.'}, status=403)
 
-    title = request.POST.get('title', '').strip()
-    if title:
-        task.title = title
-    task.description = request.POST.get('description', task.description)
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'application/json' in request.headers.get('accept', '')
+    form = TaskForm(request.POST, instance=task, project=task.project)
+    if not form.is_valid():
+        if is_ajax:
+            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+        first_err = list(form.errors.values())[0][0] if form.errors else 'Dữ liệu không hợp lệ!'
+        messages.error(request, first_err)
+        return redirect('project_tasks', project_id=task.project.id)
 
-    priority = request.POST.get('priority')
-    if priority in TaskPriority.values:
-        task.priority = priority
-
-    assignee_id = request.POST.get('assignee_id')
-    if assignee_id:
-        mem = task.project.memberships.filter(user_id=assignee_id, status=MemberStatus.ACCEPTED).first()
-        task.assignee = mem.user if mem else None
-    elif 'assignee_id' in request.POST:
-        task.assignee = None
-
-    milestone_id = request.POST.get('milestone_id')
-    if milestone_id:
-        m = task.project.milestones.filter(id=milestone_id).first()
-        task.milestone = m
-    elif 'milestone_id' in request.POST:
-        task.milestone = None
-
-    due_date = request.POST.get('due_date')
-    if due_date:
-        task.due_date = due_date
-
-    task.labels = request.POST.get('labels', task.labels)
-    task.save()
+    task = form.save()
 
     log_action(
         user=request.user,
@@ -231,6 +193,8 @@ def task_edit_view(request, task_id):
         request=request
     )
     messages.success(request, f'Cập nhật công việc "{task.title}" thành công!')
+    if is_ajax:
+        return JsonResponse({'status': 'success', 'task_id': task.id})
     return redirect('project_tasks', project_id=task.project.id)
 
 @login_required

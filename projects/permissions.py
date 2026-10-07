@@ -20,6 +20,25 @@ def visible_projects(user):
         models.Q(created_by=user)
     ).distinct()
 
+def pending_mentor_invites(user):
+    """
+    Returns QuerySet of projects where the user is an invited mentor awaiting response.
+    """
+    if not user or not user.is_authenticated or user.status != UserStatus.ACTIVE or not user.is_mentor:
+        return Project.objects.none()
+    return Project.objects.filter(mentor=user, mentor_status=MentorStatus.PENDING).distinct()
+
+def pending_member_invites(user):
+    """
+    Returns QuerySet of projects where the user is an invited student awaiting response.
+    """
+    if not user or not user.is_authenticated or user.status != UserStatus.ACTIVE:
+        return Project.objects.none()
+    return Project.objects.filter(
+        memberships__user=user,
+        memberships__status=MemberStatus.PENDING
+    ).distinct()
+
 def get_project_role(user, project):
     """
     Returns string role: 'ADMIN', 'LEADER', 'MEMBER', 'MENTOR', 'MENTOR_PENDING', 'OUTSIDER', or 'ANONYMOUS'

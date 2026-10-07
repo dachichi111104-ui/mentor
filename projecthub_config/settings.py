@@ -32,14 +32,11 @@ for port in ['', ':8000', ':8088', ':8001', ':8080', ':3000']:
     CSRF_TRUSTED_ORIGINS.append(f'http://localhost{port}')
 CSRF_TRUSTED_ORIGINS = list(set(CSRF_TRUSTED_ORIGINS))
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+import importlib.util
 
 INSTALLED_APPS = []
-try:
-    import daphne
+if importlib.util.find_spec('daphne'):
     INSTALLED_APPS.append('daphne')
-except ImportError:
-    pass
 
 INSTALLED_APPS.extend([
     'django.contrib.admin',
@@ -50,11 +47,8 @@ INSTALLED_APPS.extend([
     'django.contrib.staticfiles',
 ])
 
-try:
-    import channels
+if importlib.util.find_spec('channels'):
     INSTALLED_APPS.append('channels')
-except ImportError:
-    pass
 
 INSTALLED_APPS.extend([
     # Custom Apps
@@ -241,10 +235,13 @@ LOGGING = {
     },
 }
 
-# Celery Configuration
-CELERY_BROKER_URL = REDIS_URL or 'memory://'
-CELERY_RESULT_BACKEND = REDIS_URL or 'disabled://'
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'Asia/Ho_Chi_Minh'
+# Storage Configuration
+DEFAULT_FILE_STORAGE = os.getenv('DEFAULT_FILE_STORAGE', 'django.core.files.storage.FileSystemStorage')
+STORAGES = {
+    "default": {
+        "BACKEND": os.getenv('STORAGE_ENGINE', 'django.core.files.storage.FileSystemStorage'),
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}

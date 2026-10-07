@@ -62,61 +62,10 @@
 
     <!-- Metric KPI Strip (4 Stat Cards Grid) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Card 1 -->
-        <div class="bg-white rounded-2xl p-5 border border-[#D9DEE8] shadow-xs hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between">
-                <span class="text-[10px] font-bold text-[#667085] uppercase tracking-wider">Đồ án Hướng dẫn</span>
-                <div class="w-9 h-9 rounded-xl bg-blue-50 text-[#163B65] border border-blue-200 flex items-center justify-center">
-                    <i class="fa-solid fa-folder-tree text-sm"></i>
-                </div>
-            </div>
-            <div class="mt-3">
-                <span class="text-2xl font-extrabold text-[#172033]">{{ total_mentored }}</span>
-                <span class="text-xs text-[#667085] block mt-0.5">đồ án đang tiếp nhận</span>
-            </div>
-        </div>
-
-        <!-- Card 2 -->
-        <div class="bg-white rounded-2xl p-5 border border-[#D9DEE8] shadow-xs hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between">
-                <span class="text-[10px] font-bold text-[#667085] uppercase tracking-wider">Task Chờ Review</span>
-                <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 flex items-center justify-center">
-                    <i class="fa-solid fa-clipboard-check text-sm"></i>
-                </div>
-            </div>
-            <div class="mt-3">
-                <span class="text-2xl font-extrabold text-[#163B65]">{{ pending_review_tasks.count }}</span>
-                <span class="text-xs text-[#667085] block mt-0.5">cần đánh giá tiến độ</span>
-            </div>
-        </div>
-
-        <!-- Card 3 -->
-        <div class="bg-white rounded-2xl p-5 border border-[#D9DEE8] shadow-xs hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between">
-                <span class="text-[10px] font-bold text-[#667085] uppercase tracking-wider">Bản thảo Nộp Duyệt</span>
-                <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-800 border border-purple-200 flex items-center justify-center">
-                    <i class="fa-solid fa-file-signature text-sm"></i>
-                </div>
-            </div>
-            <div class="mt-3">
-                <span class="text-2xl font-extrabold text-purple-900">{{ review_needed_projects.count }}</span>
-                <span class="text-xs text-[#667085] block mt-0.5">đồ án yêu cầu review</span>
-            </div>
-        </div>
-
-        <!-- Card 4 -->
-        <div class="bg-white rounded-2xl p-5 border border-[#D9DEE8] shadow-xs hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between">
-                <span class="text-[10px] font-bold text-[#667085] uppercase tracking-wider">Lời mời Hướng dẫn</span>
-                <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center justify-center">
-                    <i class="fa-solid fa-envelope-open-text text-sm"></i>
-                </div>
-            </div>
-            <div class="mt-3">
-                <span class="text-2xl font-extrabold text-emerald-800">{{ pending_mentor_invites.count }}</span>
-                <span class="text-xs text-[#667085] block mt-0.5">đơn đang chờ xác nhận</span>
-            </div>
-        </div>
+        {% include "includes/_stat_card.html" with title="Đồ án Hướng dẫn" value=total_mentored subtitle="đồ án đang tiếp nhận" icon="fa-folder-tree" icon_bg="bg-blue-50 text-[#163B65]" href="/projects/" %}
+        {% include "includes/_stat_card.html" with title="Task Chờ Review" value=pending_review_tasks.count subtitle="cần đánh giá tiến độ" icon="fa-clipboard-check" icon_bg="bg-amber-50 text-amber-800" href="/reviews/" %}
+        {% include "includes/_stat_card.html" with title="Bản thảo Nộp Duyệt" value=review_needed_projects.count subtitle="đồ án yêu cầu review" icon="fa-file-signature" icon_bg="bg-purple-50 text-purple-800" href="/reviews/" %}
+        {% include "includes/_stat_card.html" with title="Lời mời Hướng dẫn" value=pending_mentor_invites.count subtitle="đang chờ phản hồi" icon="fa-envelope-open-text" icon_bg="bg-emerald-50 text-emerald-800" href="/projects/" %}
     </div>
 
 

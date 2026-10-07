@@ -8,12 +8,45 @@ from django.core.files.base import ContentFile
 
 from accounts.models import User, UserRole, UserStatus
 from projects.models import Project, ProjectStatus, ProjectMember, MemberRole, MemberStatus, MentorStatus
-from milestones.models import Milestone, MilestoneStatus
+from milestones.models import Milestone, MilestoneStatus, Appointment, AppointmentStatus
 from tasks.models import Task, TaskPriority, TaskStatus, Sprint, TaskComment, TaskChecklistItem
 from documents.models import Document, DocumentVersion
 from reviews.models import Feedback, ReviewStatus
-from audit_log.models import ActivityLog, ActionType
+from audit_log.models import ActionType, ActivityLog
 from notifications.models import Notification, NotificationType
+
+BLUEPRINTS = {
+    'PRJ-2026-AI': {
+        'title': 'Hệ thống Trợ lý AI Hỗ trợ Quản lý Đồ án Học thuật (ProjectHub AI)',
+        'category': 'WEB',
+        'tech': 'Python, Django, Tailwind CSS, Alpine.js, PostgreSQL'
+    },
+    'PRJ-2026-AVIA': {
+        'title': 'Ứng dụng Giám sát & Quản lý Lịch trình Hàng không Chế độ Realtime',
+        'category': 'SYSTEM',
+        'tech': 'FastAPI, Redis, WebSocket, Docker, ReactJS'
+    },
+    'PRJ-2026-DRONE': {
+        'title': 'Hệ thống Quản lý & Điều phối Drone Giao vận Hàng hóa Tự động',
+        'category': 'IOT',
+        'tech': 'Python, MQTT, C++, ESP32, PostgreSQL'
+    },
+    'PRJ-2026-CARGO': {
+        'title': 'Phần mềm Tối ưu hóa Chuỗi Cung ứng & Kho Hàng không',
+        'category': 'WEB',
+        'tech': 'Java, Spring Boot, Vue.js, PostgreSQL'
+    },
+    'PRJ-2026-RESERVE': {
+        'title': 'Cổng Đặt vé & Quản lý Đặt chỗ Chuyến bay Tự động',
+        'category': 'WEB',
+        'tech': 'Node.js, Express, MongoDB, Next.js'
+    },
+    'PRJ-2026-SAFETY': {
+        'title': 'Hệ thống Đánh giá & Cảnh báo Rủi ro An toàn Bay HVHK',
+        'category': 'SYSTEM',
+        'tech': 'Python, Django, PostgreSQL, Celery'
+    }
+}
 
 # Minimal valid 1-page PDF file bytes
 MINIMAL_PDF_BYTES = b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000058 00000 n\n0000000115 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n190\n%%EOF\n"
@@ -93,7 +126,7 @@ class Command(BaseCommand):
                 u, _ = User.objects.get_or_create(
                     username=uname,
                     defaults={
-                        'email': f"{uname}@vau.edu.vn",
+                        'email': f"{uname}@demo.vau.edu.vn",
                         'first_name': fname,
                         'last_name': lname,
                         'role': UserRole.MENTOR,
@@ -502,6 +535,22 @@ class Command(BaseCommand):
                         file=doc.file,
                         uploaded_by=bp['leader'],
                         change_log="Phiên bản khởi tạo báo cáo đồ án."
+                    )
+
+                # Seed Appointment
+                if proj.mentor:
+                    Appointment.objects.get_or_create(
+                        project=proj,
+                        student=bp['leader'],
+                        mentor=proj.mentor,
+                        title=f"Họp duyệt tiến độ với Mentor [{proj.code}]",
+                        defaults={
+                            'notes': "Thảo luận về các khó khăn kỹ thuật và mốc kế tiếp.",
+                            'start_time': timezone.now() + timezone.timedelta(days=1, hours=2),
+                            'end_time': timezone.now() + timezone.timedelta(days=1, hours=3),
+                            'status': AppointmentStatus.ACCEPTED,
+                            'location': "Phòng A2-301 / Online Google Meet"
+                        }
                     )
 
                 # Activity Log

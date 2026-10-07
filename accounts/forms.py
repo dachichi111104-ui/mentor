@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
-from accounts.models import User, UserRole
+from django.contrib.auth.password_validation import validate_password
+from accounts.models import User, UserRole, UserStatus
 
 class CustomLoginForm(AuthenticationForm):
     username = forms.CharField(
@@ -54,6 +55,12 @@ class CustomRegisterForm(forms.ModelForm):
             'phone': forms.TextInput(attrs={'class': 'w-full px-3 py-2 rounded-lg border border-slate-300 text-xs'}),
         }
 
+    def clean_password(self):
+        p = self.cleaned_data.get('password')
+        if p:
+            validate_password(p)
+        return p
+
     def clean(self):
         cleaned_data = super().clean()
         p1 = cleaned_data.get('password')
@@ -78,3 +85,16 @@ class ProfileUpdateForm(forms.ModelForm):
             'experience': forms.Textarea(attrs={'rows': 3, 'class': 'w-full px-3 py-2 rounded-lg border border-slate-300 text-xs'}),
             'avatar': forms.FileInput(attrs={'class': 'text-xs text-slate-500'}),
         }
+
+class AdminUserForm(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput, required=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'role', 'status', 'password']
+
+    def clean_password(self):
+        password = self.cleaned_data.get('password')
+        if password:
+            validate_password(password)
+        return password

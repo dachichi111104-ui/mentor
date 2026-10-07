@@ -13,42 +13,29 @@ CB_MAX_FAILURES = 5
 CB_WINDOW_SECONDS = 60
 CB_COOLDOWN_SECONDS = 60
 
+# LLMClient featuring retry backoff mechanism, circuit breaker, response cache, and execution lock.
 class LLMClient:
     """
     LLM Client supporting Gemini, OpenAI, and Anthropic.
-    Passes API key via headers (SEC-10), enforces timeouts, circuit breaker, retries, and JSON mode.
+    Features: retry exponential backoff, circuit breaker, cache, and lock.
     """
 
     def __init__(self):
-        self.provider = os.getenv('AI_PROVIDER', 'none').lower()
-        self.model = os.getenv('AI_MODEL', '')
-        self.gemini_key = os.getenv('GEMINI_API_KEY', '')
-        self.openai_key = os.getenv('OPENAI_API_KEY', '')
-        self.anthropic_key = os.getenv('ANTHROPIC_API_KEY', '')
+        self.provider = os.getenv('AI_PROVIDER', 'none').strip().lower()
+        self.model = os.getenv('AI_MODEL', '').strip()
+        self.gemini_key = os.getenv('GEMINI_API_KEY', '').strip()
+        self.openai_key = os.getenv('OPENAI_API_KEY', '').strip()
+        self.anthropic_key = os.getenv('ANTHROPIC_API_KEY', '').strip()
         self.timeout = int(os.getenv('AI_TIMEOUT_SECONDS', '25'))
 
-        # Auto-select provider if not specified explicitly
-        if self.provider == 'none':
-            if self.gemini_key:
-                self.provider = 'gemini'
-            elif self.openai_key:
-                self.provider = 'openai'
-            elif self.anthropic_key:
-                self.provider = 'anthropic'
-
-        if self.provider == 'gemini' and not self.model:
-            self.model = 'gemini-1.5-flash'
-        elif self.provider == 'openai' and not self.model:
-            self.model = 'gpt-3.5-turbo'
-        elif self.provider == 'anthropic' and not self.model:
-            self.model = 'claude-3-haiku-20240307'
-
     def is_configured(self) -> bool:
-        if self.provider == 'gemini' and self.gemini_key:
+        if self.provider == 'none':
+            return False
+        if self.provider == 'gemini' and self.gemini_key and self.model:
             return True
-        if self.provider == 'openai' and self.openai_key:
+        if self.provider == 'openai' and self.openai_key and self.model:
             return True
-        if self.provider == 'anthropic' and self.anthropic_key:
+        if self.provider == 'anthropic' and self.anthropic_key and self.model:
             return True
         return False
 
@@ -123,8 +110,8 @@ class LLMClient:
     def _call_gemini(self, prompt: str) -> tuple[str, int, int]:
         model_name = self.model.lower() if self.model else ''
         if not model_name or 'antigravity' in model_name or not model_name.startswith('gemini'):
-            model_name = 'gemini-2.5-flash'
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self.gemini_key}"
+            model_name = 'gemini-1.5-flash'
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent"
 
         headers = {
             'Content-Type': 'application/json',

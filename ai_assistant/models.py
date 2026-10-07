@@ -31,6 +31,7 @@ class AIRequest(models.Model):
     tokens_out = models.IntegerField(default=0, verbose_name="Tokens đầu ra")
     context_hash = models.CharField(max_length=64, blank=True, null=True, db_index=True, verbose_name="Hash ngữ cảnh")
     cached = models.BooleanField(default=False, verbose_name="Lấy từ Cache")
+    structured_output = models.JSONField(default=dict, blank=True, null=True, verbose_name="Dữ liệu cấu trúc")
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -49,6 +50,7 @@ class WeeklySummary(models.Model):
     iso_year = models.IntegerField(verbose_name="Năm ISO", null=True, blank=True)
     iso_week = models.IntegerField(verbose_name="Tuần ISO", null=True, blank=True)
     summary_text = models.TextField(verbose_name="Nội dung tóm tắt tiến độ")
+    structured = models.JSONField(default=dict, blank=True, null=True, verbose_name="Dữ liệu JSON cấu trúc")
     rating = models.CharField(max_length=20, default='FAIR', verbose_name="Đánh giá chung (GOOD/FAIR/AT_RISK)")
     source = models.CharField(max_length=20, default='rules', verbose_name="Nguồn (llm/rules)")
     model = models.CharField(max_length=100, blank=True, null=True, verbose_name="Model LLM")

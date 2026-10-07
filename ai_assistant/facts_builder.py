@@ -139,6 +139,15 @@ def build_facts(project: Project, days: int = 14) -> dict:
     ))
     unres_count = Feedback.objects.filter(project=project, status='NEED_REVISION').count()
 
+    # Task Comments
+    from tasks.models import TaskComment
+    recent_comments = list(TaskComment.objects.filter(task__project=project, created_at__gte=start_period).order_by('-created_at')[:5].values('id', 'content', 'user__first_name', 'user__last_name'))
+
+    # Previous Weekly Summary
+    from ai_assistant.models import WeeklySummary
+    prev_ws = WeeklySummary.objects.filter(project=project).order_by('-created_at').first()
+    previous_weekly = prev_ws.summary_text if prev_ws else None
+
     facts = {
         'project': project_info,
         'members': members_data,
@@ -147,7 +156,9 @@ def build_facts(project: Project, days: int = 14) -> dict:
         'activity_14d': recent_activities,
         'documents': docs_data,
         'feedbacks': recent_feedbacks,
-        'unresolved_feedback_count': unres_count
+        'unresolved_feedback_count': unres_count,
+        'comments_recent': recent_comments,
+        'previous_weekly': previous_weekly
     }
 
     return facts

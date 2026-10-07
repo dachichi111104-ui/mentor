@@ -1,9 +1,14 @@
 {% comment %}
-Reusable Stat Card Component with Count-Up support
+Reusable Stat Card Component with Count-Up support & Clickable href
 Usage:
-{% include "includes/_stat_card.html" with title="Tổng đồ án" value=12 subtitle="Đang thực hiện" icon="fa-folder-tree" icon_bg="bg-blue-50 text-[#163B65]" %}
+{% include "includes/_stat_card.html" with title="Tổng đồ án" value=12 subtitle="Đang thực hiện" icon="fa-folder-tree" icon_bg="bg-blue-50 text-[#163B65]" href="/projects/" %}
 {% endcomment %}
-<div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-200 relative overflow-hidden group">
+
+{% if href %}
+<a href="{{ href }}" aria-label="{{ title }} - {{ subtitle|default:'Chi tiết' }}" class="block bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-[#163B65]/30 transition-all duration-200 relative overflow-hidden group cursor-pointer text-left">
+{% else %}
+<div aria-label="{{ title }}" class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-200 relative overflow-hidden group">
+{% endif %}
     <div class="flex items-start justify-between">
         <div class="space-y-1">
             <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">{{ title }}</span>
@@ -39,4 +44,8 @@ Usage:
             <i class="fa-solid {{ icon|default:'fa-chart-simple' }}"></i>
         </div>
     </div>
+{% if href %}
+</a>
+{% else %}
 </div>
+{% endif %}

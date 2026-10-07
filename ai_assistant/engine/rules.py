@@ -41,9 +41,18 @@ PHASES_BY_CATEGORY = {
         ("Xây dựng Khung Mã nguồn Cơ bản", "Khởi tạo repo và thiết lập cấu trúc thư mục chuẩn.", 14.0),
         ("Triển khai Chức năng Trọng tâm", "Viết mã nguồn cho các tính năng cốt lõi của đề tài.", 20.0),
         ("Kiểm thử & Tối ưu Nâng cao", "Chạy nghiệm thu nội bộ và sửa các lỗi phát sinh.", 12.0),
-        ("Hoàn thiện Báo cáo & Slide Bảo vệ", "Tổng hợp báo cáo kết quả và chuẩn bị bài thuyết trình.", 10.0),
     ]
 }
+
+PHASES = PHASES_BY_CATEGORY
+
+QUESTION_BANK = [
+    "Nhóm nên ưu tiên công việc nào trong tuần này để đảm bảo tiến độ?",
+    "Kiến trúc hệ thống hiện tại có điểm nghẽn nào về hiệu năng không?",
+    "Mentor có thể góp ý về phương pháp kiểm thử cho các chức năng trọng tâm?",
+    "Quy trình nộp báo cáo và tài liệu cần lưu ý những mốc thời gian nào?",
+    "Nhóm cần chuẩn bị những gì cho buổi báo cáo / demo sắp tới?"
+]
 
 def calculate_metrics(facts: dict) -> dict:
     """

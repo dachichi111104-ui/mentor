@@ -5,13 +5,25 @@ from projects.models import MemberStatus
 from accounts.models import User
 
 class TaskForm(forms.ModelForm):
+    description = forms.CharField(required=False, widget=forms.Textarea)
+    labels = forms.CharField(required=False, widget=forms.TextInput)
+    due_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
+
     class Meta:
         model = Task
         fields = ['title', 'description', 'priority', 'assignee', 'milestone', 'due_date', 'labels']
 
-    def __init__(self, *args, project=None, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, data=None, *args, project=None, **kwargs):
+        if data is not None:
+            data = data.copy()
+            if 'assignee_id' in data and not data.get('assignee'):
+                data['assignee'] = data.get('assignee_id')
+            if 'milestone_id' in data and not data.get('milestone'):
+                data['milestone'] = data.get('milestone_id')
+        super().__init__(data, *args, **kwargs)
         self.project = project
+        self.fields['assignee'].required = False
+        self.fields['milestone'].required = False
         if project:
             accepted_user_ids = project.memberships.filter(status=MemberStatus.ACCEPTED).values_list('user_id', flat=True)
             self.fields['assignee'].queryset = User.objects.filter(id__in=accepted_user_ids)

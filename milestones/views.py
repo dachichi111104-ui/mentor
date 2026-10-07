@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime, parse_date
 
 from milestones.models import Milestone, MilestoneStatus, Event, EventType, EventStatus
+from milestones.forms import MilestoneForm
 from projects.models import Project
 from projects.permissions import visible_projects, require_can, can
 from audit_log.models import ActionType
@@ -29,42 +30,33 @@ def project_milestones_view(request, project_id):
 @require_can('milestone.create')
 def milestone_create_view(request, project_id):
     project = get_object_or_404(Project, id=project_id)
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'application/json' in request.headers.get('accept', '')
 
-    name = request.POST.get('name', '').strip()
-    if not name:
-        messages.error(request, 'Vui lòng nhập tên Cột mốc!')
+    form = MilestoneForm(request.POST)
+    if not form.is_valid():
+        if is_ajax:
+            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+        first_err = list(form.errors.values())[0][0] if form.errors else 'Dữ liệu không hợp lệ!'
+        messages.error(request, first_err)
         return redirect('project_milestones', project_id=project.id)
 
-    description = request.POST.get('description', '').strip()
-    start_date = request.POST.get('start_date') or None
-    due_date = request.POST.get('due_date') or None
+    ms = form.save(commit=False)
+    ms.project = project
+    ms.status = MilestoneStatus.PENDING
+    ms.save()
 
-    if not start_date or not due_date:
-        messages.error(request, 'Vui lòng nhập đầy đủ Ngày bắt đầu và Hạn hoàn thành!')
-        return redirect('project_milestones', project_id=project.id)
-
-    if start_date > due_date:
-        messages.error(request, 'Ngày bắt đầu phải nhỏ hơn hoặc bằng Hạn hoàn thành!')
-        return redirect('project_milestones', project_id=project.id)
-
-    ms = Milestone.objects.create(
-        project=project,
-        name=name,
-        description=description,
-        start_date=start_date,
-        due_date=due_date,
-        status=MilestoneStatus.PENDING
-    )
     log_action(
         user=request.user,
         action=ActionType.CREATE_MILESTONE,
         entity_type='Milestone',
         entity_id=ms.id,
-        description=f'Tạo mốc Milestone mới: "{name}" trong đồ án {project.code}',
+        description=f'Tạo mốc Milestone mới: "{ms.name}" trong đồ án {project.code}',
         project=project,
         request=request
     )
-    messages.success(request, f'Tạo Milestone "{name}" thành công!')
+    messages.success(request, f'Tạo Milestone "{ms.name}" thành công!')
+    if is_ajax:
+        return JsonResponse({'status': 'success', 'milestone_id': ms.id})
     return redirect('project_milestones', project_id=project.id)
 
 @login_required
@@ -74,18 +66,16 @@ def milestone_edit_view(request, milestone_id):
     if not can(request.user, 'milestone.edit', ms):
         return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
-    name = request.POST.get('name', '').strip()
-    if name:
-        ms.name = name
-    ms.description = request.POST.get('description', ms.description)
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'application/json' in request.headers.get('accept', '')
+    form = MilestoneForm(request.POST, instance=ms)
+    if not form.is_valid():
+        if is_ajax:
+            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+        first_err = list(form.errors.values())[0][0] if form.errors else 'Dữ liệu không hợp lệ!'
+        messages.error(request, first_err)
+        return redirect('project_milestones', project_id=ms.project.id)
 
-    start_date = request.POST.get('start_date')
-    due_date = request.POST.get('due_date')
-    if start_date and due_date and start_date <= due_date:
-        ms.start_date = start_date
-        ms.due_date = due_date
-
-    ms.save()
+    ms = form.save()
     log_action(
         user=request.user,
         action=ActionType.UPDATE_MILESTONE,
@@ -96,6 +86,8 @@ def milestone_edit_view(request, milestone_id):
         request=request
     )
     messages.success(request, f'Đã cập nhật Milestone "{ms.name}".')
+    if is_ajax:
+        return JsonResponse({'status': 'success', 'milestone_id': ms.id})
     return redirect('project_milestones', project_id=ms.project.id)
 
 @login_required
@@ -184,6 +176,7 @@ def calendar_events_json_view(request):
     from tasks.models import Task
     user = request.user
     projects = visible_projects(user)
+    event_types = EventType.choices
 
     events_qs = Event.objects.filter(project__in=projects)
     tasks_qs = Task.objects.filter(project__in=projects, due_date__isnull=False)
@@ -226,6 +219,22 @@ def calendar_events_json_view(request):
             'color': '#10B981'
         })
 
+    from milestones.models import Appointment
+    appointments_qs = Appointment.objects.filter(project__in=projects)
+
+    for appt in appointments_qs:
+        event_data.append({
+            'id': f'appt_{appt.id}',
+            'title': f'Lịch hẹn Mentor: {appt.title}',
+            'start': appt.start_time.isoformat(),
+            'end': appt.end_time.isoformat() if appt.end_time else appt.start_time.isoformat(),
+            'type': 'MEETING',
+            'type_display': 'Lịch Hẹn Mentor',
+            'project_name': appt.project.name,
+            'status': appt.status,
+            'color': '#059669'
+        })
+
     return JsonResponse({'status': 'success', 'events': event_data})
 
 @login_required
@@ -258,6 +267,15 @@ def event_create_view(request):
     parsed_end = None
     if end_str:
         parsed_end = parse_datetime(end_str) or parse_date(end_str)
+
+    if project.mentor:
+        conflict = Event.objects.filter(
+            project__mentor=project.mentor,
+            start__lte=parsed_end or parsed_start,
+            end__gte=parsed_start
+        ).exists()
+        if conflict:
+            messages.warning(request, 'Cảnh báo: Mentor đã có lịch hẹn trùng vào thời gian này!')
 
     ev = Event.objects.create(
         project=project,

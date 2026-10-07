@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="vi" class="h-full bg-[#F7F8FA]" data-theme="{{ request.user.preference.theme|default:'NAVY' }}">
 <head>
@@ -300,6 +301,8 @@
     {% endif %}
 
     {% include "includes/_modal.html" %}
+    <script src="{% static 'js/ui.js' %}"></script>
+    <script src="{% static 'js/realtime.js' %}"></script>
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>

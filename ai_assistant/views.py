@@ -11,8 +11,9 @@ from projects.permissions import visible_projects, require_can, can
 from tasks.models import Task, TaskStatus, TaskPriority
 from ai_assistant.models import AIRequest, AIPromptType, WeeklySummary, AIProposal, AIProposalStatus
 from ai_assistant.facts_builder import build_facts
-from ai_assistant.engine.service import run_task
+from ai_assistant.client import AIClient
 from ai_assistant.engine.rules import calculate_metrics
+from core.ratelimit import ratelimit
 from audit_log.models import ActionType
 from audit_log.utils import log_action
 from notifications.models import Notification, NotificationType
@@ -80,7 +81,8 @@ def _execute_ai_task(user, project, prompt_type: str, user_message: str = ""):
     facts = build_facts(project)
     context_hash = hashlib.sha256(json.dumps(facts, sort_keys=True).encode('utf-8')).hexdigest()
 
-    result = run_task(prompt_type, facts, user_message=user_message)
+    client = AIClient()
+    result = client.run_task(prompt_type, facts, user_message=user_message)
 
     ai_req = AIRequest.objects.create(
         user=user,
@@ -113,6 +115,7 @@ def _execute_ai_task(user, project, prompt_type: str, user_message: str = ""):
 
 @login_required
 @require_POST
+@ratelimit(key_prefix='ai_limit', limit=20, period=3600)
 def ai_task_breakdown_ajax(request):
     project_id = request.POST.get('project_id')
     project = get_object_or_404(Project, id=project_id)
@@ -241,6 +244,10 @@ def ai_weekly_summary_ajax(request):
         return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
     result, _ = _execute_ai_task(request.user, project, 'weekly')
+    data = result.get('data', {}) if isinstance(result.get('data'), dict) else {}
+    now = timezone.now()
+    year, week_num, _ = now.isocalendar()
+
     def _safe_join(items):
         if not items:
             return "Không có"
@@ -271,7 +278,8 @@ def ai_weekly_summary_ajax(request):
             'summary_text': summary_str,
             'rating': data.get('rating', 'FAIR'),
             'source': result['source'],
-            'model': result['model']
+            'model': result['model'],
+            'generated_by': request.user
         }
     )
 
