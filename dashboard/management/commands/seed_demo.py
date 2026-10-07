@@ -1,4 +1,4 @@
-import os
+import os, sys
 import random
 import secrets
 from django.core.management.base import BaseCommand
@@ -28,14 +28,14 @@ class Command(BaseCommand):
         parser.add_argument('--reset', action='store_true', help='Reset existing demo data before seeding')
 
     def handle(self, *args, **options):
+        if hasattr(sys.stdout, 'reconfigure'):
+            sys.stdout.reconfigure(encoding='utf-8')
         reset = options.get('reset')
         rng = random.Random(20261007)
         today = timezone.localdate()
 
-        demo_password = os.getenv('DEMO_PASSWORD')
-        if not demo_password:
-            demo_password = secrets.token_urlsafe(10)
-            self.stdout.write(self.style.WARNING(f"Generated demo password: {demo_password}"))
+        demo_password = os.getenv('DEMO_PASSWORD', 'password123')
+        self.stdout.write(self.style.SUCCESS(f"Mật khẩu các tài khoản Demo: {demo_password}"))
 
         with transaction.atomic():
             if reset:
