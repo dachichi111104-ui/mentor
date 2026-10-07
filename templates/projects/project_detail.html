@@ -5,6 +5,7 @@
 
 {% block content %}
 {% can_user request.user 'project.edit' project as can_edit_project %}
+{# breadcrumb navigation handled by base.html #}
 <div class="space-y-6" x-data="{ addMemberModal: false, editProjectModal: false }">
 
     <!-- Top Banner Summary -->
