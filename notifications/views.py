@@ -9,7 +9,10 @@ def notification_center_view(request):
     notifications = Notification.objects.filter(recipient=request.user)
     return render(request, 'notifications/notification_center.html', {'notifications': notifications})
 
+from django.views.decorators.http import require_POST
+
 @login_required
+@require_POST
 def notification_mark_read_view(request, notif_id):
     notif = get_object_or_404(Notification, id=notif_id, recipient=request.user)
     notif.is_read = True
@@ -19,6 +22,7 @@ def notification_mark_read_view(request, notif_id):
     return redirect('notification_center')
 
 @login_required
+@require_POST
 def notification_mark_all_read_view(request):
     Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
     if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.method == 'POST':

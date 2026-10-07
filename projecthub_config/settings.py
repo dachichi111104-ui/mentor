@@ -86,8 +86,8 @@ MIDDLEWARE.extend([
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'accounts.middleware.ActiveUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'accounts.middleware.ActiveUserMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ])
 

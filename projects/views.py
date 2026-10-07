@@ -12,6 +12,7 @@ from accounts.models import User, UserRole, UserStatus
 from audit_log.models import ActionType, ActivityLog
 from audit_log.utils import log_action
 from notifications.models import Notification, NotificationType
+from notifications.services import notify
 from tasks.models import Task, TaskStatus
 
 @login_required
@@ -400,3 +401,77 @@ def project_chat_messages_view(request, project_id):
     } for m in messages_qs]
 
     return JsonResponse({'status': 'success', 'messages': msg_list})
+
+@login_required
+@require_POST
+def project_submit_review_view(request, project_id):
+    project = get_object_or_404(Project, id=project_id)
+    if not can(request.user, 'project.submit_review', project):
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return JsonResponse({'status': 'error', 'message': 'Bạn không có quyền nộp đồ án chờ nghiệm thu.'}, status=403)
+        return render(request, 'errors/403.html', status=403)
+
+    if project.mentor_status != MentorStatus.ACCEPTED or not project.mentor:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'message': 'Đồ án phải được Mentor chấp nhận hướng dẫn mới có thể nộp review.'}, status=400)
+        messages.error(request, 'Đồ án phải được Mentor chấp nhận hướng dẫn mới có thể nộp review.')
+        return redirect('project_detail', project_id=project.id)
+
+    if project.tasks.count() == 0:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'error', 'message': 'Đồ án phải có ít nhất 1 nhiệm vụ mới có thể nộp review.'}, status=400)
+        messages.error(request, 'Đồ án phải có ít nhất 1 nhiệm vụ mới có thể nộp review.')
+        return redirect('project_detail', project_id=project.id)
+
+    project.status = ProjectStatus.REVIEW
+    project.save()
+
+    log_action(
+        user=request.user,
+        action=ActionType.SUBMIT_REVIEW,
+        entity_type='Project',
+        entity_id=project.id,
+        description=f'Nhóm trưởng {request.user.display_name} nộp đồ án {project.code} chờ Mentor review',
+        project=project,
+        request=request
+    )
+
+    if project.mentor:
+        notify(
+            recipient=project.mentor,
+            sender=request.user,
+            title=f'Đồ án [{project.code}] nộp chờ review',
+            message=f'Nhóm trưởng {request.user.display_name} đã nộp đồ án "{project.name}" chờ duyệt nghiệm thu.',
+            link=f'/projects/{project.id}/',
+            notification_type=NotificationType.SUBMIT_REVIEW,
+            project=project
+        )
+
+    messages.success(request, 'Đã nộp đồ án chờ Mentor review nghiệm thu!')
+    return redirect('project_detail', project_id=project.id)
+
+@login_required
+@require_POST
+def project_archive_view(request, project_id):
+    project = get_object_or_404(Project, id=project_id)
+    if not can(request.user, 'project.archive', project):
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return JsonResponse({'status': 'error', 'message': 'Bạn không có quyền lưu trữ đồ án này.'}, status=403)
+        return render(request, 'errors/403.html', status=403)
+
+    project.status = ProjectStatus.ARCHIVED
+    project.save()
+
+    log_action(
+        user=request.user,
+        action=ActionType.UPDATE_PROJECT,
+        entity_type='Project',
+        entity_id=project.id,
+        description=f'Quản trị viên chuyển đồ án {project.code} sang lưu trữ (ARCHIVED)',
+        project=project,
+        request=request
+    )
+
+    messages.success(request, f'Đã chuyển đồ án [{project.code}] sang lưu trữ.')
+    return redirect('project_detail', project_id=project.id)
+

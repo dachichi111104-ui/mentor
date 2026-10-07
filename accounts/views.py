@@ -16,8 +16,14 @@ def login_view(request):
         form = CustomLoginForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
-            if user.status == UserStatus.SUSPENDED:
-                messages.error(request, 'Tài khoản của bạn đã bị tạm khóa do vi phạm quy định.')
+            if user.status == UserStatus.PENDING_APPROVAL:
+                messages.warning(request, 'Tài khoản Giảng viên của bạn đang chờ Quản trị viên phê duyệt.')
+                return render(request, 'accounts/login.html', {'form': form})
+            elif user.status == UserStatus.SUSPENDED:
+                messages.error(request, 'Tài khoản của bạn đã bị khóa do vi phạm quy định.')
+                return render(request, 'accounts/login.html', {'form': form})
+            elif hasattr(UserStatus, 'REJECTED') and user.status == getattr(UserStatus, 'REJECTED'):
+                messages.error(request, 'Tài khoản Giảng viên của bạn đã bị từ chối phê duyệt.')
                 return render(request, 'accounts/login.html', {'form': form})
             
             login(request, user)
@@ -32,23 +38,6 @@ def login_view(request):
             messages.success(request, f'Chào mừng {user.display_name} đăng nhập thành công.')
             return redirect('dashboard')
         else:
-            # Fallback helper for demo presets (handles student/student1 & mentor/mentor1 seamlessly)
-            username_attempt = request.POST.get('username')
-            password_attempt = request.POST.get('password')
-            fallback_map = {
-                ('student1', 'user123'): ('student', 'student123'),
-                ('student', 'student123'): ('student1', 'user123'),
-                ('mentor1', 'user123'): ('mentor', 'mentor123'),
-                ('mentor', 'mentor123'): ('mentor1', 'user123'),
-            }
-            alt = fallback_map.get((username_attempt, password_attempt))
-            if alt:
-                alt_user = authenticate(request, username=alt[0], password=alt[1])
-                if alt_user and alt_user.status == UserStatus.ACTIVE:
-                    login(request, alt_user)
-                    messages.success(request, f'Chào mừng {alt_user.display_name} đăng nhập thành công.')
-                    return redirect('dashboard')
-
             messages.error(request, 'Tên đăng nhập hoặc mật khẩu không chính xác.')
     else:
         form = CustomLoginForm()
@@ -56,7 +45,6 @@ def login_view(request):
     return render(request, 'accounts/login.html', {'form': form})
 
 def register_view(request):
-    # Note: Khi nhà trường tích hợp CSDL LMS thật, đăng ký công khai này nên được thay bằng đăng nhập SSO / import tài khoản có sẵn.
     if request.user.is_authenticated:
         return redirect('dashboard')
 
@@ -66,14 +54,13 @@ def register_view(request):
             user = form.save(commit=False)
             user.set_password(form.cleaned_data['password'])
             
-            # Security defense: Only allow STUDENT or MENTOR via public registration
             selected_role = form.cleaned_data.get('role') or UserRole.STUDENT
             if selected_role not in [UserRole.STUDENT, UserRole.MENTOR]:
                 selected_role = UserRole.STUDENT
             user.role = selected_role
             
             if selected_role == UserRole.MENTOR:
-                user.status = UserStatus.SUSPENDED
+                user.status = UserStatus.PENDING_APPROVAL
                 user.save()
                 messages.warning(request, 'Tài khoản Giảng viên / Mentor đã tạo thành công và đang chờ Quản trị viên (Admin) phê duyệt trước khi đăng nhập.')
             else:
@@ -89,6 +76,10 @@ def register_view(request):
 
     return render(request, 'accounts/register.html', {'form': form})
 
+from django.views.decorators.http import require_POST
+
+@login_required
+@require_POST
 def logout_view(request):
     if request.user.is_authenticated:
         from dashboard.models import TimeLog

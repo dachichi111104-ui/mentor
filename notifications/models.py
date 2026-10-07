@@ -12,6 +12,8 @@ class NotificationType(models.TextChoices):
     COMMENT = 'COMMENT', 'Bình luận mới'
     MILESTONE_DUE = 'MILESTONE_DUE', 'Milestone sắp đến hạn'
     PROJECT_APPROVED = 'PROJECT_APPROVED', 'Đồ án được thông qua'
+    SUBMIT_REVIEW = 'SUBMIT_REVIEW', 'Nộp đồ án chờ nghiệm thu'
+    WEEKLY_SUMMARY = 'WEEKLY_SUMMARY', 'Báo cáo tóm tắt tuần'
     SYSTEM = 'SYSTEM', 'Thông báo hệ thống'
 
 class Notification(models.Model):

@@ -7,11 +7,13 @@ try:
 except ImportError:
     get_channel_layer = None
 
-def notify(recipient, notification_type, title, body, link="", sender=None, dedupe_key=None, project=None):
+def notify(recipient, notification_type=None, title="", body="", message=None, link="", sender=None, dedupe_key=None, project=None):
     """
     Unified notification helper for ProjectHub AI.
     Creates Notification DB entry and triggers WebSocket group_send on transaction commit.
     """
+    if not body and message:
+        body = message
     if not recipient or not recipient.is_active:
         return None
 

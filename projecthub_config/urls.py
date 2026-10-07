@@ -121,9 +121,13 @@ urlpatterns = [
     path('documents/version/<int:version_id>/view/', document_views.document_version_preview_view, name='document_version_preview'),
     path('documents/version/<int:version_id>/raw/', document_views.document_version_raw_view, name='document_version_raw'),
 
+    path('projects/<int:project_id>/submit-review/', project_views.project_submit_review_view, name='project_submit_review'),
+    path('projects/<int:project_id>/archive/', project_views.project_archive_view, name='project_archive'),
+
     # Reviews & Feedbacks
     path('reviews/', review_views.mentor_reviews_view, name='mentor_reviews'),
     path('projects/<int:project_id>/reviews/create/', review_views.submit_review_view, name='submit_review'),
+    path('reviews/<int:feedback_id>/ack/', review_views.feedback_ack_view, name='feedback_ack'),
 
     # Notifications
     path('notifications/', notification_views.notification_center_view, name='notification_center'),

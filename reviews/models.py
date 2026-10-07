@@ -19,6 +19,9 @@ class Feedback(models.Model):
     rating = models.IntegerField(default=5, choices=[(i, f"{i} Sao") for i in range(1, 6)], verbose_name="Đánh giá (1-5 Sao)")
     status = models.CharField(max_length=20, choices=ReviewStatus.choices, default=ReviewStatus.APPROVED, verbose_name="Kết quả đánh giá")
     
+    acknowledged_at = models.DateTimeField(null=True, blank=True, verbose_name="Thời điểm xác nhận đã xử lý")
+    acknowledged_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='acknowledged_feedbacks', verbose_name="Người xác nhận đã xử lý")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -136,6 +136,10 @@ PERMISSION_MATRIX = {
         'roles': {'ADMIN', 'LEADER'},
         'label': 'Nộp đồ án chờ nghiệm thu'
     },
+    'project.archive': {
+        'roles': {'ADMIN'},
+        'label': 'Lưu trữ đồ án'
+    },
     'chat.read': {
         'roles': {'ADMIN', 'LEADER', 'MEMBER', 'MENTOR'},
         'label': 'Xem trò chuyện đồ án'

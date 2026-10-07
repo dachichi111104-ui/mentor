@@ -3,7 +3,8 @@ from django.db import transaction
 from projects.models import Project, ProjectStatus, MentorStatus
 from audit_log.models import ActionType
 from audit_log.utils import log_action
-from notifications.models import Notification, NotificationType
+from notifications.services import notify
+from notifications.models import NotificationType
 
 def apply_project_review(project, new_status, actor, content="", rating=5):
     """
@@ -32,13 +33,15 @@ def apply_project_review(project, new_status, actor, content="", rating=5):
 
         # Notify all accepted members
         for mem in project.memberships.filter(status='ACCEPTED'):
-            Notification.objects.create(
-                recipient=mem.user,
-                sender=actor,
-                title=f"Đồ án [{project.code}] cập nhật trạng thái",
-                message=f"Mentor đã đánh giá đồ án: {new_status}",
-                link=f"/projects/{project.id}/",
-                notification_type=NotificationType.MENTOR_FEEDBACK
-            )
+            if mem.user != actor:
+                notify(
+                    recipient=mem.user,
+                    sender=actor,
+                    title=f"Đồ án [{project.code}] cập nhật trạng thái",
+                    message=f"Mentor đã đánh giá đồ án: {new_status}",
+                    link=f"/projects/{project.id}/",
+                    notification_type=NotificationType.MENTOR_FEEDBACK,
+                    project=project
+                )
 
     return True, "Cập nhật trạng thái đồ án thành công"
