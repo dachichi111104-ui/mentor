@@ -137,10 +137,45 @@ def calendar_page_view(request):
     my_projects = visible_projects(user)
     upcoming_events = Event.objects.filter(project__in=my_projects, start__gte=timezone.now()).order_by('start')[:5]
 
+    month_param = request.GET.get('month')
+    today = timezone.localdate()
+
+    if month_param:
+        try:
+            parts = month_param.split('-')
+            year, month_num = int(parts[0]), int(parts[1])
+            if not (1 <= month_num <= 12):
+                year, month_num = today.year, today.month
+        except Exception:
+            year, month_num = today.year, today.month
+    else:
+        year, month_num = today.year, today.month
+
+    current_month_str = f"{year}-{month_num:02d}"
+    current_month_title = f"Tháng {month_num}, {year}"
+
+    if month_num == 1:
+        prev_month_str = f"{year - 1}-12"
+    else:
+        prev_month_str = f"{year}-{month_num - 1:02d}"
+
+    if month_num == 12:
+        next_month_str = f"{year + 1}-01"
+    else:
+        next_month_str = f"{year}-{month_num + 1:02d}"
+
     return render(request, 'milestones/calendar.html', {
         'my_projects': my_projects,
         'upcoming_events': upcoming_events,
+        'current_month_str': current_month_str,
+        'current_month_title': current_month_title,
+        'prev_month_str': prev_month_str,
+        'next_month_str': next_month_str,
+        'today_str': today.strftime('%Y-%m-%d'),
+        'year': year,
+        'month_num': month_num,
     })
+
 
 @login_required
 def calendar_events_json_view(request):
@@ -225,7 +260,6 @@ def event_create_view(request):
     ev = Event.objects.create(
         project=project,
         title=title,
-        description=description,
         event_type=event_type,
         start=parsed_start,
         end=parsed_end,
@@ -233,6 +267,7 @@ def event_create_view(request):
         created_by=request.user,
         status=EventStatus.ACCEPTED
     )
+
     log_action(user=request.user, action=ActionType.CREATE_EVENT, entity_type='Event', entity_id=ev.id, description=f"Tạo sự kiện '{title}'", project=project)
     messages.success(request, f'Đã thêm sự kiện "{ev.title}" vào lịch.')
     return redirect('calendar_page')

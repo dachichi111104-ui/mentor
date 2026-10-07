@@ -1,7 +1,7 @@
 {% extends 'layouts/base.html' %}
 
 {% block title %}Lịch Đồ án & Cuộc hẹn | PROJECTHUB AI{% endblock %}
-{% block breadcrumb %}<a href="{% url 'dashboard' %}" class="hover:underline text-slate-500">Trang chủ</a> <i class="fa-solid fa-chevron-right text-[9px] text-slate-300 mx-1"></i> <a href="{% url 'team' %}" class="hover:underline text-slate-500">Đội ngũ & Tiến độ</a> <i class="fa-solid fa-chevron-right text-[9px] text-slate-300 mx-1"></i> <span class="text-slate-900 font-bold">Lịch & Sự kiện</span>{% endblock %}
+{% block breadcrumb %}Lịch & Sự kiện{% endblock %}
 
 {% block content %}
 <div class="space-y-6" x-data="{
@@ -12,7 +12,10 @@
     selectedDayEvents: [],
     events: [],
 
-    currentMonthName: 'Tháng 10, 2026',
+    currentMonthTitle: '{{ current_month_title }}',
+    year: {{ year }},
+    monthNum: {{ month_num }},
+    todayStr: '{{ today_str }}',
     calendarDays: [],
 
     init() {
@@ -27,24 +30,61 @@
     },
 
     buildCalendar() {
-        // Build 35 days for current month view
         const days = [];
-        const today = new Date();
-        const year = 2026;
-        const month = 9; // October (0-indexed 9)
+        const year = this.year;
+        const monthIdx = this.monthNum - 1;
+
+        const firstDay = new Date(year, monthIdx, 1);
+        const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
         
-        // Days matrix
-        for (let i = 1; i <= 31; i++) {
-            const dateStr = `2026-10-${i.toString().padStart(2, '0')}`;
+        // Monday = 0, Sunday = 6
+        const startOffset = (firstDay.getDay() + 6) % 7;
+
+        // Previous month padding
+        const prevDaysInMonth = new Date(year, monthIdx, 0).getDate();
+        for (let i = startOffset - 1; i >= 0; i--) {
+            const dayNum = prevDaysInMonth - i;
+            const pMonth = monthIdx === 0 ? 12 : monthIdx;
+            const pYear = monthIdx === 0 ? year - 1 : year;
+            const dateStr = `${pYear}-${pMonth.toString().padStart(2, '0')}-${dayNum.toString().padStart(2, '0')}`;
+            days.push({
+                day: dayNum,
+                dateStr: dateStr,
+                isCurrentMonth: false,
+                isToday: dateStr === this.todayStr,
+                events: []
+            });
+        }
+
+        // Current month days
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dateStr = `${year}-${this.monthNum.toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
             const dayEvents = this.events.filter(e => e.start.startsWith(dateStr));
             days.push({
                 day: i,
                 dateStr: dateStr,
                 isCurrentMonth: true,
-                isToday: i === 7,
+                isToday: dateStr === this.todayStr,
                 events: dayEvents
             });
         }
+
+        // Next month padding to fill complete weeks (multiples of 7)
+        const totalCells = Math.ceil(days.length / 7) * 7;
+        const nextPadding = totalCells - days.length;
+        for (let i = 1; i <= nextPadding; i++) {
+            const nMonth = monthIdx === 11 ? 1 : this.monthNum + 1;
+            const nYear = monthIdx === 11 ? year + 1 : year;
+            const dateStr = `${nYear}-${nMonth.toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
+            days.push({
+                day: i,
+                dateStr: dateStr,
+                isCurrentMonth: false,
+                isToday: dateStr === this.todayStr,
+                events: []
+            });
+        }
+
         this.calendarDays = days;
     },
 
@@ -88,38 +128,44 @@
                         <i class="fa-solid fa-calendar-days"></i>
                     </div>
                     <div>
-                        <h2 class="font-extrabold text-base text-slate-900" x-text="currentMonthName"></h2>
+                        <h2 class="font-extrabold text-base text-slate-900" x-text="currentMonthTitle"></h2>
                         <span class="text-xs text-slate-500">Bấm vào từng ngày để xem lịch chi tiết</span>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="px-3 py-1 bg-blue-50 text-[#163B65] font-bold text-xs rounded-lg border border-blue-200" x-text="events.length + ' Sự kiện'"></span>
+                    <a href="?month={{ prev_month_str }}" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 flex items-center gap-1">
+                        <i class="fa-solid fa-chevron-left text-[10px]"></i> Tháng trước
+                    </a>
+                    <a href="?month={{ next_month_str }}" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 flex items-center gap-1">
+                        Tháng sau <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </a>
                 </div>
             </div>
 
-            <!-- Days of Week Header -->
+            <!-- Days of Week Header (Starting Monday) -->
             <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs text-slate-500 mb-2 border-b border-slate-100 pb-2">
-                <div class="text-rose-600">CN</div>
                 <div>T2</div>
                 <div>T3</div>
                 <div>T4</div>
                 <div>T5</div>
                 <div>T6</div>
                 <div class="text-blue-600">T7</div>
+                <div class="text-rose-600">CN</div>
             </div>
 
-            <!-- Calendar Days Grid (31 Days) -->
+            <!-- Calendar Days Grid -->
             <div class="grid grid-cols-7 gap-1.5 min-h-[380px]">
                 <template x-for="d in calendarDays" :key="d.dateStr">
                     <div @click="openDayDetails(d)" 
                          :class="{
-                             'bg-blue-50/80 border-blue-300 ring-2 ring-blue-500/30': d.isToday,
-                             'bg-slate-50 hover:bg-blue-50/50 border-slate-200': !d.isToday
+                             'bg-blue-50/80 border-blue-400 ring-2 ring-blue-500/30 font-bold': d.isToday,
+                             'bg-white border-slate-200 hover:bg-blue-50/40': d.isCurrentMonth && !d.isToday,
+                             'bg-slate-50/60 border-slate-100 opacity-50': !d.isCurrentMonth
                          }"
                          class="p-2 rounded-xl border transition-all cursor-pointer flex flex-col justify-between min-h-[72px] hover:shadow-sm relative group">
                         
                         <div class="flex justify-between items-center">
-                            <span class="font-extrabold text-xs" :class="d.isToday ? 'text-[#163B65]' : 'text-slate-700'" x-text="d.day"></span>
+                            <span class="font-extrabold text-xs" :class="d.isToday ? 'text-[#163B65]' : (d.isCurrentMonth ? 'text-slate-700' : 'text-slate-400')" x-text="d.day"></span>
                             <template x-if="d.events.length > 0">
                                 <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                             </template>
@@ -140,6 +186,7 @@
                 </template>
             </div>
         </div>
+
 
         <!-- Sidebar Panel: Upcoming Events (1 Col) -->
         <div class="space-y-6">
