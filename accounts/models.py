@@ -38,8 +38,21 @@ class User(AbstractUser):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Ngày cập nhật")
 
     def get_full_name(self):
-        full_name = f"{self.last_name} {self.first_name}".strip()
-        return full_name or self.username
+        if self.username == 'admin' and (not self.first_name and not self.last_name or self.first_name == 'HVHK'):
+            return "Quản trị viên HVHK"
+        if self.first_name and self.last_name:
+            raw_name = f"{self.first_name} {self.last_name}".strip()
+        else:
+            raw_name = f"{self.last_name} {self.first_name}".strip() or self.username
+
+        parts = raw_name.split()
+        formatted_parts = []
+        for p in parts:
+            if p.islower():
+                formatted_parts.append(p.capitalize())
+            else:
+                formatted_parts.append(p)
+        return " ".join(formatted_parts)
 
     @property
     def display_name(self):

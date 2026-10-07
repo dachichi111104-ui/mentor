@@ -196,6 +196,17 @@
         </div>
     </div>
 
+    <!-- Global Top Loading Progress Bar -->
+    <div id="page-global-loader" class="fixed top-0 left-0 right-0 z-[100] h-1 bg-[#163B65] hidden transition-all duration-300">
+        <div class="h-full bg-amber-400 animate-pulse w-full"></div>
+    </div>
+    <script>
+        window.addEventListener('beforeunload', function() {
+            var loader = document.getElementById('page-global-loader');
+            if (loader) loader.classList.remove('hidden');
+        });
+    </script>
+
     {% if request.user.is_authenticated %}
     <!-- AUTHENTICATED APP LAYOUT: SIDEBAR + MAIN CONTENT AREA -->
     <div class="flex min-h-screen">

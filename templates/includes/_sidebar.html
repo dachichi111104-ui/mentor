@@ -1,33 +1,33 @@
 <!-- SIDEBAR NAVIGATION COMPONENT -->
-<aside :class="sidebarCollapsed ? 'w-20' : 'w-64'" style="background-color: var(--sidebar-bg);" class="text-slate-100 flex-shrink-0 flex flex-col justify-between h-screen overflow-y-auto border-r border-white/10 shadow-2xl select-none transition-all duration-300 custom-scrollbar">
+<aside :class="sidebarCollapsed ? 'w-20' : 'w-64'" style="background-color: var(--sidebar-bg);" class="text-slate-100 flex-shrink-0 flex flex-col justify-between h-screen overflow-y-auto border-r border-white/10 shadow-2xl select-none transition-all duration-300">
     
     <!-- Top Branding Header -->
-    <div style="background-color: var(--sidebar-header);" class="p-4 border-b border-white/10 flex items-center justify-between">
+    <div style="background-color: var(--sidebar-header);" class="px-4 py-3 border-b border-white/10 flex items-center justify-between">
         <a href="{% url 'dashboard' %}" class="flex items-center space-x-3 group overflow-hidden">
-            <div class="w-10 h-10 rounded-xl bg-white/10 text-amber-400 flex items-center justify-center font-bold text-lg shadow-inner border border-white/10 group-hover:scale-105 transition-transform flex-shrink-0">
+            <div class="w-9 h-9 rounded-xl bg-white/10 text-amber-400 flex items-center justify-center font-bold text-base shadow-inner border border-white/10 group-hover:scale-105 transition-transform flex-shrink-0">
                 <i class="fa-solid fa-graduation-cap" style="color: var(--accent-gold);"></i>
             </div>
             <div x-show="!sidebarCollapsed" class="transition-opacity duration-300">
-                <span class="font-extrabold text-white text-base tracking-tight block leading-none">PROJECTHUB</span>
-                <span class="text-[10px] font-bold tracking-wider uppercase block mt-1" style="color: var(--accent-gold);">QUẢN LÝ ĐỒ ÁN AI</span>
+                <span class="font-extrabold text-white text-sm tracking-tight block leading-none">PROJECTHUB</span>
+                <span class="text-[9px] font-bold tracking-wider uppercase block mt-1" style="color: var(--accent-gold);">QUẢN LÝ ĐỒ ÁN AI</span>
             </div>
         </a>
     </div>
 
     <!-- Main Navigation Menu List -->
-    <nav class="p-3 flex-1 overflow-y-auto space-y-6 custom-scrollbar text-xs">
+    <nav class="px-3 py-2 flex-1 space-y-2.5 text-xs">
         
         <!-- SECTION 1: CHÍNH (MAIN) -->
-        <div class="space-y-1">
-            <span x-show="!sidebarCollapsed" class="px-3 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block mb-2">Bảng điều khiển</span>
+        <div class="space-y-0.5">
+            <span x-show="!sidebarCollapsed" class="px-3 text-[9px] font-extrabold text-slate-400 uppercase tracking-widest block mb-1">Bảng điều khiển</span>
             
             <a href="{% url 'dashboard' %}"
                title="Tổng quan (Dashboard)"
                {% if request.resolver_match.url_name == 'dashboard' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
-               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all relative group
+               class="flex items-center justify-between px-3 py-1.5 rounded-xl font-semibold transition-all relative group
                {% if request.resolver_match.url_name == 'dashboard' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-chart-line text-sm w-4 text-center" {% if request.resolver_match.url_name == 'dashboard' %}style="color: var(--accent-gold);"{% endif %}></i>
+                    <i class="fa-solid fa-chart-line text-xs w-4 text-center" {% if request.resolver_match.url_name == 'dashboard' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Tổng quan (Dashboard)</span>
                 </div>
             </a>
@@ -36,10 +36,10 @@
             <a href="{% url 'admin_users' %}"
                title="Quản lý Tài khoản"
                {% if request.resolver_match.url_name == 'admin_users' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
-               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               class="flex items-center justify-between px-3 py-1.5 rounded-xl font-semibold transition-all
                {% if request.resolver_match.url_name == 'admin_users' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-users-gear text-sm w-4 text-center" {% if request.resolver_match.url_name == 'admin_users' %}style="color: var(--accent-gold);"{% endif %}></i>
+                    <i class="fa-solid fa-users-gear text-xs w-4 text-center" {% if request.resolver_match.url_name == 'admin_users' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Quản lý Tài khoản</span>
                 </div>
             </a>
@@ -48,10 +48,10 @@
             <a href="{% url 'project_list' %}"
                title="Đồ án"
                {% if request.resolver_match.url_name in 'project_list,project_detail,project_create' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
-               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               class="flex items-center justify-between px-3 py-1.5 rounded-xl font-semibold transition-all
                {% if request.resolver_match.url_name in 'project_list,project_detail,project_create' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-folder-tree text-sm w-4 text-center" {% if request.resolver_match.url_name in 'project_list,project_detail,project_create' %}style="color: var(--accent-gold);"{% endif %}></i>
+                    <i class="fa-solid fa-folder-tree text-xs w-4 text-center" {% if request.resolver_match.url_name in 'project_list,project_detail,project_create' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">{% if request.user.is_student %}Đồ án của tôi{% elif request.user.is_mentor %}Đồ án Hướng dẫn{% else %}Quản lý Đồ án{% endif %}</span>
                 </div>
             </a>
@@ -60,10 +60,10 @@
             <a href="{% url 'my_tasks' %}"
                title="Công việc (Kanban)"
                {% if request.resolver_match.url_name in 'my_tasks,project_tasks' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
-               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               class="flex items-center justify-between px-3 py-1.5 rounded-xl font-semibold transition-all
                {% if request.resolver_match.url_name in 'my_tasks,project_tasks' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-list-check text-sm w-4 text-center" {% if request.resolver_match.url_name in 'my_tasks,project_tasks' %}style="color: var(--accent-gold);"{% endif %}></i>
+                    <i class="fa-solid fa-list-check text-xs w-4 text-center" {% if request.resolver_match.url_name in 'my_tasks,project_tasks' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Công việc (Kanban)</span>
                 </div>
             </a>
@@ -71,16 +71,16 @@
         </div>
 
         <!-- SECTION 2: QUẢN LÝ DỰ ÁN & TEAMWORK -->
-        <div class="space-y-1">
-            <span x-show="!sidebarCollapsed" class="px-3 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block mb-2">Đội ngũ & Tiến độ</span>
+        <div class="space-y-0.5">
+            <span x-show="!sidebarCollapsed" class="px-3 text-[9px] font-extrabold text-slate-400 uppercase tracking-widest block mb-1">Đội ngũ & Tiến độ</span>
 
             <a href="{% url 'team' %}"
                title="Thành viên & Team"
                {% if request.resolver_match.url_name in 'team,team_page' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
-               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               class="flex items-center justify-between px-3 py-1.5 rounded-xl font-semibold transition-all
                {% if request.resolver_match.url_name in 'team,team_page' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-users text-sm w-4 text-center" {% if request.resolver_match.url_name in 'team,team_page' %}style="color: var(--accent-gold);"{% endif %}></i>
+                    <i class="fa-solid fa-users text-xs w-4 text-center" {% if request.resolver_match.url_name in 'team,team_page' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Thành viên & Team</span>
                 </div>
             </a>
@@ -88,10 +88,10 @@
             <a href="{% url 'calendar' %}"
                title="Lịch & Sự kiện"
                {% if request.resolver_match.url_name in 'calendar,calendar_page' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
-               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               class="flex items-center justify-between px-3 py-1.5 rounded-xl font-semibold transition-all
                {% if request.resolver_match.url_name in 'calendar,calendar_page' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-calendar-days text-sm w-4 text-center" {% if request.resolver_match.url_name in 'calendar,calendar_page' %}style="color: var(--accent-gold);"{% endif %}></i>
+                    <i class="fa-solid fa-calendar-days text-xs w-4 text-center" {% if request.resolver_match.url_name in 'calendar,calendar_page' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Lịch & Sự kiện</span>
                 </div>
             </a>
@@ -100,10 +100,10 @@
             <a href="{% url 'document_list' %}"
                title="Kho Tài liệu"
                {% if request.resolver_match.url_name in 'document_list,project_documents,document_preview' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
-               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               class="flex items-center justify-between px-3 py-1.5 rounded-xl font-semibold transition-all
                {% if request.resolver_match.url_name in 'document_list,project_documents,document_preview' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-file-lines text-sm w-4 text-center" {% if request.resolver_match.url_name in 'document_list,project_documents,document_preview' %}style="color: var(--accent-gold);"{% endif %}></i>
+                    <i class="fa-solid fa-file-lines text-xs w-4 text-center" {% if request.resolver_match.url_name in 'document_list,project_documents,document_preview' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Kho Tài liệu</span>
                 </div>
             </a>
@@ -113,10 +113,10 @@
             <a href="{% url 'mentor_reviews' %}"
                title="Review & Đánh giá"
                {% if request.resolver_match.url_name == 'mentor_reviews' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
-               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               class="flex items-center justify-between px-3 py-1.5 rounded-xl font-semibold transition-all
                {% if request.resolver_match.url_name == 'mentor_reviews' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-clipboard-check text-sm w-4 text-center" {% if request.resolver_match.url_name == 'mentor_reviews' %}style="color: var(--accent-gold);"{% endif %}></i>
+                    <i class="fa-solid fa-clipboard-check text-xs w-4 text-center" {% if request.resolver_match.url_name == 'mentor_reviews' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Review & Đánh giá</span>
                 </div>
             </a>
@@ -125,26 +125,26 @@
             <a href="{% url 'analytics' %}"
                title="Phân tích & Thống kê"
                {% if request.resolver_match.url_name in 'analytics,analytics_page' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
-               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               class="flex items-center justify-between px-3 py-1.5 rounded-xl font-semibold transition-all
                {% if request.resolver_match.url_name in 'analytics,analytics_page' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-chart-pie text-sm w-4 text-center" {% if request.resolver_match.url_name in 'analytics,analytics_page' %}style="color: var(--accent-gold);"{% endif %}></i>
+                    <i class="fa-solid fa-chart-pie text-xs w-4 text-center" {% if request.resolver_match.url_name in 'analytics,analytics_page' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Phân tích & Thống kê</span>
                 </div>
             </a>
         </div>
 
         <!-- SECTION 3: HỆ THỐNG & AI -->
-        <div class="space-y-1">
-            <span x-show="!sidebarCollapsed" class="px-3 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block mb-2">Hệ thống & AI</span>
+        <div class="space-y-0.5">
+            <span x-show="!sidebarCollapsed" class="px-3 text-[9px] font-extrabold text-slate-400 uppercase tracking-widest block mb-1">Hệ thống & AI</span>
 
             <a href="{% url 'ai_assistant_page' %}"
                title="Trợ lý AI"
                {% if request.resolver_match.url_name == 'ai_assistant_page' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
-               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               class="flex items-center justify-between px-3 py-1.5 rounded-xl font-semibold transition-all
                {% if request.resolver_match.url_name == 'ai_assistant_page' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-robot text-sm w-4 text-center" style="color: var(--accent-gold);"></i>
+                    <i class="fa-solid fa-robot text-xs w-4 text-center" style="color: var(--accent-gold);"></i>
                     <span x-show="!sidebarCollapsed">Trợ lý AI</span>
                 </div>
                 <span x-show="!sidebarCollapsed" class="px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-full font-bold text-[9px] border border-amber-500/30">REAL</span>
@@ -153,10 +153,10 @@
             <a href="{% url 'settings' %}"
                title="Cài đặt hệ thống"
                {% if request.resolver_match.url_name in 'settings,settings_page' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
-               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               class="flex items-center justify-between px-3 py-1.5 rounded-xl font-semibold transition-all
                {% if request.resolver_match.url_name in 'settings,settings_page' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-gear text-sm w-4 text-center" {% if request.resolver_match.url_name in 'settings,settings_page' %}style="color: var(--accent-gold);"{% endif %}></i>
+                    <i class="fa-solid fa-gear text-xs w-4 text-center" {% if request.resolver_match.url_name in 'settings,settings_page' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Cài đặt hệ thống</span>
                 </div>
             </a>
@@ -165,10 +165,10 @@
             <a href="{% url 'admin_audit_log' %}"
                title="Nhật ký Hệ thống"
                {% if request.resolver_match.url_name == 'admin_audit_log' %}style="background-color: var(--accent-primary); border-left: 4px solid var(--accent-gold);"{% endif %}
-               class="flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all
+               class="flex items-center justify-between px-3 py-1.5 rounded-xl font-semibold transition-all
                {% if request.resolver_match.url_name == 'admin_audit_log' %}text-white shadow-md{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}">
                 <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-shield-halved text-sm w-4 text-center" {% if request.resolver_match.url_name == 'admin_audit_log' %}style="color: var(--accent-gold);"{% endif %}></i>
+                    <i class="fa-solid fa-shield-halved text-xs w-4 text-center" {% if request.resolver_match.url_name == 'admin_audit_log' %}style="color: var(--accent-gold);"{% endif %}></i>
                     <span x-show="!sidebarCollapsed">Nhật ký Hệ thống</span>
                 </div>
             </a>

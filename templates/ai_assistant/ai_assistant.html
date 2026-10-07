@@ -124,7 +124,7 @@
             <input type="text" id="ai-breakdown-input" value="{% if selected_project %}{{ selected_project.name }}{% else %}Phát triển hệ thống phần mềm{% endif %}" 
                    class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#163B65]">
             
-            <button @click="runBreakdown()" class="px-5 py-2.5 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center space-x-2">
+            <button id="btn-ai-breakdown" @click="runBreakdown()" class="px-5 py-2.5 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center space-x-2">
                 <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
                 <span>Phân tích & Đề xuất Task</span>
             </button>
@@ -140,7 +140,7 @@
             <div class="flex items-center justify-between">
                 <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Danh sách Task AI Đề xuất</h3>
                 {% if request.user.is_student or request.user.is_admin_user %}
-                <button @click="acceptTasks()" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all">
+                <button id="btn-accept-tasks" @click="acceptTasks()" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all">
                     <i class="fa-solid fa-circle-check mr-1.5"></i> Chấp nhận & Tạo các Task vào Database
                 </button>
                 {% endif %}
@@ -158,7 +158,7 @@
         </div>
 
         {% if request.user.is_student or request.user.is_admin_user %}
-        <button @click="runWeeklySummary()" class="px-5 py-2.5 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center space-x-2">
+        <button id="btn-ai-summary" @click="runWeeklySummary()" class="px-5 py-2.5 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center space-x-2">
             <i class="fa-solid fa-file-lines text-amber-400"></i>
             <span>Xuất Báo cáo Bằng AI</span>
         </button>
@@ -193,8 +193,8 @@
         </div>
 
         {% if request.user.is_student or request.user.is_admin_user %}
-        <button @click="runRiskDetection()" class="px-4 py-2 bg-rose-800 hover:bg-rose-900 text-white font-bold text-xs rounded-xl shadow-sm">
-            <i class="fa-solid fa-triangle-exclamation text-amber-300 mr-1.5"></i>
+        <button id="btn-ai-risk" @click="runRiskDetection()" class="px-4 py-2 bg-rose-800 hover:bg-rose-900 text-white font-bold text-xs rounded-xl shadow-sm flex items-center space-x-2">
+            <i class="fa-solid fa-triangle-exclamation text-amber-300"></i>
             <span>Kiểm tra Rủi ro Tiến độ</span>
         </button>
         {% endif %}
@@ -236,7 +236,7 @@
             <p class="text-xs text-slate-500 mt-0.5">Gợi ý danh sách câu hỏi kiểm tra kiến trúc hệ thống, quy trình và bảo mật dành cho Mentor.</p>
         </div>
 
-        <button @click="runMentorQuestions()" class="px-4 py-2 bg-purple-800 hover:bg-purple-900 text-white font-bold text-xs rounded-xl shadow-sm flex items-center space-x-2">
+        <button id="btn-ai-questions" @click="runMentorQuestions()" class="px-4 py-2 bg-purple-800 hover:bg-purple-900 text-white font-bold text-xs rounded-xl shadow-sm flex items-center space-x-2">
             <i class="fa-solid fa-comments text-amber-300"></i>
             <span>Tạo Gợi ý Câu hỏi Phản biện</span>
         </button>
@@ -324,6 +324,39 @@
         `;
     }
 
+    function setBtnLoading(btnId, loadingText) {
+        const btn = document.getElementById(btnId);
+        if (!btn) return null;
+        const origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-amber-400"></i><span>${escapeHtml(loadingText)}</span>`;
+        return origHtml;
+    }
+
+    function restoreBtn(btnId, origHtml) {
+        const btn = document.getElementById(btnId);
+        if (!btn || !origHtml) return;
+        btn.disabled = false;
+        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+        btn.innerHTML = origHtml;
+    }
+
+    function renderLoadingCard(containerId, titleText) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = `
+            <div class="p-5 bg-blue-50/80 border border-blue-200 rounded-2xl text-xs text-blue-900 flex items-center justify-center space-x-3 shadow-xs">
+                <i class="fa-solid fa-circle-notch fa-spin text-[#163B65] text-xl"></i>
+                <div>
+                    <span class="font-bold block text-sm">${escapeHtml(titleText)}</span>
+                    <span class="text-blue-700 text-[11px]">Dữ liệu đang được kết nối và xử lý từ Gemini AI, vui lòng đợi trong giây lát...</span>
+                </div>
+            </div>
+        `;
+        container.classList.remove('hidden');
+    }
+
     function runBreakdown() {
         const projectId = getSelectedProjectId();
         const inputElem = document.getElementById('ai-breakdown-input');
@@ -333,11 +366,16 @@
         formData.append('project_name', inputData);
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
+        const origHtml = setBtnLoading('btn-ai-breakdown', 'Đang phân tích AI...');
+        document.getElementById('breakdown-results').classList.remove('hidden');
+        renderLoadingCard('tasks-container', 'AI đang phân rã yêu cầu thành các Task Kanban...');
+
         fetch('/ai/task-breakdown/', {
             method: 'POST',
             body: formData
         }).then(res => res.json())
           .then(data => {
+              restoreBtn('btn-ai-breakdown', origHtml);
               if (data.status === 'success') {
                   const tasks = data.suggested_tasks || data.tasks || [];
                   globalAiTasks = tasks;
@@ -362,9 +400,13 @@
                               </div>
                           `;
                       });
-                      document.getElementById('breakdown-results').classList.remove('hidden');
                   }
+              } else {
+                  renderFormattedCard(data.message || 'Lỗi xử lý AI', 'fa-solid fa-triangle-exclamation', 'Lỗi Phân Rã Task', 'tasks-container');
               }
+          }).catch(err => {
+              restoreBtn('btn-ai-breakdown', origHtml);
+              renderFormattedCard('Có lỗi kết nối mạng. Vui lòng thử lại.', 'fa-solid fa-triangle-exclamation', 'Lỗi Kết Nối', 'tasks-container');
           });
     }
 
@@ -375,16 +417,21 @@
         formData.append('tasks_json', JSON.stringify(globalAiTasks));
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
+        const origHtml = setBtnLoading('btn-accept-tasks', 'Đang tạo Task...');
+
         fetch('/ai/accept-tasks/', {
             method: 'POST',
             body: formData
         }).then(res => res.json())
           .then(data => {
+              restoreBtn('btn-accept-tasks', origHtml);
               if (data.status === 'success' || data.status === 'proposed') {
                   const alpineData = Alpine.$data(document.querySelector('[x-data]'));
                   alpineData.createdCount = data.created_count || globalAiTasks.length;
                   alpineData.successModal = true;
               }
+          }).catch(() => {
+              restoreBtn('btn-accept-tasks', origHtml);
           });
     }
 
@@ -394,13 +441,19 @@
         formData.append('project_id', projectId);
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
+        const origHtml = setBtnLoading('btn-ai-summary', 'Đang tổng hợp báo cáo...');
+        renderLoadingCard('summary-result', 'AI đang tổng hợp báo cáo tiến độ tuần...');
+
         fetch('/ai/weekly-summary/', {
             method: 'POST',
             body: formData
         }).then(res => res.json())
           .then(data => {
+              restoreBtn('btn-ai-summary', origHtml);
               const text = data.summary || data.summary_html || 'Không có dữ liệu báo cáo.';
               renderFormattedCard(text, 'fa-solid fa-file-lines', 'Báo cáo Tổng hợp Tiến độ Tuần bằng AI', 'summary-result');
+          }).catch(() => {
+              restoreBtn('btn-ai-summary', origHtml);
           });
     }
 
@@ -410,13 +463,19 @@
         formData.append('project_id', projectId);
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
+        const origHtml = setBtnLoading('btn-ai-risk', 'Đang rà soát rủi ro...');
+        renderLoadingCard('risk-result', 'AI đang phân tích dữ liệu trễ hạn & rủi ro...');
+
         fetch('/ai/risk-detection/', {
             method: 'POST',
             body: formData
         }).then(res => res.json())
           .then(data => {
+              restoreBtn('btn-ai-risk', origHtml);
               const text = data.analysis || data.risk_html || 'Chưa ghi nhận rủi ro nghiêm trọng.';
               renderFormattedCard(text, 'fa-solid fa-triangle-exclamation', 'Phân tích Rủi ro Tiến độ bằng AI', 'risk-result');
+          }).catch(() => {
+              restoreBtn('btn-ai-risk', origHtml);
           });
     }
 
@@ -426,13 +485,19 @@
         formData.append('project_id', projectId);
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
+        const origHtml = setBtnLoading('btn-ai-questions', 'Đang tạo câu hỏi...');
+        renderLoadingCard('questions-result', 'AI đang tổng hợp bộ câu hỏi phản biện...');
+
         fetch('/ai/mentor-questions/', {
             method: 'POST',
             body: formData
         }).then(res => res.json())
           .then(data => {
+              restoreBtn('btn-ai-questions', origHtml);
               const text = data.questions || data.questions_html || 'Không có câu hỏi đề xuất.';
               renderFormattedCard(text, 'fa-solid fa-comments', 'Gợi ý Câu hỏi Phản biện cho Mentor', 'questions-result');
+          }).catch(() => {
+              restoreBtn('btn-ai-questions', origHtml);
           });
     }
 </script>

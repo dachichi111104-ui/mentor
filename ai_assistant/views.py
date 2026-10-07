@@ -241,12 +241,27 @@ def ai_weekly_summary_ajax(request):
         return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
     result, _ = _execute_ai_task(request.user, project, 'weekly')
-    data = result['data']
+    def _safe_join(items):
+        if not items:
+            return "Không có"
+        if isinstance(items, str):
+            return items
+        if isinstance(items, list):
+            res = []
+            for item in items:
+                if isinstance(item, dict):
+                    res.append(item.get('title') or item.get('name') or str(item))
+                else:
+                    res.append(str(item))
+            return ", ".join(res)
+        return str(items)
 
-    now = timezone.now()
-    year, week_num, _ = now.isocalendar()
+    highlights = data.get('highlights', 'Chưa có tóm tắt nổi bật')
+    done_str = _safe_join(data.get('done', []))
+    in_progress_str = _safe_join(data.get('in_progress', []))
+    blockers_str = _safe_join(data.get('blockers', []))
 
-    summary_str = f"**Highlights**: {data.get('highlights')}\n- **Đã xong**: {', '.join(data.get('done', []))}\n- **Đang làm**: {', '.join(data.get('in_progress', []))}\n- **Vướng mắc**: {', '.join(data.get('blockers', []))}"
+    summary_str = f"**Highlights**: {highlights}\n- **Đã xong**: {done_str}\n- **Đang làm**: {in_progress_str}\n- **Vướng mắc**: {blockers_str}"
 
     WeeklySummary.objects.update_or_create(
         project=project,
