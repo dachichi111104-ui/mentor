@@ -97,6 +97,8 @@ urlpatterns = [
     # Milestones & Calendar
     path('projects/<int:project_id>/milestones/', milestone_views.project_milestones_view, name='project_milestones'),
     path('projects/<int:project_id>/milestones/create/', milestone_views.milestone_create_view, name='milestone_create'),
+    path('milestones/<int:milestone_id>/edit/', milestone_views.milestone_edit_view, name='milestone_edit'),
+    path('milestones/<int:milestone_id>/complete/', milestone_views.milestone_complete_view, name='milestone_complete'),
     path('milestones/<int:milestone_id>/delete/', milestone_views.milestone_delete_view, name='milestone_delete'),
     path('calendar/', milestone_views.calendar_page_view, name='calendar'),
     path('calendar-page/', milestone_views.calendar_page_view, name='calendar_page'),
@@ -137,6 +139,8 @@ urlpatterns = [
     path('ai/weekly-summary/', ai_views.ai_weekly_summary_ajax, name='ai_weekly_summary'),
     path('ai/risk-detection/', ai_views.ai_risk_detection_ajax, name='ai_risk_detection'),
     path('ai/mentor-questions/', ai_views.ai_mentor_questions_ajax, name='ai_mentor_questions'),
+    path('ai/health/', ai_views.ai_health_status_view, name='ai_health'),
+    path('ai/health/test/', ai_views.ai_health_test_ajax, name='ai_health_test'),
 ]
 
 if settings.DEBUG:

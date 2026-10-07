@@ -66,7 +66,7 @@ def submit_review_view(request, project_id):
         if status == ReviewStatus.APPROVED:
             project.status = ProjectStatus.COMPLETED
             project.save()
-        elif status == ReviewStatus.NEEDS_REVISION:
+        elif status == ReviewStatus.NEED_REVISION:
             project.status = ProjectStatus.IN_PROGRESS
             project.save()
 

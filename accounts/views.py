@@ -176,9 +176,12 @@ from django.http import FileResponse, Http404
 @login_required
 def avatar_view(request, user_id):
     target = get_object_or_404(User, id=user_id)
-    if not target.avatar:
-        raise Http404("Avatar không tồn tại.")
-    return FileResponse(target.avatar.open('rb'), as_attachment=False)
+    if target.avatar:
+        try:
+            return FileResponse(target.avatar.open('rb'), as_attachment=False)
+        except (FileNotFoundError, OSError, Exception):
+            pass
+    return redirect(target.get_avatar_url())
 
 
 from accounts.models import UserPreference

@@ -34,6 +34,8 @@ class TaskPermissionTests(TestCase):
         )
 
     def test_assignee_can_move_task_to_review(self):
+        self.task.status = TaskStatus.IN_PROGRESS
+        self.task.save()
         self.client.login(username='student2', password='password')
         url = reverse('task_update_status', args=[self.task.id])
         response = self.client.post(url, {'status': TaskStatus.REVIEW})
@@ -42,6 +44,8 @@ class TaskPermissionTests(TestCase):
         self.assertEqual(self.task.status, TaskStatus.REVIEW)
 
     def test_regular_member_cannot_move_task_to_done(self):
+        self.task.status = TaskStatus.REVIEW
+        self.task.save()
         self.client.login(username='student2', password='password')
         url = reverse('task_update_status', args=[self.task.id])
         response = self.client.post(url, {'status': TaskStatus.DONE})
@@ -50,6 +54,8 @@ class TaskPermissionTests(TestCase):
         self.assertNotEqual(self.task.status, TaskStatus.DONE)
 
     def test_mentor_can_move_task_to_done(self):
+        self.task.status = TaskStatus.REVIEW
+        self.task.save()
         self.client.login(username='mentor', password='password')
         url = reverse('task_update_status', args=[self.task.id])
         response = self.client.post(url, {'status': TaskStatus.DONE})

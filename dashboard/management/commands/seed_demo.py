@@ -1,346 +1,448 @@
+import os
+import random
+import secrets
 from django.core.management.base import BaseCommand
+from django.utils import timezone
+from django.db import transaction
+from django.core.files.base import ContentFile
+
 from accounts.models import User, UserRole, UserStatus
 from projects.models import Project, ProjectStatus, ProjectMember, MemberRole, MemberStatus, MentorStatus
-from tasks.models import Task, TaskStatus, TaskPriority, TaskChecklistItem
-from milestones.models import Milestone, MilestoneStatus, Event
-from dashboard.models import TimeLog
+from milestones.models import Milestone, MilestoneStatus
+from tasks.models import Task, TaskPriority, TaskStatus, Sprint, TaskComment, TaskChecklistItem
 from documents.models import Document, DocumentVersion
 from reviews.models import Feedback, ReviewStatus
-from notifications.models import Notification, NotificationType
 from audit_log.models import ActivityLog, ActionType
-from django.utils import timezone
+from notifications.models import Notification, NotificationType
+
+# Minimal valid 1-page PDF file bytes
+MINIMAL_PDF_BYTES = b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000058 00000 n\n0000000115 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n190\n%%EOF\n"
+
+# Minimal valid 1x1 PNG bytes
+MINIMAL_PNG_BYTES = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15c4\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
 
 class Command(BaseCommand):
-    help = 'Khoi tao du lieu demo chuan cho VAU ProjectHub AI'
+    help = "Seeds database with diverse, realistic demo projects and users (Phase D)."
+
+    def add_arguments(self, parser):
+        parser.add_argument('--reset', action='store_true', help='Reset existing demo data before seeding')
 
     def handle(self, *args, **options):
-        self.stdout.write("Dang xoa va dong bo du lieu theo danh sach thanh vien quy dinh...")
+        reset = options.get('reset')
+        rng = random.Random(20261007)
+        today = timezone.localdate()
 
-        # 1. ADMIN USER
-        admin_user, _ = User.objects.get_or_create(
-            username='admin',
-            defaults={
-                'email': 'admin@vau.edu.vn',
-                'first_name': 'Hàng Không',
-                'last_name': 'Quản trị viên',
-                'role': UserRole.ADMIN,
-                'status': UserStatus.ACTIVE,
-                'is_staff': True,
-                'is_superuser': True,
-                'department': 'Khoa Công Nghệ Thông Tin'
-            }
-        )
-        admin_user.set_password('admin123')
-        admin_user.first_name = 'Hàng Không'
-        admin_user.last_name = 'Quản trị viên'
-        admin_user.email = 'admin@vau.edu.vn'
-        admin_user.save()
+        demo_password = os.getenv('DEMO_PASSWORD')
+        if not demo_password:
+            demo_password = secrets.token_urlsafe(10)
+            self.stdout.write(self.style.WARNING(f"Generated demo password: {demo_password}"))
 
-        # 2. STUDENTS (5 STRICT MEMBERS ONLY)
-        students_data = [
-            ('student', 'trinhln@vau.edu.vn', 'Ngọc Trinh', 'Lê', True),       # LEADER (Lê Ngọc Trinh)
-            ('hanndn', 'hanndn@vau.edu.vn', 'Doãn Ngọc Hân', 'Nguyễn', False),
-            ('nghitdg', 'nghitdg@vau.edu.vn', 'Đàm Gia Nghi', 'Trần', False),
-            ('tructtt', 'tructtt@vau.edu.vn', 'Thị Thanh Trúc', 'Phạm', False),
-            ('tuyetnlh', 'tuyetnlh@vau.edu.vn', 'Lâm Huyền Tuyết', 'Nguyễn', False),
-        ]
+        with transaction.atomic():
+            if reset:
+                self.stdout.write("Cleaning old demo data...")
+                TaskChecklistItem.objects.all().delete()
+                TaskComment.objects.all().delete()
+                Task.objects.all().delete()
+                Sprint.objects.all().delete()
+                Milestone.objects.all().delete()
+                DocumentVersion.objects.all().delete()
+                Document.objects.all().delete()
+                Feedback.objects.all().delete()
+                Notification.objects.all().delete()
+                ActivityLog.objects.all().delete()
+                ProjectMember.objects.all().delete()
+                Project.objects.all().delete()
+                User.objects.filter(email__endswith='@vau.edu.vn').exclude(username='admin').delete()
 
-        student_objs = []
-        valid_usernames = {'admin'}
-
-        for username, email, first_name, last_name, is_leader in students_data:
-            valid_usernames.add(username)
-            st_user, created = User.objects.get_or_create(
-                username=username,
+            # 1. Users
+            admin, _ = User.objects.get_or_create(
+                username='admin',
                 defaults={
-                    'email': email,
-                    'first_name': first_name,
-                    'last_name': last_name,
-                    'role': UserRole.STUDENT,
+                    'email': 'admin@vau.edu.vn',
+                    'first_name': 'Quản trị viên',
+                    'last_name': 'HVHK',
+                    'role': UserRole.ADMIN,
                     'status': UserStatus.ACTIVE,
-                    'department': 'Khoa Công Nghệ Thông Tin',
-                    'class_name': 'KTPM2022'
+                    'is_staff': True,
+                    'is_superuser': True
                 }
             )
-            st_user.set_password('student123')
-            st_user.email = email
-            st_user.first_name = first_name
-            st_user.last_name = last_name
-            st_user.role = UserRole.STUDENT
-            st_user.status = UserStatus.ACTIVE
-            st_user.department = 'Khoa Công Nghệ Thông Tin'
-            st_user.class_name = 'KTPM2022'
-            st_user.save()
-            student_objs.append((st_user, is_leader))
+            admin.set_password(demo_password)
+            admin.save()
 
-        leader_user = student_objs[0][0] # Lê Ngọc Trinh
+            mentors_data = [
+                ('mentor1', 'Nguyễn Thanh', 'Hiếu', 'ThS.NCS. Nguyễn Thanh Hiếu', 'ThS.NCS.'),
+                ('mentor2', 'Nguyễn Lương', 'Anh Tuấn', 'TS. Nguyễn Lương Anh Tuấn', 'TS.'),
+                ('mentor3', 'Trần Hoàng', 'Lộc', 'TS. Trần Hoàng Lộc', 'TS.'),
+            ]
+            mentors = []
+            for uname, fname, lname, display, title in mentors_data:
+                u, _ = User.objects.get_or_create(
+                    username=uname,
+                    defaults={
+                        'email': f"{uname}@vau.edu.vn",
+                        'first_name': fname,
+                        'last_name': lname,
+                        'role': UserRole.MENTOR,
+                        'status': UserStatus.ACTIVE,
+                        'department': 'Khoa Công nghệ Thông tin',
+                        'specialization': 'Phát triển Phần mềm & Hệ thống AI'
+                    }
+                )
+                u.set_password(demo_password)
+                u.save()
+                mentors.append(u)
 
-        # 3. MENTORS (3 STRICT MENTORS ONLY)
-        mentors_data = [
-            ('mentor', 'hieunt@vau.edu.vn', 'Thanh Hiếu', 'ThS.NCS. Nguyễn'),
-            ('tuannla', 'tuannla@vau.edu.vn', 'Lương Anh Tuấn', 'TS. Nguyễn'),
-            ('locth', 'locth@vau.edu.vn', 'Hoàng Lộc', 'TS. Trần'),
-        ]
-
-        mentor_objs = []
-
-        for username, email, first_name, last_name in mentors_data:
-            valid_usernames.add(username)
-            mt_user, _ = User.objects.get_or_create(
-                username=username,
+            # Pending mentor for approval test
+            m_pending, _ = User.objects.get_or_create(
+                username='mentor_pending',
                 defaults={
-                    'email': email,
-                    'first_name': first_name,
-                    'last_name': last_name,
+                    'email': 'mentor_pending@vau.edu.vn',
+                    'first_name': 'Đỗ Văn',
+                    'last_name': 'Nam',
                     'role': UserRole.MENTOR,
-                    'status': UserStatus.ACTIVE,
-                    'department': 'Khoa Công Nghệ Thông Tin',
-                    'specialization': 'Phát triển Phần mềm & AI'
+                    'status': UserStatus.PENDING_APPROVAL,
+                    'department': 'Khoa Vận tải Hàng không'
                 }
             )
-            mt_user.set_password('mentor123')
-            mt_user.email = email
-            mt_user.first_name = first_name
-            mt_user.last_name = last_name
-            mt_user.role = UserRole.MENTOR
-            mt_user.status = UserStatus.ACTIVE
-            mt_user.department = 'Khoa Công Nghệ Thông Tin'
-            mt_user.save()
-            mentor_objs.append(mt_user)
+            m_pending.set_password(demo_password)
+            m_pending.save()
 
-        main_mentor = mentor_objs[0] # ThS.NCS. Nguyễn Thanh Hiếu
+            # Students
+            students_data = [
+                ('student1', 'Lê Ngọc', 'Trinh', '2431540114', '24ĐHTT02'),
+                ('student2', 'Nguyễn Doãn', 'Ngọc Hân', '2431540093', '24ĐHTT02'),
+                ('student3', 'Phạm Thị', 'Thanh Trúc', '2431540102', '24ĐHTT02'),
+                ('student4', 'Trần Đàm', 'Gia Nghi', '2431540080', '24ĐHTT02'),
+                ('student5', 'Nguyễn Lâm', 'Huyền Tuyết', '2431540137', '24ĐHTT03'),
+                ('student6', 'Hoàng Minh', 'Nhật', '2431540150', '24ĐHTT01'),
+                ('student7', 'Võ Văn', 'Kiệt', '2431540161', '24ĐHTT01'),
+                ('student8', 'Đặng Thái', 'Sơn', '2431540172', '24ĐHTT02'),
+                ('student9', 'Bùi Phương', 'Nam', '2431540183', '24ĐHTT03'),
+                ('student10', 'Trịnh Công', 'Vinh', '2431540194', '24ĐHTT01'),
+                ('student11', 'Đỗ Khánh', 'Linh', '2431540205', '24ĐHTT02'),
+                ('student12', 'Vũ Đức', 'Anh', '2431540216', '24ĐHTT03'),
+                ('student13', 'Lý Hoàng', 'Long', '2431540227', '24ĐHTT01'),
+                ('student14', 'Cao Thị', 'Mai', '2431540238', '24ĐHTT02'),
+            ]
+            students = []
+            for uname, fname, lname, sid, cname in students_data:
+                u, _ = User.objects.get_or_create(
+                    username=uname,
+                    defaults={
+                        'email': f"{uname}@vau.edu.vn",
+                        'first_name': fname,
+                        'last_name': lname,
+                        'student_id': sid,
+                        'class_name': cname,
+                        'role': UserRole.STUDENT,
+                        'status': UserStatus.ACTIVE,
+                        'department': 'Khoa CNTT'
+                    }
+                )
+                u.set_password(demo_password)
+                u.save()
+                students.append(u)
 
-        # Clean up old projects created by legacy users
-        legacy_users = User.objects.exclude(username__in=valid_usernames)
-        Project.objects.filter(created_by__in=legacy_users).delete()
-        Task.objects.filter(assignee__in=legacy_users).delete()
-        legacy_users.delete()
-
-        # 4. PROJECTS (Leader is ALWAYS Lê Ngọc Trinh)
-        project1, _ = Project.objects.get_or_create(
-            code='PRJ-2026-AI',
-            defaults={
-                'name': 'Hệ thống Quản lý Đồ án Tốt nghiệp PROJECTHUB AI',
-                'description': 'Hệ thống hỗ trợ sinh viên Khoa CNTT - Học viện Hàng không Việt Nam quản lý tiến độ đồ án và tương tác cùng giảng viên.',
-                'category': 'WEB',
-                'technology': 'Python, Django 5, Tailwind CSS, Alpine.js, PostgreSQL',
-                'created_by': leader_user,
-                'mentor': main_mentor,
-                'mentor_status': MentorStatus.ACCEPTED,
-                'status': ProjectStatus.IN_PROGRESS,
-                'start_date': timezone.now().date() - timezone.timedelta(days=15),
-                'end_date': timezone.now().date() + timezone.timedelta(days=75)
-            }
-        )
-        project1.name = 'Hệ thống Quản lý Đồ án Tốt nghiệp PROJECTHUB AI'
-        project1.created_by = leader_user
-        project1.mentor = main_mentor
-        project1.mentor_status = MentorStatus.ACCEPTED
-        project1.save()
-
-        project2, _ = Project.objects.get_or_create(
-            code='PRJ-2026-AVIA',
-            defaults={
-                'name': 'Ứng dụng Quản lý Lịch bay & Đặt chỗ Hàng không VAU',
-                'description': 'Hệ thống mô phỏng quản lý phi cơ, lịch khởi hành và điều phối nhân sự hàng không.',
-                'category': 'MOBILE',
-                'technology': 'Flutter, Dart, Django REST Framework, Postgres',
-                'created_by': leader_user,
-                'mentor': mentor_objs[1],
-                'mentor_status': MentorStatus.ACCEPTED,
-                'status': ProjectStatus.IN_PROGRESS,
-                'start_date': timezone.now().date() - timezone.timedelta(days=10),
-                'end_date': timezone.now().date() + timezone.timedelta(days=80)
-            }
-        )
-        project2.name = 'Ứng dụng Quản lý Lịch bay & Đặt chỗ Hàng không VAU'
-        project2.created_by = leader_user
-        project2.mentor = mentor_objs[1]
-        project2.mentor_status = MentorStatus.ACCEPTED
-        project2.save()
-
-        # 5. PROJECT MEMBERS
-        for st_user, is_leader in student_objs:
-            role = MemberRole.LEADER if is_leader else MemberRole.MEMBER
-            pm1, _ = ProjectMember.objects.get_or_create(
-                project=project1,
-                user=st_user,
-                defaults={'role': role, 'status': MemberStatus.ACCEPTED}
-            )
-            pm1.role = role
-            pm1.save()
-
-            pm2, _ = ProjectMember.objects.get_or_create(
-                project=project2,
-                user=st_user,
-                defaults={'role': role, 'status': MemberStatus.ACCEPTED}
-            )
-            pm2.role = role
-            pm2.save()
-
-        # 6. TASKS
-        tasks_data = [
-            ('Phân tích Yêu cầu & Khảo sát Người dùng', TaskPriority.CRITICAL, TaskStatus.DONE, leader_user),
-            ('Thiết kế CSDL & Sơ đồ ERD chuẩn RBAC', TaskPriority.HIGH, TaskStatus.DONE, student_objs[1][0]),
-            ('Xây dựng Giao diện Kanban kéo thả với SortableJS', TaskPriority.HIGH, TaskStatus.IN_PROGRESS, student_objs[2][0]),
-            ('Tích hợp Trợ lý AI Phân tích Rủi ro & Task Breakdown', TaskPriority.CRITICAL, TaskStatus.IN_PROGRESS, student_objs[3][0]),
-            ('Kiểm thử Đóng gói & Thuyết minh Đồ án', TaskPriority.MEDIUM, TaskStatus.TODO, student_objs[4][0]),
-            ('Nộp Báo cáo Tiến độ Tuần 4 cho Mentor Review', TaskPriority.HIGH, TaskStatus.REVIEW, leader_user),
-        ]
-
-        for title, prio, st, assignee in tasks_data:
-            t, _ = Task.objects.get_or_create(
-                project=project1,
-                title=title,
+            # Suspended student
+            s_suspended, _ = User.objects.get_or_create(
+                username='student_locked',
                 defaults={
-                    'priority': prio,
-                    'status': st,
-                    'assignee': assignee,
-                    'created_by': leader_user,
-                    'due_date': timezone.now().date() + timezone.timedelta(days=10),
-                    'description': f'Nhiệm vụ thuộc đồ án ProjectHub AI do {assignee.display_name} thực hiện.'
+                    'email': 'student_locked@vau.edu.vn',
+                    'first_name': 'Phạm Quốc',
+                    'last_name': 'Bảo',
+                    'role': UserRole.STUDENT,
+                    'status': UserStatus.SUSPENDED
                 }
             )
-            t.priority = prio
-            t.status = st
-            t.assignee = assignee
-            t.save()
+            s_suspended.set_password(demo_password)
+            s_suspended.save()
 
-            TaskChecklistItem.objects.get_or_create(task=t, title='Khảo sát quy trình hiện tại', defaults={'is_completed': True})
-            TaskChecklistItem.objects.get_or_create(task=t, title='Review cùng Mentor', defaults={'is_completed': st == TaskStatus.DONE})
+            # 2. Projects & Blueprints
+            blueprints = [
+                {
+                    'code': 'PRJ-2026-AI',
+                    'name': 'Hệ thống Quản lý NCKH và Đồ án Hàng không ProjectHub AI',
+                    'description': 'Nền tảng quản lý đồ án thông minh cho Học viện Hàng không Việt Nam tích hợp AI gợi ý rủi ro và trợ lý học thuật.',
+                    'tech': 'Django 5, Tailwind CSS, Alpine.js, PostgreSQL, FastAPI',
+                    'category': 'WEB',
+                    'status': ProjectStatus.IN_PROGRESS,
+                    'leader': students[0],
+                    'members': [students[1], students[2], students[3]],
+                    'mentor': mentors[0],
+                    'mentor_status': MentorStatus.ACCEPTED,
+                    'progress': 45,
+                    'start_days': -30,
+                    'end_days': 60,
+                    'tasks_blueprint': [
+                        ("Thiết kế CSDL chuẩn hóa RBAC", "Xây dựng sơ đồ CSDL PostgreSQL cho người dùng và dự án.", TaskStatus.DONE, TaskPriority.HIGH, students[0], -25, -20),
+                        ("Xây dựng API Phân quyền & Matrix", "Lập ma trận phân quyền PERMISSION_MATRIX tập trung.", TaskStatus.DONE, TaskPriority.CRITICAL, students[1], -20, -15),
+                        ("Giao diện Bảng Kanban kéo thả", "Phát triển Kanban board Alpine.js với hiệu ứng mượt.", TaskStatus.IN_PROGRESS, TaskPriority.HIGH, students[2], -10, 5),
+                        ("Tích hợp Trợ lý AI và engine rủi ro", "Kết nối engine AI đánh giá điểm rủi ro R1-R9.", TaskStatus.IN_PROGRESS, TaskPriority.MEDIUM, students[0], -5, 10),
+                        ("Kiểm thử Tích hợp & Đơn vị 19 test case", "Viết test suite kiểm tra toàn bộ luồng hệ thống.", TaskStatus.TODO, TaskPriority.HIGH, students[3], 5, 20),
+                    ]
+                },
+                {
+                    'code': 'PRJ-2026-AVIA',
+                    'name': 'Ứng dụng Di động Đặt vé & Trải nghiệm Hàng không AviaTravel',
+                    'description': 'Ứng dụng mobile hỗ trợ hành khách tra cứu chuyến bay, check-in trực tuyến và dịch vụ mặt đất tại sân bay.',
+                    'tech': 'Flutter, DRF, SQLite, Firebase, Redis',
+                    'category': 'MOBILE',
+                    'status': ProjectStatus.IN_PROGRESS,
+                    'leader': students[5],
+                    'members': [students[6], students[7], students[8], students[1]],
+                    'mentor': mentors[1],
+                    'mentor_status': MentorStatus.ACCEPTED,
+                    'progress': 25,
+                    'start_days': -45,
+                    'end_days': 45,
+                    'tasks_blueprint': [
+                        ("Thiết kế UI/UX luồng Đặt vé chuyến bay", "Vẽ prototype và thiết kế giao diện Flutter.", TaskStatus.DONE, TaskPriority.HIGH, students[5], -40, -30),
+                        ("Xây dựng Service Check-in Trực tuyến", "Viết API xử lý chọn ghế và sinh thẻ lên máy bay QR.", TaskStatus.IN_PROGRESS, TaskPriority.CRITICAL, students[6], -20, -5), # Overdue!
+                        ("Tích hợp Cổng Thanh toán VNPay", "Kết nối SDK thanh toán trực tuyến.", TaskStatus.IN_PROGRESS, TaskPriority.HIGH, students[7], -15, -2), # Overdue!
+                        ("Xử lý Thông báo Đẩy lịch bay", "Tích hợp Firebase Cloud Messaging nhận cảnh báo chậm chuyến.", TaskStatus.IN_PROGRESS, TaskPriority.HIGH, students[8], -10, 5),
+                        ("Thử nghiệm trên thiết bị Android/iOS", "Kiểm tra độ ổn định và hiệu năng bộ nhớ.", TaskStatus.TODO, TaskPriority.MEDIUM, students[1], 10, 25),
+                    ]
+                },
+                {
+                    'code': 'PRJ-2026-DRONE',
+                    'name': 'Hệ thống Giám sát & Cảnh báo An ninh Sân bay bằng Drone',
+                    'description': 'Giải pháp IoT và Thị giác máy tính phát hiện xâm nhập đường băng và sự cố vật thể lạ (FOD).',
+                    'tech': 'FastAPI, OpenCV, Python, MQTT, PyTorch',
+                    'category': 'IOT',
+                    'status': ProjectStatus.REVIEW,
+                    'leader': students[7],
+                    'members': [students[8], students[9], students[10]],
+                    'mentor': mentors[2],
+                    'mentor_status': MentorStatus.ACCEPTED,
+                    'progress': 85,
+                    'start_days': -60,
+                    'end_days': 15,
+                    'tasks_blueprint': [
+                        ("Lập trình Firmware Điều khiển Drone", "Viết mã nhúng thu thập luồng video RTSP.", TaskStatus.DONE, TaskPriority.CRITICAL, students[7], -50, -40),
+                        ("Huấn luyện Model YOLOv8 Nhận diện FOD", "Gán nhãn dữ liệu và train mô hình phát hiện vật thể.", TaskStatus.DONE, TaskPriority.HIGH, students[8], -40, -20),
+                        ("Xây dựng Dashboard Cảnh báo Realtime", "Giao diện bản đồ hiển thị vị trí sự cố trên đường băng.", TaskStatus.DONE, TaskPriority.HIGH, students[7], -30, -10),
+                        ("Nộp Báo cáo Tiến độ nghiệm thu", "Tổng hợp báo cáo kỹ thuật nộp Mentor.", TaskStatus.REVIEW, TaskPriority.HIGH, students[7], -10, 5),
+                    ]
+                },
+                {
+                    'code': 'PRJ-2026-CARGO',
+                    'name': 'Hệ thống Quản lý Kho Hàng hóa và Logistics Hàng không',
+                    'description': 'Hệ thống quản lý chuỗi cung ứng hàng hóa hàng không, theo dõi vận đơn AWB và lưu kho lạnh.',
+                    'tech': 'Spring Boot, Vue.js, MySQL, RabbitMQ',
+                    'category': 'SYSTEM',
+                    'status': ProjectStatus.PLANNING,
+                    'leader': students[9],
+                    'members': [students[10], students[11], students[12]],
+                    'mentor': mentors[0],
+                    'mentor_status': MentorStatus.ACCEPTED,
+                    'progress': 10,
+                    'start_days': -10,
+                    'end_days': 80,
+                    'tasks_blueprint': [
+                        ("Phân tích Yêu cầu Nghiệp vụ AWB", "Khảo sát quy trình quản lý vận đơn hàng hóa.", TaskStatus.TODO, TaskPriority.MEDIUM, None, 2, 10),
+                        ("Khảo sát Hạ tầng Kho lạnh", "Đánh giá thiết bị tích hợp cảm biến nhiệt độ.", TaskStatus.TODO, TaskPriority.LOW, None, 5, 15),
+                    ]
+                },
+                {
+                    'code': 'PRJ-2026-RESERVE',
+                    'name': 'Hệ thống Đặt chỗ Dịch vụ Mặt đất và Lounge Sân bay',
+                    'description': 'Hệ thống quản lý và đặt trước phòng chờ thương gia, xe đưa đón và dịch vụ ưu tiên tại sân bay.',
+                    'tech': 'Node.js, Express, React, MongoDB, Redis',
+                    'category': 'WEB',
+                    'status': ProjectStatus.COMPLETED,
+                    'leader': students[11],
+                    'members': [students[12], students[13], students[0], students[4]],
+                    'mentor': mentors[1],
+                    'mentor_status': MentorStatus.ACCEPTED,
+                    'progress': 100,
+                    'start_days': -90,
+                    'end_days': -10,
+                    'tasks_blueprint': [
+                        ("Xây dựng API Quản lý Sơ đồ Lounge", "Thiết lập sơ đồ chỗ ngồi và trạng thái phòng chờ.", TaskStatus.DONE, TaskPriority.HIGH, students[11], -80, -60),
+                        ("Tích hợp Quét Mã QR Check-in", "Xây dựng tính năng quét vé thương gia.", TaskStatus.DONE, TaskPriority.HIGH, students[12], -60, -40),
+                        ("Báo cáo Thống kê Doanh thu Dịch vụ", "Biểu đồ phân tích lưu lượng hành khách.", TaskStatus.DONE, TaskPriority.MEDIUM, students[13], -40, -20),
+                        ("Báo vệ Nghiệm thu Xuất sắc", "Hoàn thành bài thuyết trình và nghiệm thu đề tài.", TaskStatus.DONE, TaskPriority.CRITICAL, students[11], -20, -10),
+                    ]
+                },
+                {
+                    'code': 'PRJ-2026-SAFETY',
+                    'name': 'Hệ thống Phân tích & Dự báo An toàn Bay bằng Học máy',
+                    'description': 'Ứng dụng AI phân tích dữ liệu nhật ký sự cố hàng không và dự báo các chỉ số an toàn bay.',
+                    'tech': 'PyTorch, Streamlit, Pandas, Scikit-learn',
+                    'category': 'AI_ML',
+                    'status': ProjectStatus.PLANNING,
+                    'leader': students[13],
+                    'members': [students[2]],
+                    'mentor': mentors[2],
+                    'mentor_status': MentorStatus.PENDING,
+                    'progress': 0,
+                    'start_days': 0,
+                    'end_days': 90,
+                    'tasks_blueprint': []
+                }
+            ]
 
-        # 7. MILESTONES & EVENTS
-        Milestone.objects.get_or_create(
-            project=project1,
-            name='Giai đoạn 1: Thiết kế Kiến trúc & Khởi tạo CSDL',
-            defaults={
-                'description': 'Nộp bản thảo ERD và tài liệu thiết kế hệ thống SRS',
-                'start_date': timezone.now().date() - timezone.timedelta(days=15),
-                'due_date': timezone.now().date() + timezone.timedelta(days=5),
-                'status': MilestoneStatus.IN_PROGRESS
-            }
-        )
+            for bp in blueprints:
+                proj, _ = Project.objects.get_or_create(
+                    code=bp['code'],
+                    defaults={
+                        'name': bp['name'],
+                        'description': bp['description'],
+                        'technology': bp['tech'],
+                        'category': bp['category'],
+                        'status': bp['status'],
+                        'created_by': bp['leader'],
+                        'mentor': bp['mentor'],
+                        'mentor_status': bp['mentor_status'],
+                        'start_date': today + timezone.timedelta(days=bp['start_days']),
+                        'end_date': today + timezone.timedelta(days=bp['end_days'])
+                    }
+                )
 
-        Event.objects.get_or_create(
-            project=project1,
-            title='Họp Review Tiến độ Tuần với Mentor PGS.TS Nguyễn Văn Minh',
-            defaults={
-                'event_type': 'MEETING',
-                'start': timezone.now() + timezone.timedelta(days=1),
-                'end': timezone.now() + timezone.timedelta(days=1, hours=2),
-                'created_by': leader_user
-            }
-        )
+                # Memberships
+                ProjectMember.objects.get_or_create(
+                    project=proj,
+                    user=bp['leader'],
+                    defaults={'role': MemberRole.LEADER, 'status': MemberStatus.ACCEPTED}
+                )
+                for m_user in bp['members']:
+                    ProjectMember.objects.get_or_create(
+                        project=proj,
+                        user=m_user,
+                        defaults={'role': MemberRole.MEMBER, 'status': MemberStatus.ACCEPTED}
+                    )
 
-        Event.objects.get_or_create(
-            project=project1,
-            title='Họp Review Tiến độ Giữa Kỳ cùng Mentor',
-            defaults={
-                'event_type': 'MEETING',
-                'start': timezone.now() + timezone.timedelta(days=2),
-                'end': timezone.now() + timezone.timedelta(days=2, hours=2),
-                'created_by': leader_user
-            }
-        )
+                # Milestones
+                m1, _ = Milestone.objects.get_or_create(
+                    project=proj,
+                    name=f"Giai đoạn 1: Phân tích & Thiết kế [{proj.code}]",
+                    defaults={
+                        'description': 'Hoàn thiện hồ sơ khảo sát và sơ đồ kiến trúc.',
+                        'start_date': today + timezone.timedelta(days=bp['start_days']),
+                        'due_date': today + timezone.timedelta(days=bp['start_days'] + 20),
+                        'status': MilestoneStatus.COMPLETED if (bp['progress'] >= 40) else MilestoneStatus.IN_PROGRESS
+                    }
+                )
+                m2, _ = Milestone.objects.get_or_create(
+                    project=proj,
+                    name=f"Giai đoạn 2: Phát triển Cốt lõi [{proj.code}]",
+                    defaults={
+                        'description': 'Xây dựng các module chức năng trọng tâm.',
+                        'start_date': today + timezone.timedelta(days=bp['start_days'] + 21),
+                        'due_date': today + timezone.timedelta(days=bp['start_days'] + 50),
+                        'status': MilestoneStatus.COMPLETED if (bp['progress'] >= 80) else MilestoneStatus.PENDING
+                    }
+                )
+                m3, _ = Milestone.objects.get_or_create(
+                    project=proj,
+                    name=f"Giai đoạn 3: Nghiệm thu & Bảo vệ [{proj.code}]",
+                    defaults={
+                        'description': 'Đóng gói sản phẩm và báo cáo hội đồng.',
+                        'start_date': today + timezone.timedelta(days=bp['start_days'] + 51),
+                        'due_date': today + timezone.timedelta(days=bp['end_days']),
+                        'status': MilestoneStatus.COMPLETED if (bp['progress'] == 100) else MilestoneStatus.PENDING
+                    }
+                )
 
-        # 8. TIME LOG
-        TimeLog.objects.get_or_create(
-            user=leader_user,
-            project=project1,
-            defaults={
-                'duration': 14400,
-                'note': 'Thiết kế giao diện Dark Navy và hoàn thiện báo cáo đồ án'
-            }
-        )
+                # Sprints for IN_PROGRESS projects
+                if bp['status'] == ProjectStatus.IN_PROGRESS:
+                    Sprint.objects.get_or_create(
+                        project=proj,
+                        name=f"Sprint 1 - Khởi chạy [{proj.code}]",
+                        defaults={
+                            'goal': 'Xây dựng khung giao diện và API cơ bản.',
+                            'start_date': today + timezone.timedelta(days=bp['start_days']),
+                            'end_date': today + timezone.timedelta(days=bp['start_days'] + 14),
+                            'is_active': False
+                        }
+                    )
+                    Sprint.objects.get_or_create(
+                        project=proj,
+                        name=f"Sprint 2 - Tích hợp [{proj.code}]",
+                        defaults={
+                            'goal': 'Hoàn thiện luồng dữ liệu chính và kết nối AI.',
+                            'start_date': today + timezone.timedelta(days=bp['start_days'] + 15),
+                            'end_date': today + timezone.timedelta(days=bp['start_days'] + 30),
+                            'is_active': True
+                        }
+                    )
 
-        # 9. REVIEWS & FEEDBACK
-        Feedback.objects.get_or_create(
-            project=project1,
-            mentor=main_mentor,
-            defaults={
-                'content': 'Đồ án tiến độ rất tốt. Nhóm trưởng Lê Ngọc Trinh đã phân chia công việc hợp lý.',
-                'rating': 5,
-                'status': ReviewStatus.APPROVED
-            }
-        )
+                # Tasks
+                for t_title, t_desc, t_status, t_prio, t_assignee, s_off, e_off in bp['tasks_blueprint']:
+                    t_due = today + timezone.timedelta(days=e_off)
+                    t_obj, t_created = Task.objects.get_or_create(
+                        project=proj,
+                        title=t_title,
+                        defaults={
+                            'description': t_desc,
+                            'status': t_status,
+                            'priority': t_prio,
+                            'assignee': t_assignee,
+                            'created_by': bp['leader'],
+                            'milestone': m1 if e_off < 0 else m2,
+                            'due_date': t_due,
+                            'status_changed_at': timezone.now() - timezone.timedelta(days=abs(s_off)),
+                            'completed_at': (timezone.now() - timezone.timedelta(days=abs(e_off))) if t_status == TaskStatus.DONE else None
+                        }
+                    )
+                    if t_created:
+                        TaskChecklistItem.objects.create(task=t_obj, title="Khảo sát tài liệu yêu cầu", is_completed=True)
+                        TaskChecklistItem.objects.create(task=t_obj, title="Viết mã nguồn và kiểm thử", is_completed=(t_status == TaskStatus.DONE))
 
-        # 10. DOCUMENTS
-        doc1, _ = Document.objects.get_or_create(
-            project=project1,
-            title='Slide Thuyết minh Đồ án Tốt nghiệp Hội đồng VAU',
-            defaults={
-                'file_type': 'POWERPOINT',
-                'uploaded_by': leader_user,
-                'file_size': '4.2 MB',
-                'description': 'Slide báo cáo tổng quan kiến trúc phần mềm và demo trợ lý AI.',
-                'current_version': 1
-            }
-        )
-        DocumentVersion.objects.get_or_create(
-            document=doc1,
-            version_number=1,
-            defaults={
-                'uploaded_by': leader_user,
-                'change_log': 'Khởi tạo slide trình chiếu đồ án.'
-            }
-        )
+                # Feedbacks
+                if bp['code'] == 'PRJ-2026-DRONE':
+                    Feedback.objects.get_or_create(
+                        project=proj,
+                        mentor=mentors[2],
+                        defaults={
+                            'content': 'Cần bổ sung thêm ma trận đánh giá độ chính xác Precision/Recall cho mô hình nhận diện FOD.',
+                            'rating': 4,
+                            'status': ReviewStatus.NEED_REVISION
+                        }
+                    )
+                elif bp['code'] == 'PRJ-2026-RESERVE':
+                    Feedback.objects.get_or_create(
+                        project=proj,
+                        mentor=mentors[1],
+                        defaults={
+                            'content': 'Đồ án hoàn thành xuất sắc, giao diện mượt mà và báo cáo đầy đủ chỉ tiêu.',
+                            'rating': 5,
+                            'status': ReviewStatus.APPROVED
+                        }
+                    )
 
-        doc2, _ = Document.objects.get_or_create(
-            project=project1,
-            title='Báo cáo SRS & Sơ đồ CSDL ERD',
-            defaults={
-                'file_type': 'PDF',
-                'uploaded_by': leader_user,
-                'file_size': '2.8 MB',
-                'description': 'Tài liệu phân tích yêu cầu SRS và bản vẽ ERD cơ sở dữ liệu.',
-                'current_version': 1
-            }
-        )
-        DocumentVersion.objects.get_or_create(
-            document=doc2,
-            version_number=1,
-            defaults={
-                'uploaded_by': leader_user,
-                'change_log': 'Phiên bản thiết kế hệ thống v1.'
-            }
-        )
+                # Documents with real valid PDF files
+                doc, doc_created = Document.objects.get_or_create(
+                    project=proj,
+                    title=f"Báo cáo Kiến trúc & Thiết kế [{proj.code}]",
+                    defaults={
+                        'uploaded_by': bp['leader'],
+                        'file_type': 'pdf',
+                        'file_size': '245 KB',
+                        'current_version': 1
+                    }
+                )
+                if doc_created:
+                    doc.file.save(f"report_{proj.code}.pdf", ContentFile(MINIMAL_PDF_BYTES), save=True)
+                    DocumentVersion.objects.create(
+                        document=doc,
+                        version_number=1,
+                        file=doc.file,
+                        uploaded_by=bp['leader'],
+                        change_log="Phiên bản khởi tạo báo cáo đồ án."
+                    )
 
-        # 11. NOTIFICATIONS
-        Notification.objects.get_or_create(
-            recipient=leader_user,
-            title='Mentor đã chấp nhận Hướng dẫn',
-            defaults={
-                'message': 'ThS.NCS. Nguyễn Thanh Hiếu đã chấp nhận hướng dẫn đồ án PRJ-2026-AI của bạn.',
-                'notification_type': NotificationType.SYSTEM
-            }
-        )
-        Notification.objects.get_or_create(
-            recipient=main_mentor,
-            title='Bản thảo Đồ án Mới được Nộp',
-            defaults={
-                'message': 'Lê Ngọc Trinh vừa nộp bản thảo "Nộp Báo cáo Tiến độ Tuần 4 cho Mentor Review".',
-                'notification_type': NotificationType.MENTOR_FEEDBACK
-            }
-        )
+                # Activity Log
+                ActivityLog.objects.get_or_create(
+                    project=proj,
+                    action=ActionType.CREATE_PROJECT,
+                    defaults={
+                        'user': bp['leader'],
+                        'entity_type': 'Project',
+                        'entity_id': proj.id,
+                        'description': f"Khởi tạo đồ án {proj.code} - {proj.name}"
+                    }
+                )
 
-        # 12. AUDIT LOGS
-        ActivityLog.objects.create(
-            user=leader_user,
-            action=ActionType.LOGIN,
-            description='Đăng nhập hệ thống thành công với vai trò Sinh viên',
-            ip_address='127.0.0.1'
-        )
-        ActivityLog.objects.create(
-            user=main_mentor,
-            action=ActionType.LOGIN,
-            description='Đăng nhập hệ thống thành công với vai trò Giảng viên / Mentor',
-            ip_address='127.0.0.1'
-        )
-        ActivityLog.objects.create(
-            user=admin_user,
-            action=ActionType.LOGIN,
-            description='Đăng nhập hệ thống thành công với vai trò Quản trị viên',
-            ip_address='127.0.0.1'
-        )
-
-        self.stdout.write(self.style.SUCCESS("Khoi tao du lieu seed_demo VAU thanh cong!"))
+        self.stdout.write(self.style.SUCCESS("Successfully seeded demo data (Phase D)!"))

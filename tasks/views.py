@@ -1,30 +1,33 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from django.contrib import messages
 from tasks.models import Task, TaskComment, TaskStatus, TaskPriority, TaskChecklistItem
-from projects.models import Project, ProjectMember
-from projects.permissions import user_can_access_project
+from tasks.workflow import transition
+from projects.models import Project, ProjectMember, MemberStatus
+from projects.permissions import require_can, can
+from milestones.models import Milestone
 from audit_log.models import ActionType
 from audit_log.utils import log_action
 from notifications.models import Notification, NotificationType
 
 @login_required
+@require_can('project.view')
 def project_tasks_view(request, project_id):
     project = get_object_or_404(Project, id=project_id)
-    if not user_can_access_project(request.user, project):
-        return render(request, 'errors/403.html', status=403)
+    request.breadcrumb_obj = project
 
     tasks = project.tasks.all().select_related('assignee', 'milestone')
-    
+
     todo_tasks = tasks.filter(status=TaskStatus.TODO)
     in_progress_tasks = tasks.filter(status=TaskStatus.IN_PROGRESS)
     review_tasks = tasks.filter(status=TaskStatus.REVIEW)
     done_tasks = tasks.filter(status=TaskStatus.DONE)
-    
-    members = project.memberships.all()
+
+    members = project.memberships.filter(status=MemberStatus.ACCEPTED).select_related('user')
     milestones = project.milestones.all()
-    
+
     context = {
         'project': project,
         'todo_tasks': todo_tasks,
@@ -42,207 +45,218 @@ def my_tasks_view(request):
     return render(request, 'tasks/my_tasks.html', {'tasks': tasks})
 
 @login_required
+@require_POST
+@require_can('task.create')
 def task_create_view(request, project_id):
     project = get_object_or_404(Project, id=project_id)
-    if not user_can_access_project(request.user, project):
-        return render(request, 'errors/403.html', status=403)
 
-    if request.method == 'POST':
-        title = request.POST.get('title')
-        description = request.POST.get('description', '')
-        priority = request.POST.get('priority', TaskPriority.MEDIUM)
-        assignee_id = request.POST.get('assignee_id')
-        milestone_id = request.POST.get('milestone_id')
-        due_date = request.POST.get('due_date') or None
-        
-        task = Task.objects.create(
-            project=project,
-            title=title,
-            description=description,
-            priority=priority,
-            assignee_id=assignee_id if assignee_id else None,
-            milestone_id=milestone_id if milestone_id else None,
-            due_date=due_date,
-            created_by=request.user,
-            status=TaskStatus.TODO
+    title = request.POST.get('title', '').strip()
+    if not title:
+        messages.error(request, 'Vui lòng nhập tiêu đề công việc!')
+        return redirect('project_tasks', project_id=project.id)
+
+    description = request.POST.get('description', '').strip()
+    priority = request.POST.get('priority', TaskPriority.MEDIUM)
+    if priority not in TaskPriority.values:
+        priority = TaskPriority.MEDIUM
+
+    assignee_id = request.POST.get('assignee_id')
+    assignee = None
+    if assignee_id:
+        mem = project.memberships.filter(user_id=assignee_id, status=MemberStatus.ACCEPTED).first()
+        if mem:
+            assignee = mem.user
+
+    milestone_id = request.POST.get('milestone_id')
+    milestone = None
+    if milestone_id:
+        milestone = project.milestones.filter(id=milestone_id).first()
+
+    due_date = request.POST.get('due_date') or None
+
+    task = Task.objects.create(
+        project=project,
+        title=title,
+        description=description,
+        priority=priority,
+        assignee=assignee,
+        milestone=milestone,
+        due_date=due_date,
+        created_by=request.user,
+        status=TaskStatus.TODO
+    )
+
+    log_action(
+        user=request.user,
+        action=ActionType.CREATE_TASK,
+        entity_type='Task',
+        entity_id=task.id,
+        description=f'Tạo công việc mới: "{task.title}" trong đồ án {project.code}',
+        project=project,
+        request=request
+    )
+
+    if task.assignee and task.assignee != request.user:
+        Notification.objects.create(
+            recipient=task.assignee,
+            sender=request.user,
+            title=f'Bạn được giao Task mới [{task.title}]',
+            message=f'{request.user.display_name} đã phân công task "{task.title}" cho bạn.',
+            link=f'/projects/{project.id}/tasks/',
+            notification_type=NotificationType.TASK_ASSIGNED
         )
 
-        log_action(
-            user=request.user,
-            action=ActionType.CREATE_TASK,
-            entity_type='Task',
-            entity_id=task.id,
-            description=f'Tạo công việc mới: "{task.title}" trong đồ án {project.code}',
-            request=request
-        )
-
-        if task.assignee and task.assignee != request.user:
-            Notification.objects.create(
-                recipient=task.assignee,
-                sender=request.user,
-                title=f'Bạn được giao Task mới [{task.title}]',
-                message=f'{request.user.display_name} đã phân công task "{task.title}" cho bạn trong đồ án "{project.name}".',
-                link=f'/projects/{project.id}/tasks/',
-                notification_type=NotificationType.TASK_ASSIGNED
-            )
-
-        messages.success(request, f'Tạo task "{task.title}" thành công!')
+    messages.success(request, f'Tạo task "{task.title}" thành công!')
     return redirect('project_tasks', project_id=project.id)
 
 @login_required
+@require_POST
 def task_update_status_view(request, task_id):
-    if request.method == 'POST':
-        task = get_object_or_404(Task, id=task_id)
-        if not user_can_access_project(request.user, task.project):
-            return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+    task = get_object_or_404(Task, id=task_id)
+    if not can(request.user, 'task.move', task):
+        return JsonResponse({'status': 'error', 'message': 'Bạn không có quyền chuyển trạng thái task này.'}, status=403)
 
-        new_status = request.POST.get('status')
-        if new_status in TaskStatus.values:
-            is_admin = request.user.is_admin_user
-            is_mentor = (task.project.mentor == request.user)
-            is_leader = (task.project.created_by == request.user) or ProjectMember.objects.filter(project=task.project, user=request.user, role='LEADER').exists()
-            is_assignee = (task.assignee == request.user)
+    new_status = request.POST.get('status')
+    reason = request.POST.get('reason', '')
+    force = request.POST.get('force', 'false').lower() == 'true'
 
-            if new_status == TaskStatus.DONE:
-                if not (is_mentor or is_leader or is_admin):
-                    return JsonResponse({'status': 'error', 'message': 'Chỉ Mentor, Trưởng nhóm hoặc Admin mới có quyền chuyển công việc sang DONE.'}, status=403)
-            else:
-                if not (is_assignee or is_leader or is_mentor or is_admin):
-                    return JsonResponse({'status': 'error', 'message': 'Chỉ người thực hiện hoặc quản lý đồ án mới có quyền cập nhật công việc.'}, status=403)
-
-            task.status = new_status
-            task.save()
-            
-            log_action(
-                user=request.user,
-                action=ActionType.UPDATE_TASK,
-                entity_type='Task',
-                entity_id=task.id,
-                description=f'Cập nhật trạng thái task "{task.title}" sang {task.get_status_display()}',
-                request=request
-            )
-            
-            return JsonResponse({'status': 'success', 'new_status_display': task.get_status_display()})
-            
-    return JsonResponse({'status': 'error'}, status=400)
+    success, msg = transition(task, new_status, request.user, reason=reason, force=force)
+    if success:
+        return JsonResponse({'status': 'success', 'message': msg, 'new_status_display': task.get_status_display()})
+    else:
+        status_code = 403 if ("vai trò" in msg or "quyền" in msg) else 400
+        return JsonResponse({'status': 'error', 'message': msg}, status=status_code)
 
 @login_required
+@require_POST
 def task_comment_view(request, task_id):
     task = get_object_or_404(Task, id=task_id)
-    if not user_can_access_project(request.user, task.project):
-        return render(request, 'errors/403.html', status=403)
+    if not can(request.user, 'comment.create', task):
+        return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
-    if request.method == 'POST':
-        content = request.POST.get('content')
-        if content:
-            comment = TaskComment.objects.create(
-                task=task,
-                user=request.user,
-                content=content
-            )
-            log_action(
-                user=request.user,
-                action=ActionType.UPDATE_TASK,
-                entity_type='TaskComment',
-                entity_id=comment.id,
-                description=f'Bình luận về công việc "{task.title}": {content[:50]}',
-                request=request
-            )
-            messages.success(request, 'Đã gửi bình luận!')
-    return redirect('project_tasks', project_id=task.project.id)
-
-
-@login_required
-def task_reorder_view(request):
-    if request.method == 'POST':
-        task_id = request.POST.get('task_id')
-        new_status = request.POST.get('status')
-        order_index = request.POST.get('order_index', 0)
-
-        task = get_object_or_404(Task, id=task_id)
-        if not user_can_access_project(request.user, task.project):
-            return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
-
-        if new_status in TaskStatus.values:
-            task.status = new_status
-            task.order_index = int(order_index)
-            task.save()
-            log_action(
-                user=request.user,
-                action=ActionType.UPDATE_TASK,
-                entity_type='Task',
-                entity_id=task.id,
-                description=f'Di chuyển task "{task.title}" sang {task.get_status_display()}',
-                request=request
-            )
-            return JsonResponse({'status': 'success', 'task_id': task.id, 'new_status': new_status})
-    return JsonResponse({'status': 'error', 'message': 'Yêu cầu không hợp lệ'}, status=400)
-
-
-@login_required
-def task_edit_view(request, task_id):
-    task = get_object_or_404(Task, id=task_id)
-    if not user_can_access_project(request.user, task.project):
-        return render(request, 'errors/403.html', status=403)
-
-    if request.method == 'POST':
-        task.title = request.POST.get('title', task.title)
-        task.description = request.POST.get('description', task.description)
-        task.priority = request.POST.get('priority', task.priority)
-        task.status = request.POST.get('status', task.status)
-        assignee_id = request.POST.get('assignee_id')
-        milestone_id = request.POST.get('milestone_id')
-
-        task.assignee_id = assignee_id if assignee_id else None
-        task.milestone_id = milestone_id if milestone_id else None
-        due_date = request.POST.get('due_date')
-        if due_date:
-            task.due_date = due_date
-        task.labels = request.POST.get('labels', task.labels)
-        task.save()
-
-        messages.success(request, f'Cập nhật công việc "{task.title}" thành công!')
+    content = request.POST.get('content', '').strip()
+    if content:
+        comment = TaskComment.objects.create(
+            task=task,
+            user=request.user,
+            content=content
+        )
         log_action(
             user=request.user,
-            action=ActionType.UPDATE_TASK,
-            entity_type='Task',
-            entity_id=task.id,
-            description=f'Chỉnh sửa thông tin công việc "{task.title}"',
+            action=ActionType.ADD_COMMENT,
+            entity_type='TaskComment',
+            entity_id=comment.id,
+            description=f'Bình luận về công việc "{task.title}": {content[:50]}',
+            project=task.project,
             request=request
         )
-        return redirect('project_tasks', project_id=task.project.id)
-
-    return JsonResponse({'status': 'error', 'message': 'Yêu cầu không hợp lệ'}, status=400)
-
+        messages.success(request, 'Đã gửi bình luận!')
+    return redirect('project_tasks', project_id=task.project.id)
 
 @login_required
+@require_POST
+def task_reorder_view(request):
+    task_id = request.POST.get('task_id')
+    new_status = request.POST.get('status')
+    order_index_raw = request.POST.get('order_index', 0)
+
+    try:
+        order_index = int(order_index_raw)
+    except (ValueError, TypeError):
+        order_index = 0
+
+    task = get_object_or_404(Task, id=task_id)
+    if not can(request.user, 'task.move', task):
+        return JsonResponse({'status': 'error', 'message': 'Bạn không có quyền di chuyển task này.'}, status=403)
+
+    reason = request.POST.get('reason', '')
+    success, msg = transition(task, new_status, request.user, reason=reason)
+    if not success:
+        status_code = 403 if ("vai trò" in msg or "quyền" in msg) else 400
+        return JsonResponse({'status': 'error', 'message': msg}, status=status_code)
+
+    task.order_index = order_index
+    task.save()
+
+    return JsonResponse({'status': 'success', 'task_id': task.id, 'new_status': new_status})
+
+@login_required
+@require_POST
+def task_edit_view(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    if not can(request.user, 'task.edit', task):
+        return JsonResponse({'status': 'error', 'message': 'Bạn không có quyền chỉnh sửa task này.'}, status=403)
+
+    title = request.POST.get('title', '').strip()
+    if title:
+        task.title = title
+    task.description = request.POST.get('description', task.description)
+
+    priority = request.POST.get('priority')
+    if priority in TaskPriority.values:
+        task.priority = priority
+
+    assignee_id = request.POST.get('assignee_id')
+    if assignee_id:
+        mem = task.project.memberships.filter(user_id=assignee_id, status=MemberStatus.ACCEPTED).first()
+        task.assignee = mem.user if mem else None
+    elif 'assignee_id' in request.POST:
+        task.assignee = None
+
+    milestone_id = request.POST.get('milestone_id')
+    if milestone_id:
+        m = task.project.milestones.filter(id=milestone_id).first()
+        task.milestone = m
+    elif 'milestone_id' in request.POST:
+        task.milestone = None
+
+    due_date = request.POST.get('due_date')
+    if due_date:
+        task.due_date = due_date
+
+    task.labels = request.POST.get('labels', task.labels)
+    task.save()
+
+    log_action(
+        user=request.user,
+        action=ActionType.UPDATE_TASK,
+        entity_type='Task',
+        entity_id=task.id,
+        description=f'Chỉnh sửa thông tin công việc "{task.title}"',
+        project=task.project,
+        request=request
+    )
+    messages.success(request, f'Cập nhật công việc "{task.title}" thành công!')
+    return redirect('project_tasks', project_id=task.project.id)
+
+@login_required
+@require_POST
 def task_delete_view(request, task_id):
     task = get_object_or_404(Task, id=task_id)
     project_id = task.project.id
-    if not user_can_access_project(request.user, task.project):
-        return render(request, 'errors/403.html', status=403)
+    if not can(request.user, 'task.delete', task):
+        return JsonResponse({'status': 'error', 'message': 'Bạn không có quyền xóa task này.'}, status=403)
 
-    if request.method == 'POST':
-        title = task.title
-        task.delete()
-        messages.success(request, f'Đã xóa công việc "{title}".')
-        log_action(
-            user=request.user,
-            action=ActionType.DELETE_TASK,
-            entity_type='Task',
-            entity_id=task_id,
-            description=f'Xóa công việc "{title}" khỏi dự án',
-            request=request
-        )
-        return redirect('project_tasks', project_id=project_id)
-    return JsonResponse({'status': 'error', 'message': 'Yêu cầu không hợp lệ'}, status=400)
-
+    title = task.title
+    task.delete()
+    log_action(
+        user=request.user,
+        action=ActionType.DELETE_TASK,
+        entity_type='Task',
+        entity_id=task_id,
+        description=f'Xóa công việc "{title}" khỏi dự án',
+        project=task.project,
+        request=request
+    )
+    messages.success(request, f'Đã xóa công việc "{title}".')
+    return redirect('project_tasks', project_id=project_id)
 
 @login_required
+@require_POST
 def task_duplicate_view(request, task_id):
     task = get_object_or_404(Task, id=task_id)
-    if not user_can_access_project(request.user, task.project):
-        return render(request, 'errors/403.html', status=403)
+    if not can(request.user, 'task.duplicate', task):
+        return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
     new_task = Task.objects.create(
         project=task.project,
@@ -259,11 +273,10 @@ def task_duplicate_view(request, task_id):
     messages.success(request, f'Đã nhân bản công việc thành "{new_task.title}".')
     return redirect('project_tasks', project_id=task.project.id)
 
-
 @login_required
 def task_detail_json_view(request, task_id):
     task = get_object_or_404(Task, id=task_id)
-    if not user_can_access_project(request.user, task.project):
+    if not can(request.user, 'project.view', task.project):
         return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
     checklist_items = task.checklist_items.all()
@@ -283,61 +296,56 @@ def task_detail_json_view(request, task_id):
             'assignee_name': task.assignee.display_name if task.assignee else 'Chưa giao',
             'due_date': task.due_date.strftime('%Y-%m-%d') if task.due_date else None,
             'labels': task.labels or '',
+            'days_in_status': task.days_in_status,
             'progress': task.checklist_progress,
             'checklist': [{'id': item.id, 'title': item.title, 'is_completed': item.is_completed} for item in checklist_items],
             'comments': [{'id': c.id, 'user_name': c.user.display_name, 'user_avatar': c.user.get_avatar_url(), 'content': c.content, 'created_at': c.created_at.strftime('%H:%M %d/%m/%Y')} for c in comments],
         }
     })
 
-
 @login_required
+@require_POST
 def task_checklist_add_view(request, task_id):
-    if request.method == 'POST':
-        task = get_object_or_404(Task, id=task_id)
-        if not user_can_access_project(request.user, task.project):
-            return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+    task = get_object_or_404(Task, id=task_id)
+    if not can(request.user, 'checklist.manage', task):
+        return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
-        title = request.POST.get('title')
-        if title:
-            item = TaskChecklistItem.objects.create(task=task, title=title)
-            return JsonResponse({
-                'status': 'success',
-                'item': {'id': item.id, 'title': item.title, 'is_completed': item.is_completed},
-                'progress': task.checklist_progress
-            })
-    return JsonResponse({'status': 'error'}, status=400)
-
-
-@login_required
-def task_checklist_toggle_view(request, item_id):
-    if request.method == 'POST':
-        item = get_object_or_404(TaskChecklistItem, id=item_id)
-        if not user_can_access_project(request.user, item.task.project):
-            return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
-
-        item.is_completed = not item.is_completed
-        item.save()
-
+    title = request.POST.get('title', '').strip()
+    if title:
+        item = TaskChecklistItem.objects.create(task=task, title=title)
         return JsonResponse({
             'status': 'success',
-            'is_completed': item.is_completed,
-            'progress': item.task.checklist_progress
-        })
-    return JsonResponse({'status': 'error'}, status=400)
-
-
-@login_required
-def task_checklist_delete_view(request, item_id):
-    if request.method == 'POST':
-        item = get_object_or_404(TaskChecklistItem, id=item_id)
-        if not user_can_access_project(request.user, item.task.project):
-            return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
-
-        task = item.task
-        item.delete()
-        return JsonResponse({
-            'status': 'success',
+            'item': {'id': item.id, 'title': item.title, 'is_completed': item.is_completed},
             'progress': task.checklist_progress
         })
-    return JsonResponse({'status': 'error'}, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Tiêu đề không được để trống'}, status=400)
 
+@login_required
+@require_POST
+def task_checklist_toggle_view(request, item_id):
+    item = get_object_or_404(TaskChecklistItem, id=item_id)
+    if not can(request.user, 'checklist.toggle', item.task):
+        return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+
+    item.is_completed = not item.is_completed
+    item.save()
+
+    return JsonResponse({
+        'status': 'success',
+        'is_completed': item.is_completed,
+        'progress': item.task.checklist_progress
+    })
+
+@login_required
+@require_POST
+def task_checklist_delete_view(request, item_id):
+    item = get_object_or_404(TaskChecklistItem, id=item_id)
+    if not can(request.user, 'checklist.manage', item.task):
+        return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
+
+    task = item.task
+    item.delete()
+    return JsonResponse({
+        'status': 'success',
+        'progress': task.checklist_progress
+    })

@@ -19,9 +19,25 @@ class ActionType(models.TextChoices):
     LOCK_USER = 'LOCK_USER', 'Khóa tài khoản'
     UNLOCK_USER = 'UNLOCK_USER', 'Mở khóa tài khoản'
     SYSTEM_CONFIG = 'SYSTEM_CONFIG', 'Cấu hình hệ thống'
+    CREATE_USER = 'CREATE_USER', 'Tạo người dùng'
+    UPDATE_USER = 'UPDATE_USER', 'Cập nhật người dùng'
+    CHANGE_ROLE = 'CHANGE_ROLE', 'Đổi vai trò người dùng'
+    APPROVE_USER = 'APPROVE_USER', 'Duyệt giảng viên'
+    REJECT_USER = 'REJECT_USER', 'Từ chối đăng ký'
+    RESET_PASSWORD = 'RESET_PASSWORD', 'Đặt lại mật khẩu'
+    ADD_COMMENT = 'ADD_COMMENT', 'Thêm bình luận'
+    CHANGE_STATUS = 'CHANGE_STATUS', 'Chuyển trạng thái'
+    CREATE_EVENT = 'CREATE_EVENT', 'Tạo sự kiện lịch'
+    UPDATE_EVENT = 'UPDATE_EVENT', 'Cập nhật sự kiện lịch'
+    DELETE_EVENT = 'DELETE_EVENT', 'Xóa sự kiện lịch'
+    MEMBER_CHANGE = 'MEMBER_CHANGE', 'Thay đổi thành viên'
+    AI_GENERATE = 'AI_GENERATE', 'Yêu cầu AI phân tích'
+    AI_APPLY = 'AI_APPLY', 'Áp dụng đề xuất AI'
+    AI_PROPOSE = 'AI_PROPOSE', 'Gửi đề xuất AI'
 
 class ActivityLog(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='audit_logs', verbose_name="Người thực hiện")
+    project = models.ForeignKey('projects.Project', on_delete=models.CASCADE, null=True, blank=True, related_name='activity_logs', verbose_name="Đồ án liên quan")
     action = models.CharField(max_length=50, choices=ActionType.choices, verbose_name="Hành động")
     entity_type = models.CharField(max_length=100, blank=True, null=True, verbose_name="Đối tượng tác động")
     entity_id = models.CharField(max_length=50, blank=True, null=True, verbose_name="ID Đối tượng")

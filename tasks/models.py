@@ -81,6 +81,8 @@ class Task(models.Model):
     due_date = models.DateField(blank=True, null=True, db_index=True, verbose_name="Hạn hoàn thành")
     labels = models.CharField(max_length=255, blank=True, null=True, verbose_name="Nhãn (cách nhau bởi dấu phẩy)")
     order_index = models.IntegerField(default=0, verbose_name="Thứ tự Kanban")
+    completed_at = models.DateTimeField(null=True, blank=True, verbose_name="Thời điểm hoàn thành")
+    status_changed_at = models.DateTimeField(null=True, blank=True, verbose_name="Thời điểm đổi trạng thái gần nhất")
     
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -104,6 +106,13 @@ class Task(models.Model):
         if self.status != TaskStatus.DONE and self.due_date and self.due_date < timezone.now().date():
             return True
         return False
+
+    @property
+    def days_in_status(self):
+        ref = self.status_changed_at or self.created_at
+        if not ref:
+            return 0
+        return (timezone.now() - ref).days
 
     @property
     def checklist_total_count(self):

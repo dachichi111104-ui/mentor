@@ -9,6 +9,7 @@ class UserRole(models.TextChoices):
 class UserStatus(models.TextChoices):
     ACTIVE = 'ACTIVE', 'Hoạt động'
     SUSPENDED = 'SUSPENDED', 'Đã khóa'
+    PENDING_APPROVAL = 'PENDING_APPROVAL', 'Chờ duyệt'
 
 class User(AbstractUser):
     role = models.CharField(
@@ -145,6 +146,7 @@ class UserPreferenceTheme(models.TextChoices):
 
 class UserPreference(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='preference', verbose_name="Người dùng")
+    last_ai_project = models.ForeignKey('projects.Project', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Đồ án AI xem gần nhất")
     theme = models.CharField(max_length=20, choices=UserPreferenceTheme.choices, default=UserPreferenceTheme.NAVY, verbose_name="Giao diện Accent")
     email_notifications = models.BooleanField(default=True, verbose_name="Thông báo qua Email")
     in_app_notifications = models.BooleanField(default=True, verbose_name="Thông báo trong Ứng dụng")

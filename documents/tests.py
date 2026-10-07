@@ -39,7 +39,7 @@ class DocumentPermissionTests(TestCase):
     def test_non_uploader_cannot_delete_document(self):
         self.client.login(username='student2', password='password')
         url = reverse('document_delete', args=[self.doc.id])
-        response = self.client.get(url)
+        response = self.client.post(url)
         self.assertEqual(response.status_code, 403)
         self.assertTrue(Document.objects.filter(id=self.doc.id).exists())
 

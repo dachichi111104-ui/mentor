@@ -122,7 +122,7 @@ def build_project_context(project, days=14):
     ).order_by('-created_at')[:10]
     
     recent_activities = [
-        f"[{log.created_at.strftime('%d/%m %H:%i')}] {log.user.display_name if log.user else 'System'}: {log.description}"
+        f"[{log.created_at.strftime('%d/%m %H:%M')}] {log.user.display_name if log.user else 'System'}: {log.description}"
         for log in activity_logs
     ]
 
