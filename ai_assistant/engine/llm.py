@@ -121,7 +121,11 @@ class LLMClient:
         raise last_exception
 
     def _call_gemini(self, prompt: str) -> tuple[str, int, int]:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
+        model_name = self.model.lower() if self.model else ''
+        if not model_name or 'antigravity' in model_name or not model_name.startswith('gemini'):
+            model_name = 'gemini-2.5-flash'
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self.gemini_key}"
+
         headers = {
             'Content-Type': 'application/json',
             'x-goog-api-key': self.gemini_key
@@ -146,6 +150,7 @@ class LLMClient:
         text = candidates[0]['content']['parts'][0]['text']
         usage = data.get('usageMetadata', {})
         return text, usage.get('promptTokenCount', 0), usage.get('candidatesTokenCount', 0)
+
 
     def _call_openai(self, prompt: str) -> tuple[str, int, int]:
         url = "https://api.openai.com/v1/chat/completions"
