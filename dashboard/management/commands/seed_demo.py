@@ -50,19 +50,22 @@ class Command(BaseCommand):
         with transaction.atomic():
             if reset:
                 self.stdout.write("Cleaning old demo data...")
-                TaskChecklistItem.objects.all().delete()
-                TaskComment.objects.all().delete()
-                Task.objects.all().delete()
-                Sprint.objects.all().delete()
-                Milestone.objects.all().delete()
-                DocumentVersion.objects.all().delete()
-                Document.objects.all().delete()
-                Feedback.objects.all().delete()
-                Notification.objects.all().delete()
-                ActivityLog.objects.all().delete()
-                ProjectMember.objects.all().delete()
-                Project.objects.all().delete()
-                User.objects.filter(email__endswith='@vau.edu.vn').exclude(username='admin').delete()
+                demo_projects = Project.objects.filter(code__startswith='PRJ-2026-')
+                demo_users = User.objects.filter(email__endswith='@vau.edu.vn').exclude(username='admin')
+                
+                TaskChecklistItem.objects.filter(task__project__in=demo_projects).delete()
+                TaskComment.objects.filter(task__project__in=demo_projects).delete()
+                Task.objects.filter(project__in=demo_projects).delete()
+                Sprint.objects.filter(project__in=demo_projects).delete()
+                Milestone.objects.filter(project__in=demo_projects).delete()
+                DocumentVersion.objects.filter(document__project__in=demo_projects).delete()
+                Document.objects.filter(project__in=demo_projects).delete()
+                Feedback.objects.filter(project__in=demo_projects).delete()
+                Notification.objects.filter(project__in=demo_projects).delete()
+                ActivityLog.objects.filter(project__in=demo_projects).delete()
+                ProjectMember.objects.filter(project__in=demo_projects).delete()
+                demo_projects.delete()
+                demo_users.delete()
 
             # 1. Users
             admin, _ = User.objects.get_or_create(
@@ -184,6 +187,11 @@ class Command(BaseCommand):
                     'progress': 45,
                     'start_days': -30,
                     'end_days': 60,
+                    'milestones_names': [
+                        "Mốc 1: Khảo sát Yêu cầu & Thiết kế CSDL Hàng không",
+                        "Mốc 2: Phát triển Core API & Giao diện Kanban AI",
+                        "Mốc 3: Kiểm thử Tích hợp & Đóng gói Báo cáo Hội đồng"
+                    ],
                     'tasks_blueprint': [
                         ("Thiết kế CSDL chuẩn hóa RBAC", "Xây dựng sơ đồ CSDL PostgreSQL cho người dùng và dự án.", TaskStatus.DONE, TaskPriority.HIGH, students[0], -25, -20),
                         ("Xây dựng API Phân quyền & Matrix", "Lập ma trận phân quyền PERMISSION_MATRIX tập trung.", TaskStatus.DONE, TaskPriority.CRITICAL, students[1], -20, -15),
@@ -206,10 +214,15 @@ class Command(BaseCommand):
                     'progress': 25,
                     'start_days': -45,
                     'end_days': 45,
+                    'milestones_names': [
+                        "Mốc 1: Thiết kế UI/UX App Mobile & Khung Chức năng",
+                        "Mốc 2: Tích hợp Cổng Thanh toán & Check-in QR",
+                        "Mốc 3: Kiểm thử Đa thiết bị & Đóng gói App Stores"
+                    ],
                     'tasks_blueprint': [
                         ("Thiết kế UI/UX luồng Đặt vé chuyến bay", "Vẽ prototype và thiết kế giao diện Flutter.", TaskStatus.DONE, TaskPriority.HIGH, students[5], -40, -30),
-                        ("Xây dựng Service Check-in Trực tuyến", "Viết API xử lý chọn ghế và sinh thẻ lên máy bay QR.", TaskStatus.IN_PROGRESS, TaskPriority.CRITICAL, students[6], -20, -5), # Overdue!
-                        ("Tích hợp Cổng Thanh toán VNPay", "Kết nối SDK thanh toán trực tuyến.", TaskStatus.IN_PROGRESS, TaskPriority.HIGH, students[7], -15, -2), # Overdue!
+                        ("Xây dựng Service Check-in Trực tuyến", "Viết API xử lý chọn ghế và sinh thẻ lên máy bay QR.", TaskStatus.IN_PROGRESS, TaskPriority.CRITICAL, students[6], -20, -5),
+                        ("Tích hợp Cổng Thanh toán VNPay", "Kết nối SDK thanh toán trực tuyến.", TaskStatus.IN_PROGRESS, TaskPriority.HIGH, students[7], -15, -2),
                         ("Xử lý Thông báo Đẩy lịch bay", "Tích hợp Firebase Cloud Messaging nhận cảnh báo chậm chuyến.", TaskStatus.IN_PROGRESS, TaskPriority.HIGH, students[8], -10, 5),
                         ("Thử nghiệm trên thiết bị Android/iOS", "Kiểm tra độ ổn định và hiệu năng bộ nhớ.", TaskStatus.TODO, TaskPriority.MEDIUM, students[1], 10, 25),
                     ]
@@ -228,6 +241,11 @@ class Command(BaseCommand):
                     'progress': 85,
                     'start_days': -60,
                     'end_days': 15,
+                    'milestones_names': [
+                        "Mốc 1: Thu thập Dữ liệu Video & Thiết lập Firmware Drone",
+                        "Mốc 2: Huấn luyện Mô hình YOLOv8 & Realtime Dashboard",
+                        "Mốc 3: Thử nghiệm Thực địa Đường băng & Báo cáo Nghiệm thu"
+                    ],
                     'tasks_blueprint': [
                         ("Lập trình Firmware Điều khiển Drone", "Viết mã nhúng thu thập luồng video RTSP.", TaskStatus.DONE, TaskPriority.CRITICAL, students[7], -50, -40),
                         ("Huấn luyện Model YOLOv8 Nhận diện FOD", "Gán nhãn dữ liệu và train mô hình phát hiện vật thể.", TaskStatus.DONE, TaskPriority.HIGH, students[8], -40, -20),
@@ -249,6 +267,11 @@ class Command(BaseCommand):
                     'progress': 10,
                     'start_days': -10,
                     'end_days': 80,
+                    'milestones_names': [
+                        "Mốc 1: Phân tích Quy trình Vận đơn AWB & Khảo sát Kho",
+                        "Mốc 2: Thiết kế Hệ thống Quản lý Cung ứng Hàng hóa",
+                        "Mốc 3: Triển khai Module Theo dõi Thời gian thực"
+                    ],
                     'tasks_blueprint': [
                         ("Phân tích Yêu cầu Nghiệp vụ AWB", "Khảo sát quy trình quản lý vận đơn hàng hóa.", TaskStatus.TODO, TaskPriority.MEDIUM, None, 2, 10),
                         ("Khảo sát Hạ tầng Kho lạnh", "Đánh giá thiết bị tích hợp cảm biến nhiệt độ.", TaskStatus.TODO, TaskPriority.LOW, None, 5, 15),
@@ -268,6 +291,11 @@ class Command(BaseCommand):
                     'progress': 100,
                     'start_days': -90,
                     'end_days': -10,
+                    'milestones_names': [
+                        "Mốc 1: Khảo sát Sơ đồ Phòng chờ Thương gia & API Backend",
+                        "Mốc 2: Tích hợp Check-in QR & Thanh toán Trực tuyến",
+                        "Mốc 3: Nghiệm thu Đề tài & Báo cáo Hội đồng Xuất sắc"
+                    ],
                     'tasks_blueprint': [
                         ("Xây dựng API Quản lý Sơ đồ Lounge", "Thiết lập sơ đồ chỗ ngồi và trạng thái phòng chờ.", TaskStatus.DONE, TaskPriority.HIGH, students[11], -80, -60),
                         ("Tích hợp Quét Mã QR Check-in", "Xây dựng tính năng quét vé thương gia.", TaskStatus.DONE, TaskPriority.HIGH, students[12], -60, -40),
@@ -289,9 +317,17 @@ class Command(BaseCommand):
                     'progress': 0,
                     'start_days': 0,
                     'end_days': 90,
+                    'milestones_names': [
+                        "Mốc 1: Thu thập & Tiền xử lý Dữ liệu Nhật ký Sự cố",
+                        "Mốc 2: Xây dựng & Đánh giá Model Dự báo An toàn",
+                        "Mốc 3: Triển khai Dashboard Streamlit & Nghiệm thu"
+                    ],
                     'tasks_blueprint': []
                 }
             ]
+
+            from dashboard.models import TimeLog
+            from milestones.models import Event, EventType, EventStatus
 
             for bp in blueprints:
                 proj, _ = Project.objects.get_or_create(
@@ -323,10 +359,11 @@ class Command(BaseCommand):
                         defaults={'role': MemberRole.MEMBER, 'status': MemberStatus.ACCEPTED}
                     )
 
-                # Milestones
+                # Milestones with unique names
+                ms_names = bp.get('milestones_names', ["Mốc 1", "Mốc 2", "Mốc 3"])
                 m1, _ = Milestone.objects.get_or_create(
                     project=proj,
-                    name=f"Giai đoạn 1: Phân tích & Thiết kế [{proj.code}]",
+                    name=ms_names[0],
                     defaults={
                         'description': 'Hoàn thiện hồ sơ khảo sát và sơ đồ kiến trúc.',
                         'start_date': today + timezone.timedelta(days=bp['start_days']),
@@ -336,7 +373,7 @@ class Command(BaseCommand):
                 )
                 m2, _ = Milestone.objects.get_or_create(
                     project=proj,
-                    name=f"Giai đoạn 2: Phát triển Cốt lõi [{proj.code}]",
+                    name=ms_names[1],
                     defaults={
                         'description': 'Xây dựng các module chức năng trọng tâm.',
                         'start_date': today + timezone.timedelta(days=bp['start_days'] + 21),
@@ -346,7 +383,7 @@ class Command(BaseCommand):
                 )
                 m3, _ = Milestone.objects.get_or_create(
                     project=proj,
-                    name=f"Giai đoạn 3: Nghiệm thu & Bảo vệ [{proj.code}]",
+                    name=ms_names[2],
                     defaults={
                         'description': 'Đóng gói sản phẩm và báo cáo hội đồng.',
                         'start_date': today + timezone.timedelta(days=bp['start_days'] + 51),
@@ -399,6 +436,30 @@ class Command(BaseCommand):
                     if t_created:
                         TaskChecklistItem.objects.create(task=t_obj, title="Khảo sát tài liệu yêu cầu", is_completed=True)
                         TaskChecklistItem.objects.create(task=t_obj, title="Viết mã nguồn và kiểm thử", is_completed=(t_status == TaskStatus.DONE))
+
+                        # TimeLog seed entry
+                        if t_assignee:
+                            TimeLog.objects.create(
+                                user=t_assignee,
+                                project=proj,
+                                task=t_obj,
+                                duration=3600 * 4,
+                                note=f"Lập trình module cho task '{t_title}'"
+                            )
+
+                # Seed Calendar Event
+                Event.objects.get_or_create(
+                    project=proj,
+                    title=f"Họp Mentor định kỳ - Đồ án {proj.code}",
+                    defaults={
+                        'event_type': EventType.MEETING,
+                        'start': timezone.now() + timezone.timedelta(days=2),
+                        'end': timezone.now() + timezone.timedelta(days=2, hours=1),
+                        'status': EventStatus.ACCEPTED,
+                        'created_by': bp['leader'],
+                        'link': 'https://meet.google.com/vau-demo-project'
+                    }
+                )
 
                 # Feedbacks
                 if bp['code'] == 'PRJ-2026-DRONE':
@@ -455,4 +516,5 @@ class Command(BaseCommand):
                     }
                 )
 
-        self.stdout.write(self.style.SUCCESS("Successfully seeded demo data (Phase D)!"))
+        self.stdout.write(self.style.SUCCESS("Successfully seeded demo data (Phase E)!"))
+
