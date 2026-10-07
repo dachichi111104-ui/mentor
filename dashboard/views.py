@@ -221,6 +221,63 @@ def admin_user_change_role_view(request, user_id):
         messages.success(request, f'Đã đổi vai trò {user_to_change.username} thành {user_to_change.get_role_display()}.')
     return redirect('admin_users')
 
+from notifications.services import notify
+from notifications.models import NotificationType
+
+@login_required
+@require_POST
+@require_can('user.approve_mentor')
+def admin_approve_user_view(request, user_id):
+    target_user = get_object_or_404(User, id=user_id)
+    target_user.status = UserStatus.ACTIVE
+    target_user.save()
+
+    log_action(
+        user=request.user,
+        action=ActionType.APPROVE_USER,
+        entity_type='User',
+        entity_id=target_user.id,
+        description=f'Quản trị viên phê duyệt tài khoản Giảng viên: {target_user.username}',
+        request=request
+    )
+
+    notify(
+        recipient=target_user,
+        sender=request.user,
+        title='Tài khoản đã được phê duyệt',
+        message='Tài khoản Giảng viên của bạn đã được Quản trị viên HVHK phê duyệt. Bạn có thể đăng nhập ngay bây giờ.',
+        link='/login/',
+        notification_type=NotificationType.SYSTEM
+    )
+
+    messages.success(request, f'Đã phê duyệt tài khoản Giảng viên: {target_user.display_name}')
+    return redirect('admin_users')
+
+@login_required
+@require_POST
+@require_can('user.approve_mentor')
+def admin_reject_user_view(request, user_id):
+    target_user = get_object_or_404(User, id=user_id)
+    reason = request.POST.get('reason', '').strip()
+    if not reason:
+        messages.error(request, 'Vui lòng nhập lý do từ chối phê duyệt.')
+        return redirect('admin_users')
+
+    target_user.status = UserStatus.SUSPENDED
+    target_user.save()
+
+    log_action(
+        user=request.user,
+        action=ActionType.REJECT_USER,
+        entity_type='User',
+        entity_id=target_user.id,
+        description=f'Từ chối phê duyệt Giảng viên {target_user.username}. Lý do: {reason}',
+        request=request
+    )
+
+    messages.warning(request, f'Đã từ chối tài khoản Giảng viên: {target_user.display_name}. Lý do: {reason}')
+    return redirect('admin_users')
+
 @login_required
 @require_can('user.manage')
 def admin_audit_log_view(request):
