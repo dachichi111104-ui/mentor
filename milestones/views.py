@@ -12,6 +12,8 @@ from projects.permissions import visible_projects, require_can, can
 from audit_log.models import ActionType
 from audit_log.utils import log_action
 from notifications.models import Notification, NotificationType
+from notifications.services import notify
+
 
 @login_required
 @require_can('project.view')
@@ -300,18 +302,21 @@ def appointment_book_view(request):
         start=parsed_start,
         link=link,
         created_by=request.user,
-        status=EventStatus.PENDING
     )
+
     if project.mentor:
+
         ev.participants.add(project.mentor)
-        Notification.objects.create(
+        notify(
             recipient=project.mentor,
             sender=request.user,
             title=f'Lịch hẹn mới từ Sinh viên [{project.code}]',
             message=f'{request.user.display_name} muốn đặt lịch hẹn: "{title}" vào lúc {start_str}.',
             link='/calendar/',
-            notification_type=NotificationType.SYSTEM
+            notification_type=NotificationType.SYSTEM,
+            project=project
         )
+
 
     messages.success(request, 'Đã gửi yêu cầu đặt lịch hẹn tới Mentor.')
     return redirect('calendar_page')

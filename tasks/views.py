@@ -11,6 +11,8 @@ from milestones.models import Milestone
 from audit_log.models import ActionType
 from audit_log.utils import log_action
 from notifications.models import Notification, NotificationType
+from notifications.services import notify
+
 
 @login_required
 @require_can('project.view')
@@ -97,14 +99,16 @@ def task_create_view(request, project_id):
     )
 
     if task.assignee and task.assignee != request.user:
-        Notification.objects.create(
+        notify(
             recipient=task.assignee,
             sender=request.user,
             title=f'Bạn được giao Task mới [{task.title}]',
             message=f'{request.user.display_name} đã phân công task "{task.title}" cho bạn.',
             link=f'/projects/{project.id}/tasks/',
-            notification_type=NotificationType.TASK_ASSIGNED
+            notification_type=NotificationType.TASK_ASSIGNED,
+            project=project
         )
+
 
     messages.success(request, f'Tạo task "{task.title}" thành công!')
     return redirect('project_tasks', project_id=project.id)

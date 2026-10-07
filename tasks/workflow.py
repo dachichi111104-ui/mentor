@@ -5,6 +5,8 @@ from projects.permissions import get_project_role
 from audit_log.models import ActionType
 from audit_log.utils import log_action
 from notifications.models import Notification, NotificationType
+from notifications.services import notify
+
 
 def transition(task, new_status, actor, reason=None, force=False):
     """
@@ -97,13 +99,15 @@ def transition(task, new_status, actor, reason=None, force=False):
             recipients.add(task.project.mentor)
 
         for recipient in recipients:
-            Notification.objects.create(
+            notify(
                 recipient=recipient,
                 sender=actor,
                 title=f"Nhiệm vụ [{task.project.code}] đổi trạng thái",
                 message=f"{actor.display_name} đã chuyển nhiệm vụ '{task.title[:50]}' sang [{task.get_status_display()}].",
                 link=f"/tasks/{task.id}/",
-                notification_type=NotificationType.TASK_ASSIGNED
+                notification_type=NotificationType.TASK_ASSIGNED,
+                project=task.project
             )
+
 
     return True, "Thành công"

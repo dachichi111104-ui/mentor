@@ -22,17 +22,14 @@ def notify(recipient, notification_type=None, title="", body="", message=None, l
     if safe_link and not safe_link.startswith('/'):
         safe_link = '/'
 
-    # Deduplication check in last 24 hours
+    # Deduplication check
     if dedupe_key:
-        from django.utils import timezone
-        recent = Notification.objects.filter(
-            recipient=recipient,
-            notification_type=notification_type,
-            title=title,
-            created_at__gte=timezone.now() - timezone.timedelta(hours=24)
-        ).exists()
-        if recent:
+        from django.core.cache import cache
+        cache_k = f"notif_dedupe:{dedupe_key}"
+        if cache.get(cache_k):
             return None
+        cache.set(cache_k, True, timeout=86400)
+
 
     notif = Notification.objects.create(
         recipient=recipient,

@@ -16,6 +16,8 @@ from ai_assistant.engine.rules import calculate_metrics
 from audit_log.models import ActionType
 from audit_log.utils import log_action
 from notifications.models import Notification, NotificationType
+from notifications.services import notify
+
 
 @login_required
 @require_can('ai.view')
@@ -168,14 +170,16 @@ def ai_accept_tasks_ajax(request):
                 recipients.add(m.user)
 
             for leader in recipients:
-                Notification.objects.create(
+                notify(
                     recipient=leader,
                     sender=request.user,
                     title=f'Đề xuất Task AI mới cho Đồ án [{project.code}]',
                     message=f'{request.user.display_name} đã gửi đề xuất {len(tasks_to_create)} công việc từ AI Assistant.',
                     link=f'/ai/assistant/?project_id={project.id}',
-                    notification_type=NotificationType.SYSTEM
+                    notification_type=NotificationType.SYSTEM,
+                    project=project
                 )
+
 
             return JsonResponse({
                 'status': 'proposed',
@@ -452,13 +456,14 @@ def ai_propose_ajax(request):
             recipients.add(m.user)
 
         for rec in recipients:
-            Notification.objects.create(
+            notify(
                 recipient=rec,
                 sender=request.user,
                 title=f'Đề xuất AI mới cho Đồ án [{project.code}]',
                 message=f'{request.user.display_name} đã gửi đề xuất AI mới.',
                 link=f'/ai/assistant/?project_id={project.id}',
-                notification_type=NotificationType.SYSTEM
+                notification_type=NotificationType.SYSTEM,
+                project=project
             )
 
         return JsonResponse({
@@ -504,13 +509,14 @@ def ai_proposal_action_ajax(request, proposal_id, action):
         proposal.note = f"Đã duyệt và áp dụng {created_count} task."
         proposal.save()
 
-        Notification.objects.create(
+        notify(
             recipient=proposal.proposed_by,
             sender=request.user,
             title=f'Đề xuất AI đã được duyệt [{proposal.project.code}]',
             message=f'Đề xuất AI của bạn đã được {request.user.display_name} duyệt và áp dụng {created_count} task.',
             link=f'/ai/assistant/?project_id={proposal.project.id}',
-            notification_type=NotificationType.SYSTEM
+            notification_type=NotificationType.SYSTEM,
+            project=proposal.project
         )
 
         return JsonResponse({'status': 'success', 'proposal_status': proposal.status, 'created_count': created_count})
@@ -522,14 +528,16 @@ def ai_proposal_action_ajax(request, proposal_id, action):
         proposal.note = "Đã từ chối đề xuất."
         proposal.save()
 
-        Notification.objects.create(
+        notify(
             recipient=proposal.proposed_by,
             sender=request.user,
             title=f'Đề xuất AI bị từ chối [{proposal.project.code}]',
             message=f'Đề xuất AI của bạn đã bị từ chối.',
             link=f'/ai/assistant/?project_id={proposal.project.id}',
-            notification_type=NotificationType.SYSTEM
+            notification_type=NotificationType.SYSTEM,
+            project=proposal.project
         )
+
 
         return JsonResponse({'status': 'success', 'proposal_status': proposal.status})
 

@@ -230,13 +230,14 @@ def project_add_member_view(request, project_id):
         defaults={'role': MemberRole.MEMBER, 'status': MemberStatus.PENDING}
     )
 
-    Notification.objects.create(
+    notify(
         recipient=user_to_add,
         sender=request.user,
         title=f'Lời mời tham gia đồ án [{project.code}]',
         message=f'{request.user.display_name} đã mời bạn tham gia đồ án "{project.name}". Vui lòng xác nhận.',
         link=f'/projects/{project.id}/',
-        notification_type=NotificationType.PROJECT_INVITE
+        notification_type=NotificationType.PROJECT_INVITE,
+        project=project
     )
     log_action(
         user=request.user,
@@ -270,13 +271,14 @@ def project_mentor_accept_view(request, project_id):
     project.status = ProjectStatus.IN_PROGRESS
     project.save()
 
-    Notification.objects.create(
+    notify(
         recipient=project.created_by,
         sender=request.user,
         title=f'Mentor đã chấp nhận hướng dẫn đồ án [{project.code}]',
         message=f'Giảng viên {request.user.display_name} đã đồng ý hướng dẫn đồ án "{project.name}".',
         link=f'/projects/{project.id}/',
-        notification_type=NotificationType.PROJECT_ACCEPTED
+        notification_type=NotificationType.PROJECT_ACCEPTED,
+        project=project
     )
     messages.success(request, 'Bạn đã chấp nhận hướng dẫn đồ án này!')
     return redirect('project_detail', project_id=project_id)
@@ -292,14 +294,16 @@ def project_mentor_reject_view(request, project_id):
     project.mentor_status = MentorStatus.REJECTED
     project.save()
 
-    Notification.objects.create(
+    notify(
         recipient=project.created_by,
         sender=request.user,
         title=f'Mentor từ chối hướng dẫn đồ án [{project.code}]',
         message=f'Giảng viên {request.user.display_name} từ chối hướng dẫn đồ án "{project.name}". Lý do: {reason or "Không có"}',
         link=f'/projects/{project.id}/',
-        notification_type=NotificationType.PROJECT_REJECTED
+        notification_type=NotificationType.PROJECT_REJECTED,
+        project=project
     )
+
     messages.warning(request, 'Bạn đã từ chối hướng dẫn đồ án này.')
     return redirect('project_list')
 
