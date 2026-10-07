@@ -1,4 +1,5 @@
 import csv
+from pathlib import Path
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
@@ -522,3 +523,37 @@ def analytics_export_pdf_view(request):
         'generated_at': timezone.now().strftime('%H:%M %d/%m/%Y')
     }
     return render(request, 'dashboard/analytics_pdf_report.html', context)
+
+def healthz_view(request):
+    """
+    Health check endpoint for production load balancers and Render health checks.
+    Checks DB connectivity and MEDIA_ROOT write permissions.
+    """
+    from django.db import connection
+    from django.conf import settings
+    import tempfile
+
+    db_ok = True
+    try:
+        connection.ensure_connection()
+    except Exception:
+        db_ok = False
+
+    media_ok = True
+    try:
+        media_dir = getattr(settings, 'MEDIA_ROOT', None)
+        if media_dir:
+            test_file = Path(media_dir) / '.health_check_tmp'
+            test_file.write_bytes(b'health_check')
+            if test_file.exists():
+                test_file.unlink()
+    except Exception:
+        media_ok = False
+
+    status_code = 200 if (db_ok and media_ok) else 500
+    return JsonResponse({
+        'status': 'ok' if (db_ok and media_ok) else 'error',
+        'db': 'ok' if db_ok else 'error',
+        'media_storage': 'ok' if media_ok else 'error'
+    }, status=status_code)
+

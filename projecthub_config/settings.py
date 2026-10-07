@@ -18,17 +18,15 @@ DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 if not DEBUG and SECRET_KEY.startswith('django-insecure'):
     raise ImproperlyConfigured("DJANGO_SECRET_KEY phải được cấu hình an toàn khi DEBUG=False.")
 
-ALLOWED_HOSTS = [h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost,*.onrender.com,*.ngrok-free.app,*.serveo.net').split(',') if h.strip()]
+allowed_hosts_raw = os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = [h.strip() for h in allowed_hosts_raw if h.strip()]
+render_host = os.getenv('RENDER_EXTERNAL_HOSTNAME')
+if render_host:
+    ALLOWED_HOSTS.append(render_host.strip())
+ALLOWED_HOSTS = list(set(ALLOWED_HOSTS))
 
-default_origins = (
-    'http://127.0.0.1,http://127.0.0.1:8000,http://127.0.0.1:8088,http://127.0.0.1:8001,'
-    'http://localhost,http://localhost:8000,http://localhost:8088,http://localhost:8001,'
-    'https://*.onrender.com,https://*.ngrok-free.app,https://*.serveo.net'
-)
-raw_origins = os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', default_origins).split(',')
-CSRF_TRUSTED_ORIGINS = list(set([o.strip() for o in raw_origins if o.strip()]))
-
-# Ensure common local ports are present in CSRF_TRUSTED_ORIGINS
+raw_origins = os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',')
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in raw_origins if o.strip()]
 for port in ['', ':8000', ':8088', ':8001', ':8080', ':3000']:
     CSRF_TRUSTED_ORIGINS.append(f'http://127.0.0.1{port}')
     CSRF_TRUSTED_ORIGINS.append(f'http://localhost{port}')
@@ -200,10 +198,48 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_BROWSER_XSS_FILTER = True
-    if os.getenv('SECURE_SSL_REDIRECT', 'False') == 'True':
+    SECURE_REFERRER_POLICY = 'same-origin'
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    if os.getenv('SECURE_SSL_REDIRECT', 'True') == 'True':
         SECURE_SSL_REDIRECT = True
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'ai': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'security': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
 
 # Celery Configuration
 CELERY_BROKER_URL = REDIS_URL or 'memory://'

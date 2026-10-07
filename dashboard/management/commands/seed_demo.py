@@ -30,12 +30,22 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if hasattr(sys.stdout, 'reconfigure'):
             sys.stdout.reconfigure(encoding='utf-8')
+
+        from django.conf import settings
+        if not settings.DEBUG and os.getenv('SEED_DEMO') != '1':
+            self.stdout.write(self.style.ERROR("Lệnh seed_demo bị từ chối khi DEBUG=False ngoại trừ khi SEED_DEMO=1 được thiết lập."))
+            return
+
         reset = options.get('reset')
         rng = random.Random(20261007)
         today = timezone.localdate()
 
-        demo_password = os.getenv('DEMO_PASSWORD', 'password123')
-        self.stdout.write(self.style.SUCCESS(f"Mật khẩu các tài khoản Demo: {demo_password}"))
+        demo_password = os.getenv('DEMO_PASSWORD')
+        if not demo_password:
+            demo_password = secrets.token_urlsafe(10)
+            self.stdout.write(self.style.WARNING(f"Mật khẩu các tài khoản Demo: {demo_password}"))
+        else:
+            self.stdout.write(self.style.SUCCESS(f"Mật khẩu các tài khoản Demo: {demo_password}"))
 
         with transaction.atomic():
             if reset:

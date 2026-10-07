@@ -1,17 +1,20 @@
 from django.core.cache import cache
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import render
 from functools import wraps
 
-def ratelimit(key_prefix: str, limit: int, period: int):
+def ratelimit(key_prefix: str, limit: int, period: int, key_func=None):
     """
-    Simple cache-based rate limiter decorator.
+    Cache-based rate limiter decorator.
     key_prefix: str, limit: max requests, period: seconds
+    key_func: optional callable(request) -> str
     """
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
-            if request.user.is_authenticated:
+            if key_func:
+                user_key = f"{key_prefix}:{key_func(request)}"
+            elif request.user.is_authenticated:
                 user_key = f"{key_prefix}:{request.user.id}"
             else:
                 ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '127.0.0.1')).split(',')[0].strip()
@@ -20,8 +23,8 @@ def ratelimit(key_prefix: str, limit: int, period: int):
             current = cache.get(user_key, 0)
             if current >= limit:
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', '') or request.path.startswith('/api/'):
-                    return JsonResponse({'status': 'error', 'code': 'rate_limited', 'message': f'Thao tác quá nhanh. Giới hạn tối đa {limit} lần trong {period//60} phút.'}, status=429)
-                return render(request, 'errors/429.html', {'message': f'Thao tác quá nhanh. Vui lòng thử lại sau {period//60} phút.'}, status=429)
+                    return JsonResponse({'status': 'error', 'code': 'rate_limited', 'message': f'Thao tác quá nhiều lần. Giới hạn tối đa {limit} lần trong {period//60} phút.'}, status=429)
+                return render(request, 'errors/429.html', {'message': f'Thao tác quá nhiều lần. Vui lòng thử lại sau.'}, status=429)
 
             cache.set(user_key, current + 1, period)
             return view_func(request, *args, **kwargs)

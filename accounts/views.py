@@ -8,6 +8,14 @@ from accounts.models import User, UserStatus, UserRole
 from audit_log.models import ActionType
 from audit_log.utils import log_action
 
+from core.ratelimit import ratelimit
+
+def _login_rate_key(request):
+    ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '127.0.0.1')).split(',')[0].strip()
+    uname = request.POST.get('username', '').strip().lower()
+    return f"{ip}:{uname}"
+
+@ratelimit('login_attempt', limit=5, period=900, key_func=_login_rate_key)
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')

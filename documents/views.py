@@ -100,8 +100,12 @@ def all_document_upload_view(request):
 
     return document_upload_view(request, project_id)
 
+from core.ratelimit import ratelimit
+import hashlib
+
 @login_required
 @require_POST
+@ratelimit('document_upload', limit=30, period=3600)
 def document_upload_view(request, project_id):
     project = get_object_or_404(Project, id=project_id)
     if not can(request.user, 'document.upload', project):

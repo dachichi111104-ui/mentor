@@ -1,18 +1,29 @@
 services:
-  # 1. Main Web Application Service (Render Free Plan compatible)
+  # 1. Main Web Application Service
   - type: web
     name: projecthub-ai-web
     env: python
     plan: free
+    healthCheckPath: /healthz
     buildCommand: "./build.sh"
     startCommand: "bash start.sh"
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.8"
       - key: DJANGO_SECRET_KEY
-        generateValue: true
+        sync: false
       - key: DJANGO_DEBUG
         value: "False"
       - key: DJANGO_ALLOWED_HOSTS
-        value: ".onrender.com"
+        value: "127.0.0.1,localhost,.onrender.com"
+      - key: AI_SERVICE_URL
+        value: "http://projecthub-ai-service:8001"
+      - key: AI_SERVICE_TOKEN
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
       - key: DATABASE_URL
         fromDatabase:
           name: projecthub-db
@@ -23,14 +34,68 @@ services:
           name: projecthub-redis
           property: connectionString
 
-  # 2. Redis Instance (Cache, Celery Broker & Channels Layer)
+  # 2. AI FastAPI Microservice
+  - type: web
+    name: projecthub-ai-service
+    env: python
+    plan: free
+    healthCheckPath: /healthz
+    buildCommand: "pip install -r requirements-ai.txt"
+    startCommand: "uvicorn ai_service.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.8"
+      - key: AI_SERVICE_TOKEN
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+
+  # 3. Redis Instance
   - type: redis
     name: projecthub-redis
     plan: free
     ipAllowList: []
 
+  # 4. Cron Job - Weekly Summaries (Mondays 00:00 UTC)
+  - type: cron
+    name: generate-weekly-summaries
+    env: python
+    schedule: "0 0 * * 1"
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python manage.py generate_weekly_summaries"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: projecthub-db
+          property: connectionString
+
+  # 5. Cron Job - Daily Risk Scan (00:30 UTC)
+  - type: cron
+    name: daily-risk-scan
+    env: python
+    schedule: "30 0 * * *"
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python manage.py scan_risks"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: projecthub-db
+          property: connectionString
+
+  # 6. Cron Job - Daily Check Overdue (01:00 UTC)
+  - type: cron
+    name: daily-check-overdue
+    env: python
+    schedule: "0 1 * * *"
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python manage.py check_overdue"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: projecthub-db
+          property: connectionString
+
 databases:
-  # 3. Production PostgreSQL Instance
   - name: projecthub-db
     plan: free
     databaseName: projecthub_db

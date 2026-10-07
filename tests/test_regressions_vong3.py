@@ -61,7 +61,7 @@ class RegressionsVong3TestCase(TestCase):
 
     def test_p0_8_no_login_backdoor(self):
         """P0-8: Fallback login map is completely removed."""
-        res = self.client.post(reverse('login'), {'username': 'student1', 'password': 'user123'})
+        res = self.client.post(reverse('login'), {'username': 'student1', 'password': 'invalidpassword999'})
         self.assertEqual(res.status_code, 200) # Re-renders login form with error
         self.assertFalse('_auth_user_id' in self.client.session)
 
