@@ -16,7 +16,10 @@ if not SECRET_KEY:
     if os.getenv('DJANGO_DEBUG', 'False') == 'True':
         SECRET_KEY = 'django-insecure-projecthub-ai-secret-key-development-mode-10-10'
     else:
-        SECRET_KEY = os.getenv('SECRET_KEY', 'vau-projecthub-ai-production-key-sec-9876543210')
+        SECRET_KEY = os.getenv(
+            'SECRET_KEY',
+            '5317270d02fe6ce97ca752762731c81b82a086bd6cc54af3512468e40380746acf23bec712ac283e6f42aad3f3fc28948c50'
+        )
 
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
@@ -45,6 +48,18 @@ CSRF_TRUSTED_ORIGINS.extend([
 CSRF_TRUSTED_ORIGINS = list(set(CSRF_TRUSTED_ORIGINS))
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+X_FRAME_OPTIONS = 'DENY'
+
+# Production security hardening (only when NOT in DEBUG mode)
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
 
 import importlib.util
 
