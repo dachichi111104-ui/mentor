@@ -399,10 +399,7 @@
 
     function setContentHTML(el, html) {
         if (!el) return;
-        el.replaceChildren();
-        const template = document.createElement('template');
-        template.insertAdjacentHTML('afterbegin', html);
-        el.appendChild(template.content);
+        el.innerHTML = html;
     }
 
     function appendContentHTML(el, html) {
@@ -440,12 +437,12 @@
         const origHtml = btn.innerHTML;
         btn.disabled = true;
         btn.classList.add('opacity-75', 'cursor-not-allowed');
-        setContentHTML(btn, `
+        btn.innerHTML = `
             <div class="inline-flex items-center justify-center space-x-1.5">
                 <i class="fa-solid fa-circle-notch fa-spin text-amber-400"></i>
                 <span>${escapeHtml(loadingText)}</span>
             </div>
-        `);
+        `;
         return origHtml;
     }
 
@@ -454,7 +451,7 @@
         if (!btn || !origHtml) return;
         btn.disabled = false;
         btn.classList.remove('opacity-75', 'cursor-not-allowed');
-        setContentHTML(btn, origHtml);
+        btn.innerHTML = origHtml;
     }
 
     function renderLoadingCard(containerId, titleText) {
