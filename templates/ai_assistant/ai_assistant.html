@@ -288,7 +288,7 @@
         </div>
 
         <div class="flex gap-2">
-            <input type="text" id="ai-chat-input" @keydown.enter="runChat()" placeholder="Nhập câu hỏi cho AI (VD: Tiến độ đồ án hiện tại ra sao? Cần làm task gì tiếp theo?)..." 
+            <input type="text" id="ai-chat-input" @keydown.enter.prevent.stop="runChat()" placeholder="Nhập câu hỏi cho AI (VD: Tiến độ đồ án hiện tại ra sao? Cần làm task gì tiếp theo?)..." 
                    class="flex-1 px-4 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#163B65] focus:bg-white transition-all">
             <button id="btn-ai-chat" @click="runChat()" class="px-5 py-2.5 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 border border-blue-700">
                 <i class="fa-solid fa-paper-plane text-amber-400"></i>
@@ -368,7 +368,8 @@
 
     function getSelectedProjectId() {
         const select = document.getElementById('ai-project-select');
-        return select ? select.value : '';
+        if (select && select.value) return select.value;
+        return '{{ selected_project.id|default:"" }}';
     }
 
     function goToKanban() {
@@ -389,7 +390,9 @@
               if (data.status === 'success') {
                   window.location.reload();
               } else {
-                  alert(data.message || 'Lỗi xử lý đề xuất');
+                  if (window.Alpine && Alpine.store('toast')) {
+                      Alpine.store('toast').show(data.message || 'Lỗi xử lý đề xuất', 'error');
+                  }
               }
           });
     }
@@ -404,9 +407,7 @@
 
     function appendContentHTML(el, html) {
         if (!el) return;
-        const template = document.createElement('template');
-        template.insertAdjacentHTML('afterbegin', html);
-        el.appendChild(template.content);
+        el.insertAdjacentHTML('beforeend', html);
     }
 
     function renderFormattedCard(content, iconClass, title, containerId) {
@@ -433,7 +434,7 @@
         btn.classList.add('opacity-75', 'cursor-not-allowed', 'min-w-[170px]');
         setContentHTML(btn, `
             <div class="inline-flex items-center justify-center space-x-2">
-                <div class="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+                <svg class="animate-spin h-4 w-4 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                 <span class="animate-pulse">${escapeHtml(loadingText)}</span>
             </div>
         `);
@@ -454,9 +455,8 @@
         setContentHTML(container, `
             <div class="p-6 bg-gradient-to-r from-blue-50/90 via-slate-50 to-amber-50/50 border border-blue-200/80 rounded-2xl text-xs shadow-sm flex flex-col sm:flex-row items-center justify-center gap-4 text-center sm:text-left transition-all">
                 <div class="relative w-12 h-12 flex items-center justify-center shrink-0">
-                    <div class="absolute inset-0 rounded-full border-2 border-slate-200 border-t-[#163B65] border-r-amber-400 animate-spin"></div>
-                    <div class="absolute inset-1.5 rounded-full border-2 border-transparent border-b-blue-500 border-l-amber-300 animate-spin flex items-center justify-center"></div>
-                    <i class="fa-solid fa-robot text-[#163B65] text-base animate-pulse"></i>
+                    <svg class="animate-spin h-10 w-10 text-[#163B65]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <i class="fa-solid fa-robot text-amber-500 text-xs absolute"></i>
                 </div>
                 <div class="space-y-1">
                     <span class="font-bold text-slate-900 block text-sm flex items-center gap-2 justify-center sm:justify-start">
@@ -544,7 +544,11 @@
         }).then(res => res.json())
           .then(data => {
               restoreBtn('btn-accept-tasks', origHtml);
-              if (data.status === 'success' || data.status === 'proposed') {
+              if (data.status === 'warning') {
+                  if (window.Alpine && Alpine.store('toast')) {
+                      Alpine.store('toast').show(data.message || 'Tất cả task đề xuất đã tồn tại!', 'warning');
+                  }
+              } else if (data.status === 'success' || data.status === 'proposed') {
                   const alpineData = Alpine.$data(document.querySelector('[x-data]'));
                   alpineData.createdCount = data.created_count || globalAiTasks.length;
                   alpineData.successModal = true;

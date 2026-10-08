@@ -225,6 +225,14 @@ def ai_accept_tasks_ajax(request):
             project=project
         )
 
+        if created_count == 0 and len(skipped) > 0:
+            return JsonResponse({
+                'status': 'warning',
+                'created_count': 0,
+                'skipped': skipped,
+                'message': f'Tất cả {len(skipped)} công việc đề xuất đều đã tồn tại trong Đồ án của bạn! Không thể tạo trùng lặp.'
+            })
+
         return JsonResponse({
             'status': 'success',
             'created_count': created_count,
