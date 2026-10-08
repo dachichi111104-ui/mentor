@@ -115,7 +115,7 @@ class LLMClient:
     def _call_gemini(self, prompt: str) -> tuple[str, int, int]:
         model_name = self.model.lower() if self.model else ''
         if not model_name or 'antigravity' in model_name or not model_name.startswith('gemini'):
-            model_name = 'gemini-1.5-flash'
+            model_name = 'gemini-2.5-flash'
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent"
 
         headers = {

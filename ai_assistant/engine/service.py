@@ -65,7 +65,7 @@ def run_task(prompt_type: str, facts: dict, user_message: str = "") -> dict:
     # Check if LLM is configured and operational
     if llm.is_configured():
         try:
-            facts_str = json.dumps(facts, ensure_ascii=False, indent=2)
+            facts_str = json.dumps(facts, ensure_ascii=False, indent=2, default=str)
             if prompt_type == 'chat':
                 prompt_text = prompt_tmpl.format(facts_json=facts_str, user_message=user_message)
             else:

@@ -79,7 +79,7 @@ def ai_assistant_page_view(request):
 
 def _execute_ai_task(user, project, prompt_type: str, user_message: str = ""):
     facts = build_facts(project)
-    context_hash = hashlib.sha256(json.dumps(facts, sort_keys=True).encode('utf-8')).hexdigest()
+    context_hash = hashlib.sha256(json.dumps(facts, sort_keys=True, default=str).encode('utf-8')).hexdigest()
 
     client = AIClient()
     result = client.run_task(prompt_type, facts, user_message=user_message)
@@ -88,8 +88,8 @@ def _execute_ai_task(user, project, prompt_type: str, user_message: str = ""):
         user=user,
         project=project,
         prompt_type=prompt_type,
-        input_data=user_message or json.dumps(facts, ensure_ascii=False),
-        output_result=json.dumps(result['data'], ensure_ascii=False),
+        input_data=user_message or json.dumps(facts, ensure_ascii=False, default=str),
+        output_result=json.dumps(result['data'], ensure_ascii=False, default=str),
         provider=result['provider'],
         model=result['model'],
         status=result['status'],
