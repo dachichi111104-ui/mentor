@@ -26,7 +26,7 @@ class LLMClient:
         self.gemini_key = os.getenv('GEMINI_API_KEY', '').strip()
         self.openai_key = os.getenv('OPENAI_API_KEY', '').strip()
         self.anthropic_key = os.getenv('ANTHROPIC_API_KEY', '').strip()
-        self.timeout = float(os.getenv('AI_TIMEOUT_SECONDS', '2.0'))
+        self.timeout = float(os.getenv('AI_TIMEOUT_SECONDS', '30.0'))
 
     def is_configured(self) -> bool:
         if self.provider == 'none':
@@ -115,12 +115,11 @@ class LLMClient:
     def _call_gemini(self, prompt: str) -> tuple[str, int, int]:
         model_name = self.model.lower() if self.model else ''
         if not model_name or 'antigravity' in model_name or not model_name.startswith('gemini'):
-            model_name = 'gemini-2.5-flash'
+            model_name = 'gemini-3.5-flash'
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self.gemini_key}"
 
         headers = {
             'Content-Type': 'application/json',
-            'x-goog-api-key': self.gemini_key
         }
         payload = {
             "system_instruction": {"parts": [{"text": SYSTEM_PROMPT}]},
