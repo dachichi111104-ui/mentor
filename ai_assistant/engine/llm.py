@@ -26,7 +26,7 @@ class LLMClient:
         self.gemini_key = os.getenv('GEMINI_API_KEY', '').strip()
         self.openai_key = os.getenv('OPENAI_API_KEY', '').strip()
         self.anthropic_key = os.getenv('ANTHROPIC_API_KEY', '').strip()
-        self.timeout = int(os.getenv('AI_TIMEOUT_SECONDS', '8'))
+        self.timeout = float(os.getenv('AI_TIMEOUT_SECONDS', '2.0'))
 
     def is_configured(self) -> bool:
         if self.provider == 'none':
@@ -78,7 +78,7 @@ class LLMClient:
         if self.is_circuit_open():
             raise RuntimeError("Circuit Breaker OPEN: Dịch vụ LLM tạm thời bị ngắt do quá nhiều lỗi liên tiếp.")
 
-        backoff_delays = [0.5]
+        backoff_delays = [0.3]
         last_exception = None
 
         for attempt in range(len(backoff_delays) + 1):
@@ -101,6 +101,11 @@ class LLMClient:
 
             except Exception as e:
                 last_exception = e
+                err_str = str(e)
+                # Fail fast if authentication error or HTTP 4xx client error
+                if any(code in err_str for code in ['400', '401', '403', '404', 'API Key']):
+                    logger.warning(f"LLM API client error, failing fast without retry: {err_str}")
+                    break
                 if attempt < len(backoff_delays):
                     time.sleep(backoff_delays[attempt])
 
