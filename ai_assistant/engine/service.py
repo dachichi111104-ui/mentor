@@ -9,7 +9,7 @@ from ai_assistant.engine.schemas import BreakdownOut, RisksOut, WeeklyOut, Quest
 from ai_assistant.engine.parse import parse_and_validate
 from ai_assistant.engine.rules import (
     calculate_metrics, generate_fallback_breakdown,
-    generate_fallback_weekly, generate_fallback_questions
+    generate_fallback_weekly, generate_fallback_questions, generate_fallback_chat
 )
 
 def run_task(prompt_type: str, facts: dict, user_message: str = "") -> dict:
@@ -52,7 +52,7 @@ def run_task(prompt_type: str, facts: dict, user_message: str = "") -> dict:
         'risks': (RISKS_PROMPT_TEMPLATE, RisksOut, lambda f: {'summary': f"Phân tích rủi ro dựa trên dữ liệu hệ thống (Điểm: {f['metrics']['risk_score']}/100)", 'risks': f['metrics']['risks']}),
         'weekly': (WEEKLY_PROMPT_TEMPLATE, WeeklyOut, generate_fallback_weekly),
         'questions': (QUESTIONS_PROMPT_TEMPLATE, QuestionsOut, generate_fallback_questions),
-        'chat': (CHAT_PROMPT_TEMPLATE, ChatOut, lambda f: {'answer': f"Dữ liệu đồ án [{f.get('project', {}).get('code')}]: Tiến độ {f.get('project', {}).get('progress')}% với {len(f.get('tasks', {}).get('overdue', []))} task quá hạn.", 'citations': [], 'in_scope': True})
+        'chat': (CHAT_PROMPT_TEMPLATE, ChatOut, lambda f: generate_fallback_chat(f, user_message=user_message))
     }
 
     if prompt_type not in schema_map:

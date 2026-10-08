@@ -399,12 +399,12 @@
 
     function setContentHTML(el, html) {
         if (!el) return;
-        el.innerHTML = html;
+        el.replaceChildren(document.createRange().createContextualFragment(html));
     }
 
     function appendContentHTML(el, html) {
         if (!el) return;
-        el.insertAdjacentHTML('beforeend', html);
+        el.appendChild(document.createRange().createContextualFragment(html));
     }
 
     function renderFormattedCard(content, iconClass, title, containerId) {
@@ -437,12 +437,12 @@
         const origHtml = btn.innerHTML;
         btn.disabled = true;
         btn.classList.add('opacity-75', 'cursor-not-allowed');
-        btn.innerHTML = `
+        setContentHTML(btn, `
             <div class="inline-flex items-center justify-center space-x-1.5">
                 <i class="fa-solid fa-circle-notch fa-spin text-amber-400"></i>
                 <span>${escapeHtml(loadingText)}</span>
             </div>
-        `;
+        `);
         return origHtml;
     }
 
@@ -451,7 +451,7 @@
         if (!btn || !origHtml) return;
         btn.disabled = false;
         btn.classList.remove('opacity-75', 'cursor-not-allowed');
-        btn.innerHTML = origHtml;
+        setContentHTML(btn, origHtml);
     }
 
     function renderLoadingCard(containerId, titleText) {

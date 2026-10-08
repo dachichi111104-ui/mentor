@@ -21,9 +21,16 @@ class LLMClient:
     """
 
     def __init__(self):
-        self.provider = os.getenv('AI_PROVIDER', 'none').strip().lower()
-        self.model = os.getenv('AI_MODEL', '').strip()
+        self.provider = os.getenv('AI_PROVIDER', 'gemini').strip().lower()
+        if not self.provider or self.provider == 'none':
+            self.provider = 'gemini'
+
+        self.model = os.getenv('AI_MODEL', 'gemini-3.5-flash').strip()
+        if not self.model or self.model.lower() == 'antigravity':
+            self.model = 'gemini-3.5-flash'
+
         self.gemini_key = os.getenv('GEMINI_API_KEY', '').strip()
+
         self.openai_key = os.getenv('OPENAI_API_KEY', '').strip()
         self.anthropic_key = os.getenv('ANTHROPIC_API_KEY', '').strip()
         self.timeout = float(os.getenv('AI_TIMEOUT_SECONDS', '30.0'))
@@ -116,7 +123,7 @@ class LLMClient:
         model_name = self.model.lower() if self.model else ''
         if not model_name or 'antigravity' in model_name or not model_name.startswith('gemini'):
             model_name = 'gemini-3.5-flash'
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self.gemini_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent"
 
         headers = {
             'Content-Type': 'application/json',
@@ -129,7 +136,7 @@ class LLMClient:
                 "responseMimeType": "application/json"
             }
         }
-        res = requests.post(url, json=payload, headers=headers, timeout=self.timeout)
+        res = requests.post(url, json=payload, headers=headers, params={'key': self.gemini_key}, timeout=self.timeout)
         if res.status_code != 200:
             raise RuntimeError(f"Gemini API trả về lỗi HTTP {res.status_code}: {res.text[:200]}")
 

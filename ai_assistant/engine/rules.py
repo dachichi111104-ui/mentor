@@ -353,3 +353,58 @@ def generate_fallback_questions(facts: dict) -> dict:
         })
 
     return {'questions': questions[:7]}
+
+def generate_fallback_chat(facts: dict, user_message: str = "") -> dict:
+    """
+    Generates dynamic and helpful chat response based on facts and user_message.
+    """
+    msg_lower = user_message.lower()
+    proj = facts.get('project', {})
+    code = proj.get('code', 'PRJ')
+    name = proj.get('name', 'Đồ án')
+    progress = proj.get('progress', 0)
+    tasks = facts.get('tasks', {})
+
+    todo = tasks.get('todo', [])
+    in_progress = tasks.get('in_progress', [])
+    review = tasks.get('review', [])
+    overdue = tasks.get('overdue', [])
+    stuck = tasks.get('stuck', [])
+    recent_done = tasks.get('recent_done', [])
+
+    if any(kw in msg_lower for kw in ['xong', 'hoàn thành', 'đã làm', 'done']):
+        if recent_done:
+            done_titles = ", ".join([f"task #{t['id']} '{t['title']}'" for t in recent_done[:3]])
+            ans = f"Đồ án [{code}] hiện có {len(recent_done)} task vừa hoàn thành gần đây: {done_titles}. Tổng tiến độ đạt {progress}%."
+        else:
+            ans = f"Đồ án [{code}] hiện đạt {progress}% tiến độ. Chưa ghi nhận task mới hoàn thành trong 14 ngày qua."
+
+    elif any(kw in msg_lower for kw in ['tiếp theo', 'nên làm', 'cần làm', 'phải làm', 'sau đây', 'kế tiếp', 'todo', 'gì nữa']):
+        if in_progress:
+            prog_titles = ", ".join([f"task #{t['id']} '{t['title']}'" for t in in_progress[:3]])
+            ans = f"Nhóm nên tập trung hoàn thành các task đang dở dang: {prog_titles}. Sau đó tiếp tục triển khai các task TODO trong danh sách."
+        elif todo:
+            todo_titles = ", ".join([f"task #{t['id']} '{t['title']}'" for t in todo[:3]])
+            ans = f"Các task ưu tiên cần thực hiện tiếp theo cho đồ án [{code}]: {todo_titles}."
+        else:
+            ans = f"Đồ án [{code}] hiện đạt {progress}% tiến độ và không có task dở dang nào. Bạn có thể sử dụng tính năng 'Phân rã Task' để tạo thêm công việc mới."
+
+    elif any(kw in msg_lower for kw in ['rủi ro', 'nguy cơ', 'kẹt', 'trễ', 'chậm', 'blocker', 'overdue']):
+        if overdue or stuck:
+            issues = []
+            if overdue:
+                issues.append(f"{len(overdue)} task quá hạn")
+            if stuck:
+                issues.append(f"{len(stuck)} task bị kẹt lâu")
+            ans = f"Cảnh báo rủi ro đồ án [{code}]: Ghi nhận {', '.join(issues)}. Cần xử lý ngay các task này để tránh ảnh hưởng deadline mốc thời gian."
+        else:
+            ans = f"Đồ án [{code}] hiện có chỉ số rủi ro an toàn (0 task quá hạn/bị kẹt). Tiến độ tổng thể đang đạt {progress}%."
+
+    else:
+        ans = f"Dữ liệu đồ án [{code}] ({name}): Tiến độ tổng thể {progress}%. Hệ thống ghi nhận {len(in_progress)} task đang làm, {len(todo)} task chờ làm và {len(overdue)} task quá hạn."
+
+    return {
+        'answer': ans,
+        'citations': [f"task #{t['id']}" for t in (in_progress + todo + recent_done)[:3]],
+        'in_scope': True
+    }
