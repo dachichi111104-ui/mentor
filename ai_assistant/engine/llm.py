@@ -116,7 +116,7 @@ class LLMClient:
         model_name = self.model.lower() if self.model else ''
         if not model_name or 'antigravity' in model_name or not model_name.startswith('gemini'):
             model_name = 'gemini-2.5-flash'
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self.gemini_key}"
 
         headers = {
             'Content-Type': 'application/json',
