@@ -11,9 +11,9 @@ from notifications.models import Notification, NotificationType
 
 class ComprehensiveModelsTestCase(TestCase):
     def setUp(self):
-        self.user1 = User.objects.create_user(username='comp_user1', email='u1@demo.vau.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
-        self.user2 = User.objects.create_user(username='comp_user2', email='u2@demo.vau.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
-        self.mentor = User.objects.create_user(username='comp_mentor', email='m@demo.vau.edu.vn', role=UserRole.MENTOR, status=UserStatus.ACTIVE)
+        self.user1 = User.objects.create_user(username='comp_user1', email='u1@demo.vaa.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
+        self.user2 = User.objects.create_user(username='comp_user2', email='u2@demo.vaa.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
+        self.mentor = User.objects.create_user(username='comp_mentor', email='m@demo.vaa.edu.vn', role=UserRole.MENTOR, status=UserStatus.ACTIVE)
         self.project = Project.objects.create(code='PRJ-COMP-1', name='Comp Proj 1', category=ProjectCategory.WEB, created_by=self.user1, mentor=self.mentor,
             start_date=timezone.localdate() - timezone.timedelta(days=10),
             end_date=timezone.localdate() + timezone.timedelta(days=80),
@@ -171,7 +171,7 @@ class ComprehensiveModelsTestCase(TestCase):
 
     def test_permissions_can_admin(self):
         from projects.permissions import can
-        admin = User.objects.create_superuser(username='super_comp', email='sa@vau.edu.vn', password='pass')
+        admin = User.objects.create_superuser(username='super_comp', email='sa@vaa.edu.vn', password='pass')
         self.assertTrue(can(admin, 'project.delete', self.project))
 
     def test_permissions_can_student_own_project(self):
@@ -253,12 +253,12 @@ class ComprehensiveModelsTestCase(TestCase):
 
     def test_form_admin_user_form_valid(self):
         from accounts.forms import AdminUserForm
-        form = AdminUserForm(data={'username': 'formuser', 'email': 'fu@vau.edu.vn', 'first_name': 'Form', 'last_name': 'User', 'role': 'STUDENT', 'status': 'ACTIVE', 'password': 'ValidPassword123!'})
+        form = AdminUserForm(data={'username': 'formuser', 'email': 'fu@vaa.edu.vn', 'first_name': 'Form', 'last_name': 'User', 'role': 'STUDENT', 'status': 'ACTIVE', 'password': 'ValidPassword123!'})
         self.assertTrue(form.is_valid())
 
     def test_form_custom_register_form(self):
         from accounts.forms import CustomRegisterForm
-        form = CustomRegisterForm(data={'username': 'reguser', 'email': 'reg@vau.edu.vn', 'first_name': 'Reg', 'last_name': 'User', 'role': 'STUDENT', 'password': 'Str0ngP@ssw0rd!', 'confirm_password': 'Str0ngP@ssw0rd!'})
+        form = CustomRegisterForm(data={'username': 'reguser', 'email': 'reg@vaa.edu.vn', 'first_name': 'Reg', 'last_name': 'User', 'role': 'STUDENT', 'password': 'Str0ngP@ssw0rd!', 'confirm_password': 'Str0ngP@ssw0rd!'})
         self.assertTrue(form.is_valid())
 
     def test_context_processor_breadcrumbs(self):

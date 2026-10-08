@@ -5,7 +5,7 @@ from projects.models import Project
 
 class BreadcrumbsTestCase(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='bc_user', email='bc@vau.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
+        self.user = User.objects.create_user(username='bc_user', email='bc@vaa.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
         self.project = Project.objects.create(code='PRJ-BC-1', name='Breadcrumbs Proj', created_by=self.user,
             start_date=timezone.localdate() - timezone.timedelta(days=10),
             end_date=timezone.localdate() + timezone.timedelta(days=80),

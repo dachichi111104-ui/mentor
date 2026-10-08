@@ -16,7 +16,7 @@ def _get_today():
 class TaskWorkflowTestCase(TestCase):
     def setUp(self):
         today = timezone.localdate()
-        self.student = User.objects.create_user(username='std1', email='std1@vau.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
+        self.student = User.objects.create_user(username='std1', email='std1@vaa.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
         self.project = Project.objects.create(
             code='PRJ-WF-1', name='Workflow Test Proj', created_by=self.student,
             start_date=today - timezone.timedelta(days=10),

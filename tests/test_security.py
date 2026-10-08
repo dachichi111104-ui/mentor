@@ -6,8 +6,8 @@ from documents.models import Document
 
 class SecurityTestCase(TestCase):
     def setUp(self):
-        self.user1 = User.objects.create_user(username='sec1', email='sec1@vau.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
-        self.user2 = User.objects.create_user(username='sec2', email='sec2@vau.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
+        self.user1 = User.objects.create_user(username='sec1', email='sec1@vaa.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
+        self.user2 = User.objects.create_user(username='sec2', email='sec2@vaa.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
         self.project1 = Project.objects.create(code='PRJ-SEC-1', name='Security Proj 1', created_by=self.user1,
             start_date=timezone.localdate() - timezone.timedelta(days=10),
             end_date=timezone.localdate() + timezone.timedelta(days=80),

@@ -10,7 +10,7 @@ class Command(BaseCommand):
             sys.stdout.reconfigure(encoding='utf-8')
 
         username = os.getenv("ADMIN_USERNAME", "admin")
-        email = os.getenv("ADMIN_EMAIL", "admin@vau.edu.vn")
+        email = os.getenv("ADMIN_EMAIL", "admin@vaa.edu.vn")
         password = os.getenv("ADMIN_PASSWORD")
 
         if not password:

@@ -6,7 +6,7 @@ from milestones.models import Event, EventType, Milestone
 
 class CalendarTestCase(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='caluser', email='cal@vau.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
+        self.user = User.objects.create_user(username='caluser', email='cal@vaa.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
         self.project = Project.objects.create(code='PRJ-CAL-1', name='Calendar Proj', created_by=self.user,
             start_date=timezone.localdate() - timezone.timedelta(days=10),
             end_date=timezone.localdate() + timezone.timedelta(days=80),

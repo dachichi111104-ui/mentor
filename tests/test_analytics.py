@@ -5,7 +5,7 @@ from projects.models import Project
 
 class AnalyticsTestCase(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='analytics_user', email='ana@vau.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
+        self.user = User.objects.create_user(username='analytics_user', email='ana@vaa.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
         self.project = Project.objects.create(code='PRJ-ANA-1', name='Analytics Proj', created_by=self.user,
             start_date=timezone.localdate() - timezone.timedelta(days=10),
             end_date=timezone.localdate() + timezone.timedelta(days=80),

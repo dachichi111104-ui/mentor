@@ -8,7 +8,7 @@ def create_test_user(username="testuser", role=UserRole.STUDENT, status=UserStat
     user, _ = User.objects.get_or_create(
         username=username,
         defaults={
-            'email': f"{username}@vau.edu.vn",
+            'email': f"{username}@vaa.edu.vn",
             'first_name': 'Test',
             'last_name': username.capitalize(),
             'role': role,

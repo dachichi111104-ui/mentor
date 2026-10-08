@@ -3,8 +3,8 @@ from accounts.models import User, UserRole, UserStatus
 
 class AccountsApprovalTestCase(TestCase):
     def setUp(self):
-        self.admin = User.objects.create_superuser(username='admin_app', email='admin@vau.edu.vn', password='pass')
-        self.pending_mentor = User.objects.create_user(username='pending_m', email='pm@vau.edu.vn', role=UserRole.MENTOR, status=UserStatus.PENDING_APPROVAL)
+        self.admin = User.objects.create_superuser(username='admin_app', email='admin@vaa.edu.vn', password='pass')
+        self.pending_mentor = User.objects.create_user(username='pending_m', email='pm@vaa.edu.vn', role=UserRole.MENTOR, status=UserStatus.PENDING_APPROVAL)
 
     def test_mentor_pending_status(self):
         self.assertEqual(self.pending_mentor.status, UserStatus.PENDING_APPROVAL)

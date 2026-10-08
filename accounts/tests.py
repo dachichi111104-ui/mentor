@@ -67,8 +67,8 @@ class RegistrationRoleTests(TestCase):
             'first_name': 'Mentor',
             'last_name': 'Test',
             'role': UserRole.MENTOR,
-            'password': 'password123',
-            'confirm_password': 'password123'
+            'password': 'Str0ngP@ssw0rd!',
+            'confirm_password': 'Str0ngP@ssw0rd!'
         })
         self.assertEqual(res.status_code, 302)
         created_user = User.objects.get(username='new_mentor')
@@ -81,8 +81,8 @@ class RegistrationRoleTests(TestCase):
             'first_name': 'Fake',
             'last_name': 'Admin',
             'role': 'ADMIN',
-            'password': 'password123',
-            'confirm_password': 'password123'
+            'password': 'Str0ngP@ssw0rd!',
+            'confirm_password': 'Str0ngP@ssw0rd!'
         })
         if res.status_code == 302:
             created_user = User.objects.get(username='fake_admin')

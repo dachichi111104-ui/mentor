@@ -6,7 +6,7 @@ from projects.models import Project, ProjectMember, MemberRole, MemberStatus
 
 class AIEndpointsTestCase(TestCase):
     def setUp(self):
-        self.student = User.objects.create_user(username='aistd', email='aistd@vau.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
+        self.student = User.objects.create_user(username='aistd', email='aistd@vaa.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
         self.project = Project.objects.create(code='PRJ-AI-END', name='AI Endpoints Proj', created_by=self.student,
             start_date=timezone.localdate() - timezone.timedelta(days=10),
             end_date=timezone.localdate() + timezone.timedelta(days=80),

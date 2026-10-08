@@ -52,8 +52,8 @@ class ProjectPermissionTestCase(TestCase):
             'email': 'newuser@test.com',
             'first_name': 'New',
             'last_name': 'User',
-            'password': 'password123',
-            'confirm_password': 'password123'
+            'password': 'Str0ngP@ssw0rd!',
+            'confirm_password': 'Str0ngP@ssw0rd!'
         })
         self.assertEqual(response.status_code, 302)
         new_user = User.objects.get(username='newuser')

@@ -6,8 +6,8 @@ from ai_assistant.facts_builder import build_facts
 
 class AIIsolationTestCase(TestCase):
     def setUp(self):
-        self.user1 = User.objects.create_user(username='u1', email='u1@vau.edu.vn', role=UserRole.STUDENT)
-        self.user2 = User.objects.create_user(username='u2', email='u2@vau.edu.vn', role=UserRole.STUDENT)
+        self.user1 = User.objects.create_user(username='u1', email='u1@vaa.edu.vn', role=UserRole.STUDENT)
+        self.user2 = User.objects.create_user(username='u2', email='u2@vaa.edu.vn', role=UserRole.STUDENT)
         self.p1 = Project.objects.create(code='PRJ-ISO-1', name='Proj 1', created_by=self.user1,
             start_date=timezone.localdate() - timezone.timedelta(days=10),
             end_date=timezone.localdate() + timezone.timedelta(days=80),

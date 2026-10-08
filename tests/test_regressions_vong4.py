@@ -11,31 +11,31 @@ class PhaseARegressionTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.admin = User.objects.create_superuser(
-            username='admin_v4', email='admin_v4@vau.edu.vn', password='password123',
+            username='admin_v4', email='admin_v4@vaa.edu.vn', password='password123',
             role=UserRole.ADMIN, status=UserStatus.ACTIVE
         )
         self.mentor_accepted = User.objects.create_user(
-            username='mentor_acc', email='mentor_acc@vau.edu.vn', password='password123',
+            username='mentor_acc', email='mentor_acc@vaa.edu.vn', password='password123',
             role=UserRole.MENTOR, status=UserStatus.ACTIVE
         )
         self.mentor_pending = User.objects.create_user(
-            username='mentor_pen', email='mentor_pen@vau.edu.vn', password='password123',
+            username='mentor_pen', email='mentor_pen@vaa.edu.vn', password='password123',
             role=UserRole.MENTOR, status=UserStatus.PENDING_APPROVAL
         )
         self.leader = User.objects.create_user(
-            username='student_lead', email='lead@vau.edu.vn', password='password123',
+            username='student_lead', email='lead@vaa.edu.vn', password='password123',
             role=UserRole.STUDENT, status=UserStatus.ACTIVE
         )
         self.member_accepted = User.objects.create_user(
-            username='student_acc', email='acc@vau.edu.vn', password='password123',
+            username='student_acc', email='acc@vaa.edu.vn', password='password123',
             role=UserRole.STUDENT, status=UserStatus.ACTIVE
         )
         self.member_pending = User.objects.create_user(
-            username='student_pen', email='pen@vau.edu.vn', password='password123',
+            username='student_pen', email='pen@vaa.edu.vn', password='password123',
             role=UserRole.STUDENT, status=UserStatus.ACTIVE
         )
         self.outsider = User.objects.create_user(
-            username='student_out', email='out@vau.edu.vn', password='password123',
+            username='student_out', email='out@vaa.edu.vn', password='password123',
             role=UserRole.STUDENT, status=UserStatus.ACTIVE
         )
 

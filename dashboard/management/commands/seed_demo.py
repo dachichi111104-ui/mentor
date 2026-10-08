@@ -6,7 +6,9 @@ from django.utils import timezone
 from django.db import transaction
 from django.core.files.base import ContentFile
 
+from django.db.models import Q
 from accounts.models import User, UserRole, UserStatus
+from accounts.utils import generate_mentor_email, generate_student_email
 from projects.models import Project, ProjectStatus, ProjectMember, MemberRole, MemberStatus, MentorStatus
 from milestones.models import Milestone, MilestoneStatus, Appointment, AppointmentStatus
 from tasks.models import Task, TaskPriority, TaskStatus, Sprint, TaskComment, TaskChecklistItem
@@ -84,7 +86,7 @@ class Command(BaseCommand):
             if reset:
                 self.stdout.write("Cleaning old demo data...")
                 demo_projects = Project.objects.filter(code__startswith='PRJ-2026-')
-                demo_users = User.objects.filter(email__endswith='@vau.edu.vn').exclude(username='admin')
+                demo_users = User.objects.filter(Q(email__endswith='@vau.edu.vn') | Q(email__endswith='@vaa.edu.vn')).exclude(username='admin')
                 
                 TaskChecklistItem.objects.filter(task__project__in=demo_projects).delete()
                 TaskComment.objects.filter(task__project__in=demo_projects).delete()
@@ -94,7 +96,7 @@ class Command(BaseCommand):
                 DocumentVersion.objects.filter(document__project__in=demo_projects).delete()
                 Document.objects.filter(project__in=demo_projects).delete()
                 Feedback.objects.filter(project__in=demo_projects).delete()
-                Notification.objects.filter(project__in=demo_projects).delete()
+                Notification.objects.filter(Q(recipient__in=demo_users) | Q(sender__in=demo_users)).delete()
                 ActivityLog.objects.filter(project__in=demo_projects).delete()
                 ProjectMember.objects.filter(project__in=demo_projects).delete()
                 demo_projects.delete()
@@ -104,7 +106,7 @@ class Command(BaseCommand):
             admin, _ = User.objects.get_or_create(
                 username='admin',
                 defaults={
-                    'email': 'admin@vau.edu.vn',
+                    'email': 'admin@vaa.edu.vn',
                     'first_name': 'Quản trị viên',
                     'last_name': 'HVHK',
                     'role': UserRole.ADMIN,
@@ -113,6 +115,7 @@ class Command(BaseCommand):
                     'is_superuser': True
                 }
             )
+            admin.email = 'admin@vaa.edu.vn'
             admin.set_password(demo_password)
             admin.save()
 
@@ -123,10 +126,11 @@ class Command(BaseCommand):
             ]
             mentors = []
             for uname, fname, lname, display, title in mentors_data:
+                email = generate_mentor_email(fname, lname)
                 u, _ = User.objects.get_or_create(
                     username=uname,
                     defaults={
-                        'email': f"{uname}@demo.vau.edu.vn",
+                        'email': email,
                         'first_name': fname,
                         'last_name': lname,
                         'role': UserRole.MENTOR,
@@ -135,15 +139,17 @@ class Command(BaseCommand):
                         'specialization': 'Phát triển Phần mềm & Hệ thống AI'
                     }
                 )
+                u.email = email
                 u.set_password(demo_password)
                 u.save()
                 mentors.append(u)
 
             # Pending mentor for approval test
+            m_pending_email = generate_mentor_email('Đỗ Văn', 'Nam')
             m_pending, _ = User.objects.get_or_create(
                 username='mentor_pending',
                 defaults={
-                    'email': 'mentor_pending@vau.edu.vn',
+                    'email': m_pending_email,
                     'first_name': 'Đỗ Văn',
                     'last_name': 'Nam',
                     'role': UserRole.MENTOR,
@@ -151,6 +157,7 @@ class Command(BaseCommand):
                     'department': 'Khoa Vận tải Hàng không'
                 }
             )
+            m_pending.email = m_pending_email
             m_pending.set_password(demo_password)
             m_pending.save()
 
@@ -173,10 +180,11 @@ class Command(BaseCommand):
             ]
             students = []
             for uname, fname, lname, sid, cname in students_data:
+                email = generate_student_email(sid, uname)
                 u, _ = User.objects.get_or_create(
                     username=uname,
                     defaults={
-                        'email': f"{uname}@vau.edu.vn",
+                        'email': email,
                         'first_name': fname,
                         'last_name': lname,
                         'student_id': sid,
@@ -186,21 +194,24 @@ class Command(BaseCommand):
                         'department': 'Khoa CNTT'
                     }
                 )
+                u.email = email
                 u.set_password(demo_password)
                 u.save()
                 students.append(u)
 
             # Suspended student
+            s_suspended_email = generate_student_email('2431540999', 'student_locked')
             s_suspended, _ = User.objects.get_or_create(
                 username='student_locked',
                 defaults={
-                    'email': 'student_locked@vau.edu.vn',
+                    'email': s_suspended_email,
                     'first_name': 'Phạm Quốc',
                     'last_name': 'Bảo',
                     'role': UserRole.STUDENT,
                     'status': UserStatus.SUSPENDED
                 }
             )
+            s_suspended.email = s_suspended_email
             s_suspended.set_password(demo_password)
             s_suspended.save()
 

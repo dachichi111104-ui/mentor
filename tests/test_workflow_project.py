@@ -6,8 +6,8 @@ from projects.models import Project, ProjectStatus, ProjectMember, MemberRole, M
 class ProjectWorkflowTestCase(TestCase):
     def setUp(self):
         self.today = timezone.localdate()
-        self.student = User.objects.create_user(username='leader1', email='l1@vau.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
-        self.mentor = User.objects.create_user(username='mentor1', email='m1@vau.edu.vn', role=UserRole.MENTOR, status=UserStatus.ACTIVE)
+        self.student = User.objects.create_user(username='leader1', email='l1@vaa.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
+        self.mentor = User.objects.create_user(username='mentor1', email='m1@vaa.edu.vn', role=UserRole.MENTOR, status=UserStatus.ACTIVE)
 
     def _make_project(self, code, **kwargs):
         return Project.objects.create(
@@ -25,7 +25,7 @@ class ProjectWorkflowTestCase(TestCase):
 
     def test_project_member_addition(self):
         proj = self._make_project('PRJ-2026-TEST2', name='Project Test Mem')
-        mem_user = User.objects.create_user(username='mem1', email='mem1@vau.edu.vn', role=UserRole.STUDENT)
+        mem_user = User.objects.create_user(username='mem1', email='mem1@vaa.edu.vn', role=UserRole.STUDENT)
         pm = ProjectMember.objects.create(project=proj, user=mem_user, role=MemberRole.MEMBER, status=MemberStatus.ACCEPTED)
         self.assertEqual(proj.memberships.count(), 1)
         self.assertEqual(pm.user, mem_user)

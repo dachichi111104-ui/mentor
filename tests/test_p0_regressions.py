@@ -7,8 +7,8 @@ from reviews.models import ReviewStatus
 
 class P0RegressionTests(TestCase):
     def setUp(self):
-        self.student = User.objects.create_user(username='p0_student', email='p0@vau.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
-        self.mentor = User.objects.create_user(username='p0_mentor', email='p0m@vau.edu.vn', role=UserRole.MENTOR, status=UserStatus.ACTIVE)
+        self.student = User.objects.create_user(username='p0_student', email='p0@vaa.edu.vn', role=UserRole.STUDENT, status=UserStatus.ACTIVE)
+        self.mentor = User.objects.create_user(username='p0_mentor', email='p0m@vaa.edu.vn', role=UserRole.MENTOR, status=UserStatus.ACTIVE)
         self.project = Project.objects.create(code='PRJ-P0-TEST', name='P0 Test Project', created_by=self.student, mentor=self.mentor,
             start_date=timezone.localdate() - timezone.timedelta(days=10),
             end_date=timezone.localdate() + timezone.timedelta(days=80),
