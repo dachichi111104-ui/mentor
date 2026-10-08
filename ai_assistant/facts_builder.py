@@ -43,7 +43,7 @@ def build_facts(project: Project, days: int = 14) -> dict:
         done_tasks = assigned_tasks.filter(status='DONE').count()
         overdue_tasks = sum(1 for t in assigned_tasks if t.is_overdue)
 
-        hours_14d = sum(t.hours_spent for t in u.time_logs.filter(project=project, created_at__gte=start_period))
+        hours_14d = sum((t.duration or 0) / 3600 for t in u.time_logs.filter(project=project, created_at__gte=start_period))
 
         members_data.append({
             'user_id': u.id,
