@@ -600,6 +600,8 @@
           }).catch(() => {
               restoreBtn('btn-ai-questions', origHtml);
           });
+    }
+
     function runChat() {
         const input = document.getElementById('ai-chat-input');
         if (!input || !input.value.trim()) return;

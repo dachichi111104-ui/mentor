@@ -6,6 +6,7 @@
 <script>
 function studentTimerComponent() {
     return {
+        createModal: false,
         isTimerRunning: false,
         timerSeconds: 0,
         timerLog: null,
@@ -229,10 +230,10 @@ function studentTimerComponent() {
                 <i class="fa-solid fa-folder-open text-[#163B65]"></i>
                  Danh sách Đồ án của tôi
             </h2>
-            <a href="{% url 'project_create' %}" class="px-3 py-1.5 bg-[#163B65] hover:bg-[#0f2643] text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5">
+            <button type="button" @click="createModal = true" class="px-3 py-1.5 bg-[#163B65] hover:bg-[#0f2643] text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer">
                 <i class="fa-solid fa-plus text-amber-400"></i>
                 <span>Tạo Đồ án Mới</span>
-            </a>
+            </button>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs">
@@ -297,6 +298,82 @@ function studentTimerComponent() {
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- CREATE PROJECT POPUP MODAL ON DASHBOARD -->
+    <div x-show="createModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4" @click.self="createModal = false">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 relative">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center space-x-2.5 text-[#163B65]">
+                    <div class="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-amber-500 font-bold border border-blue-200">
+                        <i class="fa-solid fa-folder-plus"></i>
+                    </div>
+                    <h3 class="text-sm font-bold text-slate-900">Khai Báo & Đăng Ký Đồ Án Mới</h3>
+                </div>
+                <button type="button" @click="createModal = false" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition-colors" title="Đóng modal">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <form method="post" action="{% url 'project_create' %}" class="space-y-4">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Mã đồ án *</label>
+                        <input type="text" name="code" placeholder="VD: PRJ-2026-AI" required class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Tên đồ án *</label>
+                        <input type="text" name="name" placeholder="Tên đồ án đầy đủ..." required class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Mô tả mục tiêu đồ án</label>
+                    <textarea name="description" rows="2" placeholder="Tóm tắt nội dung và yêu cầu chính..." class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Thể loại *</label>
+                        <select name="category" required class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]">
+                            <option value="WEB">Phát triển Web</option>
+                            <option value="MOBILE">Ứng dụng Di động</option>
+                            <option value="AI_ML">AI / Machine Learning</option>
+                            <option value="IOT">IoT & Phần cứng</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Công nghệ sử dụng</label>
+                        <input type="text" name="technology" placeholder="VD: Python, Django, ReactJS..." class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Chọn Mentor Hướng dẫn</label>
+                        <select name="mentor_id" class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]">
+                            <option value="">-- Chọn Mentor --</option>
+                            {% for m in mentors %}
+                            <option value="{{ m.id }}">{{ m.display_name }} ({{ m.specialization|default:"Giảng viên" }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Hạn chót bảo vệ đồ án</label>
+                        <input type="date" name="end_date" class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-[#163B65]">
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-2 border-t border-slate-100">
+                    <button type="button" @click="createModal = false" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-200 transition">Hủy bỏ</button>
+                    <button type="submit" class="px-5 py-2 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5 border border-[#0f2643]">
+                        <i class="fa-solid fa-check text-amber-400"></i>
+                        <span>Tạo Đồ Án</span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

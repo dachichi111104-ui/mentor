@@ -54,6 +54,8 @@ def student_dashboard_view(request):
     pending_tasks_count = total_tasks_count - done_tasks_count
     done_percent = int((done_tasks_count / total_tasks_count * 100)) if total_tasks_count > 0 else 0
 
+    mentors = User.objects.filter(role=UserRole.MENTOR, status=UserStatus.ACTIVE)
+
     context = {
         'total_projects': my_projects.count(),
         'active_projects_count': active_projects_count,
@@ -68,6 +70,7 @@ def student_dashboard_view(request):
         'overdue_tasks_count': len(overdue_tasks),
         'upcoming_milestones': upcoming_milestones,
         'recent_activities': recent_activities,
+        'mentors': mentors,
     }
     return render(request, 'dashboard/student_dashboard.html', context)
 
