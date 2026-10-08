@@ -75,12 +75,13 @@ class Command(BaseCommand):
         rng = random.Random(20261007)
         today = timezone.localdate()
 
-        demo_password = os.getenv('DEMO_PASSWORD')
-        if not demo_password:
-            demo_password = secrets.token_urlsafe(10)
-            self.stdout.write(self.style.WARNING(f"Mật khẩu các tài khoản Demo: {demo_password}"))
-        else:
-            self.stdout.write(self.style.SUCCESS(f"Mật khẩu các tài khoản Demo: {demo_password}"))
+        admin_password = os.getenv('ADMIN_PASSWORD', 'admin123')
+        mentor_password = os.getenv('MENTOR_PASSWORD', 'mentor123')
+        student_password = os.getenv('STUDENT_PASSWORD', 'student123')
+
+        self.stdout.write(self.style.SUCCESS(f"Admin password:   {admin_password}"))
+        self.stdout.write(self.style.SUCCESS(f"Mentor password:  {mentor_password}"))
+        self.stdout.write(self.style.SUCCESS(f"Student password: {student_password}"))
 
         with transaction.atomic():
             if reset:
@@ -116,7 +117,7 @@ class Command(BaseCommand):
                 }
             )
             admin.email = 'admin@vaa.edu.vn'
-            admin.set_password(demo_password)
+            admin.set_password(admin_password)
             admin.save()
 
             mentors_data = [
@@ -140,7 +141,7 @@ class Command(BaseCommand):
                     }
                 )
                 u.email = email
-                u.set_password(demo_password)
+                u.set_password(mentor_password)
                 u.save()
                 mentors.append(u)
 
@@ -158,7 +159,7 @@ class Command(BaseCommand):
                 }
             )
             m_pending.email = m_pending_email
-            m_pending.set_password(demo_password)
+            m_pending.set_password(mentor_password)
             m_pending.save()
 
             # Students
@@ -195,7 +196,7 @@ class Command(BaseCommand):
                     }
                 )
                 u.email = email
-                u.set_password(demo_password)
+                u.set_password(student_password)
                 u.save()
                 students.append(u)
 
@@ -212,7 +213,7 @@ class Command(BaseCommand):
                 }
             )
             s_suspended.email = s_suspended_email
-            s_suspended.set_password(demo_password)
+            s_suspended.set_password(student_password)
             s_suspended.save()
 
             # 2. Projects & Blueprints
