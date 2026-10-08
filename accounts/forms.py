@@ -3,6 +3,8 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.password_validation import validate_password
 from accounts.models import User, UserRole, UserStatus
 
+from accounts.utils import generate_mentor_email, generate_student_email
+
 class CustomLoginForm(AuthenticationForm):
     username = forms.CharField(
         widget=forms.TextInput(attrs={
@@ -46,13 +48,13 @@ class CustomRegisterForm(forms.ModelForm):
         model = User
         fields = ['username', 'email', 'first_name', 'last_name', 'role', 'student_id', 'department', 'phone']
         widgets = {
-            'username': forms.TextInput(attrs={'class': 'w-full px-3 py-2 rounded-lg border border-slate-300 text-xs'}),
-            'email': forms.EmailInput(attrs={'class': 'w-full px-3 py-2 rounded-lg border border-slate-300 text-xs'}),
-            'first_name': forms.TextInput(attrs={'class': 'w-full px-3 py-2 rounded-lg border border-slate-300 text-xs'}),
-            'last_name': forms.TextInput(attrs={'class': 'w-full px-3 py-2 rounded-lg border border-slate-300 text-xs'}),
-            'student_id': forms.TextInput(attrs={'class': 'w-full px-3 py-2 rounded-lg border border-slate-300 text-xs', 'placeholder': 'Mã sinh viên / Mã GV...'}),
-            'department': forms.TextInput(attrs={'class': 'w-full px-3 py-2 rounded-lg border border-slate-300 text-xs'}),
-            'phone': forms.TextInput(attrs={'class': 'w-full px-3 py-2 rounded-lg border border-slate-300 text-xs'}),
+            'username': forms.TextInput(attrs={'class': 'w-full px-3 py-2 rounded-lg border border-slate-300 text-xs', 'placeholder': 'VD: 2431540114 hoặc tuannla'}),
+            'email': forms.EmailInput(attrs={'class': 'w-full px-3 py-2 rounded-lg border border-slate-300 text-xs', 'placeholder': 'VD: 2431540114@vaa.edu.vn hoặc tuannla@vaa.edu.vn'}),
+            'first_name': forms.TextInput(attrs={'class': 'w-full px-3 py-2 rounded-lg border border-slate-300 text-xs', 'placeholder': 'Họ và tên đệm (VD: Nguyễn Lương)'}),
+            'last_name': forms.TextInput(attrs={'class': 'w-full px-3 py-2 rounded-lg border border-slate-300 text-xs', 'placeholder': 'Tên (VD: Anh Tuấn)'}),
+            'student_id': forms.TextInput(attrs={'class': 'w-full px-3 py-2 rounded-lg border border-slate-300 text-xs', 'placeholder': 'Mã sinh viên / Mã GV (VD: 2431540114)'}),
+            'department': forms.TextInput(attrs={'class': 'w-full px-3 py-2 rounded-lg border border-slate-300 text-xs', 'placeholder': 'Khoa Công nghệ Thông tin'}),
+            'phone': forms.TextInput(attrs={'class': 'w-full px-3 py-2 rounded-lg border border-slate-300 text-xs', 'placeholder': 'Số điện thoại...'}),
         }
 
     def clean_password(self):
@@ -67,6 +69,22 @@ class CustomRegisterForm(forms.ModelForm):
         p2 = cleaned_data.get('confirm_password')
         if p1 and p2 and p1 != p2:
             raise forms.ValidationError("Mật khẩu xác nhận không trùng khớp.")
+
+        role = cleaned_data.get('role') or UserRole.STUDENT
+        email = cleaned_data.get('email')
+        student_id = cleaned_data.get('student_id')
+        username = cleaned_data.get('username')
+        first_name = cleaned_data.get('first_name', '')
+        last_name = cleaned_data.get('last_name', '')
+
+        if not email:
+            if role == UserRole.MENTOR:
+                cleaned_data['email'] = generate_mentor_email(first_name, last_name)
+            else:
+                cleaned_data['email'] = generate_student_email(student_id or username)
+        elif '@vau.edu.vn' in email:
+            cleaned_data['email'] = email.replace('@vau.edu.vn', '@vaa.edu.vn')
+
         return cleaned_data
 
 class ProfileUpdateForm(forms.ModelForm):

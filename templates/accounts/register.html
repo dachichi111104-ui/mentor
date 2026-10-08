@@ -81,10 +81,10 @@
                     <i class="fa-solid fa-user-plus text-amber-400"></i>
                 </div>
                 <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">Đăng ký Tài khoản Mới</h1>
-                <p class="text-xs text-slate-500 mt-1 font-medium">Cổng Quản lý Đồ án Học viện Hàng không Việt Nam (VAU)</p>
+                <p class="text-xs text-slate-500 mt-1 font-medium">Cổng Quản lý Đồ án Học viện Hàng không Việt Nam (VAA)</p>
                 <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-2xl text-left text-xs text-blue-900 flex items-start space-x-2">
                     <i class="fa-solid fa-circle-info text-[#163B65] mt-0.5"></i>
-                    <span>Tài khoản đăng ký hỗ trợ <b>Sinh viên</b> và <b>Giảng viên / Mentor</b>. Hệ thống tự động đồng bộ chuẩn dữ liệu Học viện Hàng không VAU.</span>
+                    <span>Tài khoản đăng ký hỗ trợ <b>Sinh viên</b> và <b>Giảng viên / Mentor</b>. Hệ thống tự động đồng bộ chuẩn dữ liệu Học viện Hàng không VAA.</span>
                 </div>
             </div>
 
@@ -107,10 +107,25 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Tên đăng nhập *</label>
                         {{ form.username }}
+                        {% if form.username.errors %}<div class="text-rose-500 text-[11px] mt-1 font-semibold">{{ form.username.errors.0 }}</div>{% endif %}
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Họ và tên đầy đủ *</label>
-                        {{ form.full_name }}
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Mã SV / Mã GV</label>
+                        {{ form.student_id }}
+                        {% if form.student_id.errors %}<div class="text-rose-500 text-[11px] mt-1 font-semibold">{{ form.student_id.errors.0 }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Họ và tên đệm *</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}<div class="text-rose-500 text-[11px] mt-1 font-semibold">{{ form.first_name.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Tên *</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}<div class="text-rose-500 text-[11px] mt-1 font-semibold">{{ form.last_name.errors.0 }}</div>{% endif %}
                     </div>
                 </div>
 
@@ -118,10 +133,12 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Địa chỉ Email *</label>
                         {{ form.email }}
+                        {% if form.email.errors %}<div class="text-rose-500 text-[11px] mt-1 font-semibold">{{ form.email.errors.0 }}</div>{% endif %}
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Loại tài khoản (Vai trò) *</label>
                         {{ form.role }}
+                        {% if form.role.errors %}<div class="text-rose-500 text-[11px] mt-1 font-semibold">{{ form.role.errors.0 }}</div>{% endif %}
                     </div>
                 </div>
 
@@ -129,20 +146,22 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Mật khẩu *</label>
                         <div class="relative">
-                            {{ form.password1 }}
-                            <button type="button" onclick="togglePasswordVisibility('id_password1', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 focus:outline-none p-1 transition-colors">
+                            {{ form.password }}
+                            <button type="button" onclick="togglePasswordVisibility('id_password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 focus:outline-none p-1 transition-colors">
                                 <i class="fa-solid fa-eye text-xs"></i>
                             </button>
                         </div>
+                        {% if form.password.errors %}<div class="text-rose-500 text-[11px] mt-1 font-semibold">{{ form.password.errors.0 }}</div>{% endif %}
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Xác nhận mật khẩu *</label>
                         <div class="relative">
-                            {{ form.password2 }}
-                            <button type="button" onclick="togglePasswordVisibility('id_password2', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 focus:outline-none p-1 transition-colors">
+                            {{ form.confirm_password }}
+                            <button type="button" onclick="togglePasswordVisibility('id_confirm_password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 focus:outline-none p-1 transition-colors">
                                 <i class="fa-solid fa-eye text-xs"></i>
                             </button>
                         </div>
+                        {% if form.confirm_password.errors %}<div class="text-rose-500 text-[11px] mt-1 font-semibold">{{ form.confirm_password.errors.0 }}</div>{% endif %}
                     </div>
                 </div>
 
@@ -160,7 +179,7 @@
 
     <!-- Academic Footer -->
     <div class="w-full text-center text-xs text-slate-400 py-3 border-t border-slate-800 relative z-10">
-        © 2026 ProjectHub AI - Khoa Công nghệ Thông tin - Học viện Hàng không Việt Nam (VAU)
+        © 2026 ProjectHub AI - Khoa Công nghệ Thông tin - Học viện Hàng không Việt Nam (VAA)
     </div>
 
     <script>
