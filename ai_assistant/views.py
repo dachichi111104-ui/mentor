@@ -88,7 +88,7 @@ def _execute_ai_task(user, project, prompt_type: str, user_message: str = ""):
         user=user,
         project=project,
         prompt_type=prompt_type,
-        input_data=user_message or json.dumps(facts, ensure_ascii=False, default=str),
+        input_data=user_message if user_message else f"Phân tích AI [{prompt_type}] trên đồ án [{project.code}] {project.name}",
         output_result=json.dumps(result['data'], ensure_ascii=False, default=str),
         provider=result['provider'],
         model=result['model'],

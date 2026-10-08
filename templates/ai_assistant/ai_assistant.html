@@ -414,14 +414,22 @@
         const container = document.getElementById(containerId);
         if (!container) return;
         const safeTitle = escapeHtml(title);
-        const safeContent = typeof content === 'string' ? escapeHtml(content) : JSON.stringify(content);
+        let safeContent = '';
+        if (typeof content === 'string') {
+            safeContent = escapeHtml(content)
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-[#163B65]">$1</strong>')
+                .replace(/- \*\*/g, '<br>• <strong class="font-bold text-[#163B65]">')
+                .replace(/\n/g, '<br>');
+        } else {
+            safeContent = escapeHtml(JSON.stringify(content, null, 2));
+        }
         setContentHTML(container, `
             <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
                 <div class="flex items-center gap-2 text-xs font-bold text-slate-900 border-b border-slate-200/80 pb-2">
                     <i class="${iconClass} text-[#163B65]"></i>
                     <span>${safeTitle}</span>
                 </div>
-                <div class="text-xs text-slate-700 leading-relaxed space-y-2 whitespace-pre-line">${safeContent}</div>
+                <div class="text-xs text-slate-700 leading-relaxed space-y-2">${safeContent}</div>
             </div>
         `);
     }
@@ -431,11 +439,11 @@
         if (!btn) return null;
         const origHtml = btn.innerHTML;
         btn.disabled = true;
-        btn.classList.add('opacity-75', 'cursor-not-allowed', 'min-w-[170px]');
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
         setContentHTML(btn, `
-            <div class="inline-flex items-center justify-center space-x-2">
-                <svg class="animate-spin h-4 w-4 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                <span class="animate-pulse">${escapeHtml(loadingText)}</span>
+            <div class="inline-flex items-center justify-center space-x-1.5">
+                <i class="fa-solid fa-circle-notch fa-spin text-amber-400"></i>
+                <span>${escapeHtml(loadingText)}</span>
             </div>
         `);
         return origHtml;
@@ -445,7 +453,7 @@
         const btn = document.getElementById(btnId);
         if (!btn || !origHtml) return;
         btn.disabled = false;
-        btn.classList.remove('opacity-75', 'cursor-not-allowed', 'min-w-[170px]');
+        btn.classList.remove('opacity-75', 'cursor-not-allowed');
         setContentHTML(btn, origHtml);
     }
 
@@ -453,18 +461,17 @@
         const container = document.getElementById(containerId);
         if (!container) return;
         setContentHTML(container, `
-            <div class="p-6 bg-gradient-to-r from-blue-50/90 via-slate-50 to-amber-50/50 border border-blue-200/80 rounded-2xl text-xs shadow-sm flex flex-col sm:flex-row items-center justify-center gap-4 text-center sm:text-left transition-all">
-                <div class="relative w-12 h-12 flex items-center justify-center shrink-0">
-                    <svg class="animate-spin h-10 w-10 text-[#163B65]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    <i class="fa-solid fa-robot text-amber-500 text-xs absolute"></i>
+            <div class="p-5 bg-gradient-to-r from-blue-50/90 via-slate-50 to-amber-50/50 border border-blue-200/80 rounded-2xl text-xs shadow-sm flex flex-col sm:flex-row items-center justify-center gap-4 text-center sm:text-left transition-all">
+                <div class="relative w-10 h-10 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-circle-notch fa-spin text-2xl text-[#163B65]"></i>
                 </div>
                 <div class="space-y-1">
-                    <span class="font-bold text-slate-900 block text-sm flex items-center gap-2 justify-center sm:justify-start">
+                    <span class="font-bold text-slate-900 block text-xs flex items-center gap-2 justify-center sm:justify-start">
                         <span>${escapeHtml(titleText)}</span>
-                        <span class="px-2.5 py-0.5 bg-[#163B65]/10 text-[#163B65] text-[10px] font-extrabold rounded-full uppercase tracking-wider">AI Processing</span>
+                        <span class="px-2 py-0.5 bg-[#163B65]/10 text-[#163B65] text-[10px] font-extrabold rounded-full uppercase tracking-wider">AI Processing</span>
                     </span>
                     <p class="text-slate-600 text-[11px] leading-relaxed">
-                        Hệ thống đang quét dữ liệu đồ án, phân tích yêu cầu học thuật & tổng hợp kết quả. Vui lòng đợi trong giây lát...
+                        Hệ thống đang phân tích dữ liệu đồ án & tổng hợp kết quả. Vui lòng đợi trong giây lát...
                     </p>
                 </div>
             </div>
@@ -503,8 +510,8 @@
                       setContentHTML(container, '');
                       tasks.forEach((t, index) => {
                           const badgeColor = t.priority === 'CRITICAL' ? 'bg-rose-100 text-rose-800' :
-                                            t.priority === 'HIGH' ? 'bg-amber-100 text-amber-800' :
-                                            t.priority === 'MEDIUM' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800';
+                                             t.priority === 'HIGH' ? 'bg-amber-100 text-amber-800' :
+                                             t.priority === 'MEDIUM' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800';
                           appendContentHTML(container, `
                               <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-start justify-between text-xs gap-3">
                                   <div class="space-y-1">
@@ -564,7 +571,7 @@
         formData.append('project_id', projectId);
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
-        const origHtml = setBtnLoading('btn-ai-summary', 'Đang tổng hợp báo cáo...');
+        const origHtml = setBtnLoading('btn-ai-summary', 'Đang tổng hợp...');
         renderLoadingCard('summary-result', 'AI đang tổng hợp báo cáo tiến độ tuần...');
 
         fetch('/ai/weekly-summary/', {
@@ -577,6 +584,7 @@
               renderFormattedCard(text, 'fa-solid fa-file-lines', 'Báo cáo Tổng hợp Tiến độ Tuần bằng AI', 'summary-result');
           }).catch(() => {
               restoreBtn('btn-ai-summary', origHtml);
+              renderFormattedCard('Không thể kết nối với dịch vụ AI. Vui lòng thử lại sau.', 'fa-solid fa-triangle-exclamation', 'Lỗi Báo cáo Tuần', 'summary-result');
           });
     }
 
@@ -586,7 +594,7 @@
         formData.append('project_id', projectId);
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
-        const origHtml = setBtnLoading('btn-ai-risk', 'Đang rà soát rủi ro...');
+        const origHtml = setBtnLoading('btn-ai-risk', 'Đang rà soát...');
         renderLoadingCard('risk-result', 'AI đang phân tích dữ liệu trễ hạn & rủi ro...');
 
         fetch('/ai/risk-detection/', {
@@ -624,6 +632,7 @@
               }
           }).catch(() => {
               restoreBtn('btn-ai-risk', origHtml);
+              renderFormattedCard('Không thể kết nối với dịch vụ AI. Vui lòng thử lại sau.', 'fa-solid fa-triangle-exclamation', 'Lỗi Cảnh báo Rủi ro', 'risk-result');
           });
     }
 
@@ -633,7 +642,7 @@
         formData.append('project_id', projectId);
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
-        const origHtml = setBtnLoading('btn-ai-questions', 'Đang tạo câu hỏi...');
+        const origHtml = setBtnLoading('btn-ai-questions', 'Đang tạo...');
         renderLoadingCard('questions-result', 'AI đang tổng hợp bộ câu hỏi phản biện...');
 
         fetch('/ai/mentor-questions/', {
@@ -668,6 +677,7 @@
               }
           }).catch(() => {
               restoreBtn('btn-ai-questions', origHtml);
+              renderFormattedCard('Không thể kết nối với dịch vụ AI. Vui lòng thử lại sau.', 'fa-solid fa-triangle-exclamation', 'Lỗi Gợi ý Câu hỏi', 'questions-result');
           });
     }
 
