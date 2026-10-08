@@ -26,7 +26,7 @@ class LLMClient:
         self.gemini_key = os.getenv('GEMINI_API_KEY', '').strip()
         self.openai_key = os.getenv('OPENAI_API_KEY', '').strip()
         self.anthropic_key = os.getenv('ANTHROPIC_API_KEY', '').strip()
-        self.timeout = int(os.getenv('AI_TIMEOUT_SECONDS', '25'))
+        self.timeout = int(os.getenv('AI_TIMEOUT_SECONDS', '8'))
 
     def is_configured(self) -> bool:
         if self.provider == 'none':
@@ -78,7 +78,7 @@ class LLMClient:
         if self.is_circuit_open():
             raise RuntimeError("Circuit Breaker OPEN: Dịch vụ LLM tạm thời bị ngắt do quá nhiều lỗi liên tiếp.")
 
-        backoff_delays = [1, 3]
+        backoff_delays = [0.5]
         last_exception = None
 
         for attempt in range(len(backoff_delays) + 1):

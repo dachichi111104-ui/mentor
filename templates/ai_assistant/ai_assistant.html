@@ -428,19 +428,19 @@
     function setBtnLoading(btnId, loadingText) {
         const btn = document.getElementById(btnId);
         if (!btn) return null;
-        const origText = btn.textContent;
+        const origHtml = btn.innerHTML;
         btn.disabled = true;
         btn.classList.add('opacity-75', 'cursor-not-allowed');
         setContentHTML(btn, `<i class="fa-solid fa-circle-notch fa-spin text-amber-400"></i><span>${escapeHtml(loadingText)}</span>`);
-        return origText;
+        return origHtml;
     }
 
-    function restoreBtn(btnId, origText) {
+    function restoreBtn(btnId, origHtml) {
         const btn = document.getElementById(btnId);
-        if (!btn || !origText) return;
+        if (!btn || !origHtml) return;
         btn.disabled = false;
         btn.classList.remove('opacity-75', 'cursor-not-allowed');
-        btn.textContent = origText;
+        setContentHTML(btn, origHtml);
     }
 
     function renderLoadingCard(containerId, titleText) {
@@ -451,7 +451,7 @@
                 <i class="fa-solid fa-circle-notch fa-spin text-[#163B65] text-xl"></i>
                 <div>
                     <span class="font-bold block text-sm">${escapeHtml(titleText)}</span>
-                    <span class="text-blue-700 text-[11px]">Dữ liệu đang được kết nối và xử lý từ Gemini AI, vui lòng đợi trong giây lát...</span>
+                    <span class="text-blue-700 text-[11px]">Dữ liệu đang được kết nối và xử lý từ Trợ lý AI, vui lòng đợi trong giây lát...</span>
                 </div>
             </div>
         `);
@@ -482,6 +482,10 @@
                   globalAiTasks = tasks;
                   const container = document.getElementById('tasks-container');
                   if (container) {
+                      if (tasks.length === 0) {
+                          renderFormattedCard('Chưa có task đề xuất phù hợp từ dữ liệu đồ án.', 'fa-solid fa-info-circle', 'Kết Quả Phân Rã Task', 'tasks-container');
+                          return;
+                      }
                       setContentHTML(container, '');
                       tasks.forEach((t, index) => {
                           const badgeColor = t.priority === 'CRITICAL' ? 'bg-rose-100 text-rose-800' :
@@ -494,7 +498,7 @@
                                       <p class="text-[11px] text-slate-600 leading-relaxed">${escapeHtml(t.description)}</p>
                                       <div class="flex items-center gap-2 pt-1">
                                           <span class="px-2 py-0.5 bg-slate-200 text-slate-700 text-[10px] font-bold rounded-md"><i class="fa-solid fa-clock mr-1"></i>${escapeHtml(t.estimated_hours || 8)}h</span>
-                                          <span class="px-2 py-0.5 bg-slate-200 text-slate-700 text-[10px] font-bold rounded-md">${escapeHtml(t.labels || 'Đề xuất AI')}</span>
+                                          <span class="px-2 py-0.5 bg-slate-200 text-slate-700 text-[10px] font-bold rounded-md">${escapeHtml(Array.isArray(t.labels) ? t.labels.join(', ') : (t.labels || 'Đề xuất AI'))}</span>
                                       </div>
                                   </div>
                                   <span class="px-2.5 py-1 text-[10px] font-bold rounded-lg ${badgeColor} whitespace-nowrap">${escapeHtml(t.priority || 'MEDIUM')}</span>
@@ -573,8 +577,33 @@
         }).then(res => res.json())
           .then(data => {
               restoreBtn('btn-ai-risk', origHtml);
-              const text = data.analysis || data.risk_html || 'Chưa ghi nhận rủi ro nghiêm trọng.';
-              renderFormattedCard(text, 'fa-solid fa-triangle-exclamation', 'Phân tích Rủi ro Tiến độ bằng AI', 'risk-result');
+              const container = document.getElementById('risk-result');
+              if (data.risks && Array.isArray(data.risks) && data.risks.length > 0) {
+                  let html = `
+                      <div class="p-4 bg-rose-50/60 border border-rose-200 rounded-xl space-y-3">
+                          <div class="flex items-center justify-between border-b border-rose-200 pb-2 text-xs font-bold text-rose-900">
+                              <span class="flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation text-rose-600"></i>${escapeHtml(data.summary || 'Cảnh báo rủi ro tiến độ đồ án')}</span>
+                              <span class="px-2.5 py-0.5 bg-rose-100 text-rose-800 rounded-full text-[10px]">Phân tích hệ thống</span>
+                          </div>
+                          <div class="space-y-2">`;
+                  data.risks.forEach(r => {
+                      const badgeClass = r.severity === 'CRITICAL' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800';
+                      html += `
+                          <div class="p-3 bg-white border border-rose-100 rounded-lg text-xs space-y-1">
+                              <div class="flex items-center justify-between">
+                                  <span class="font-bold text-slate-900">${escapeHtml(r.title)}</span>
+                                  <span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeClass}">${escapeHtml(r.severity || 'WARNING')}</span>
+                              </div>
+                              <p class="text-[11px] text-slate-600">${escapeHtml(Array.isArray(r.evidence) ? r.evidence.join('; ') : (r.evidence || ''))}</p>
+                              <p class="text-[11px] text-slate-700 font-medium"><span class="font-bold text-[#163B65]">Đề xuất khắc phục:</span> ${escapeHtml(r.recommendation)}</p>
+                          </div>`;
+                  });
+                  html += `</div></div>`;
+                  setContentHTML(container, html);
+              } else {
+                  const text = data.summary || data.analysis || 'Chưa ghi nhận rủi ro trễ hạn nghiêm trọng trên đồ án này.';
+                  renderFormattedCard(text, 'fa-solid fa-circle-check', 'Kết Quả Phân Tích Rủi Ro Tiến Độ', 'risk-result');
+              }
           }).catch(() => {
               restoreBtn('btn-ai-risk', origHtml);
           });
@@ -595,8 +624,30 @@
         }).then(res => res.json())
           .then(data => {
               restoreBtn('btn-ai-questions', origHtml);
-              const text = data.questions || data.questions_html || 'Không có câu hỏi đề xuất.';
-              renderFormattedCard(text, 'fa-solid fa-comments', 'Gợi ý Câu hỏi Phản biện cho Mentor', 'questions-result');
+              const container = document.getElementById('questions-result');
+              if (data.questions && Array.isArray(data.questions) && data.questions.length > 0) {
+                  let html = `
+                      <div class="p-4 bg-purple-50/60 border border-purple-200 rounded-xl space-y-3">
+                          <div class="flex items-center justify-between border-b border-purple-200 pb-2 text-xs font-bold text-purple-900">
+                              <span class="flex items-center gap-2"><i class="fa-solid fa-comments text-purple-700"></i>Gợi ý Câu hỏi Phản biện & Đánh giá cho Mentor</span>
+                              <span class="px-2.5 py-0.5 bg-purple-100 text-purple-800 rounded-full text-[10px]">${data.questions.length} câu hỏi</span>
+                          </div>
+                          <div class="space-y-2">`;
+                  data.questions.forEach((q, idx) => {
+                      const qText = typeof q === 'string' ? q : (q.question || '');
+                      const qWhy = typeof q === 'object' && q.why ? q.why : '';
+                      html += `
+                          <div class="p-3 bg-white border border-purple-100 rounded-lg text-xs space-y-1">
+                              <span class="font-bold text-purple-950 block">${idx + 1}. ${escapeHtml(qText)}</span>
+                              ${qWhy ? `<p class="text-[11px] text-slate-500 italic"><span class="font-bold">Mục đích:</span> ${escapeHtml(qWhy)}</p>` : ''}
+                          </div>`;
+                  });
+                  html += `</div></div>`;
+                  setContentHTML(container, html);
+              } else {
+                  const text = data.questions || data.questions_html || 'Không có câu hỏi đề xuất.';
+                  renderFormattedCard(text, 'fa-solid fa-comments', 'Gợi ý Câu hỏi Phản biện cho Mentor', 'questions-result');
+              }
           }).catch(() => {
               restoreBtn('btn-ai-questions', origHtml);
           });
@@ -639,6 +690,7 @@
         const formData = new FormData();
         formData.append('project_id', projectId);
         formData.append('message', msg);
+        formData.append('prompt', msg);
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
         fetch('/ai/chat/', {
@@ -649,7 +701,7 @@
               const loadingEl = document.getElementById(loadingId);
               if (loadingEl) loadingEl.remove();
 
-              const ans = data.reply || data.answer || data.message || 'Chưa nhận được phản hồi từ AI.';
+              const ans = data.answer || data.response || data.reply || data.message || 'Chưa nhận được phản hồi từ AI.';
               appendContentHTML(chatBox, `
                   <div class="flex items-start space-x-3 text-xs">
                       <div class="w-8 h-8 rounded-xl bg-[#163B65] text-amber-400 flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-xs">

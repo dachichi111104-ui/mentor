@@ -341,12 +341,14 @@ def ai_chat_ajax(request):
         return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
     result, _ = _execute_ai_task(request.user, project, 'chat', user_message=prompt)
+    answer = result['data'].get('answer', '') if isinstance(result.get('data'), dict) else ''
     return JsonResponse({
         'status': 'success',
         'source': result['source'],
-        'response': result['data'].get('answer', ''),
-        'citations': result['data'].get('citations', []),
-        'in_scope': result['data'].get('in_scope', True),
+        'answer': answer,
+        'response': answer,
+        'citations': result['data'].get('citations', []) if isinstance(result.get('data'), dict) else [],
+        'in_scope': result['data'].get('in_scope', True) if isinstance(result.get('data'), dict) else True,
         'source_label': f"AI Chat ({result['source'].upper()})"
     })
 
