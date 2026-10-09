@@ -87,7 +87,6 @@ def register_view(request):
 from django.views.decorators.http import require_POST
 
 @login_required
-@require_POST
 def logout_view(request):
     if request.user.is_authenticated:
         from dashboard.models import TimeLog

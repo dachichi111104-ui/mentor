@@ -190,9 +190,12 @@
                 <button type="button" @click="logoutModal = false" class="px-4 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-200 transition-all">
                     Hủy bỏ
                 </button>
-                <a href="{% url 'logout' %}" class="px-4 py-2 text-xs font-bold text-white bg-rose-700 hover:bg-rose-800 rounded-xl shadow-xs transition-all">
-                    Xác nhận Đăng xuất
-                </a>
+                <form action="{% url 'logout' %}" method="post" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="px-4 py-2 text-xs font-bold text-white bg-rose-700 hover:bg-rose-800 rounded-xl shadow-xs transition-all">
+                        Xác nhận Đăng xuất
+                    </button>
+                </form>
             </div>
         </div>
     </div>
