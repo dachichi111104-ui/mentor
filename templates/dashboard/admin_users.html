@@ -152,8 +152,10 @@
                                     </select>
                                 </form>
 
+                                <form method="post" action="{% url 'admin_toggle_user_status' u.id %}" class="inline">
+                                    {% csrf_token %}
                                     {% if u.status == 'ACTIVE' %}
-                                    <button type="button" @click="$dispatch('open-confirm-modal', { title: 'Khóa tài khoản {{ u.username|escapejs }}', message: 'Bạn có chắc chắn muốn KHÓA tài khoản {{ u.display_name|escapejs }}? Người dùng này sẽ không thể đăng nhập vào hệ thống.', url: '{% url \'admin_toggle_user_status\' u.id %}' })" class="px-3 py-1 bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-[11px] rounded-xl border border-rose-200 transition">
+                                    <button type="submit" onclick="return confirm('Bạn có chắc chắn muốn KHÓA tài khoản {{ u.clean_name|escapejs }}?');" class="px-3 py-1 bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-[11px] rounded-xl border border-rose-200 transition">
                                         Khóa
                                     </button>
                                     {% else %}

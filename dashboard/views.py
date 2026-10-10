@@ -132,11 +132,30 @@ def admin_dashboard_view(request):
 @login_required
 @require_can('user.manage')
 def admin_users_view(request):
+    query = request.GET.get('q', '').strip()
+    role_filter = request.GET.get('role', '').strip()
+
     users = User.objects.all().order_by('-date_joined')
+
+    if query:
+        users = users.filter(
+            Q(username__icontains=query) |
+            Q(email__icontains=query) |
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query)
+        )
+
+    if role_filter:
+        users = users.filter(role=role_filter)
+
     pending_mentors = User.objects.filter(role=UserRole.MENTOR, status=UserStatus.PENDING_APPROVAL)
+
     return render(request, 'dashboard/admin_users.html', {
         'users': users,
-        'pending_mentors': pending_mentors
+        'users_list': users,
+        'pending_mentors': pending_mentors,
+        'query': query,
+        'role_filter': role_filter
     })
 
 @login_required
