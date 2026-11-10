@@ -148,3 +148,15 @@ class DocumentPermissionTests(TestCase):
         response = self.client.get(download_url)
         self.assertEqual(response.status_code, 200)
 
+    def test_document_embed_and_version_embed(self):
+        self.client.login(username='student1', password='password')
+        embed_url = reverse('document_embed', args=[self.doc.id])
+        response = self.client.get(embed_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'SRS Document')
+
+        v_embed_url = reverse('document_version_embed', args=[self.v1.id])
+        response = self.client.get(v_embed_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'SRS Document')
+

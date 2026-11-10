@@ -121,9 +121,11 @@ urlpatterns = [
     path('documents/<int:document_id>/delete/', document_views.document_delete_view, name='document_delete'),
     path('documents/<int:document_id>/download/', document_views.document_download_view, name='document_download'),
     path('documents/<int:document_id>/view/', document_views.document_preview_view, name='document_preview'),
+    path('documents/<int:document_id>/embed/', document_views.document_embed_view, name='document_embed'),
     path('documents/<int:document_id>/raw/', document_views.document_raw_view, name='document_raw'),
     path('documents/version/<int:version_id>/download/', document_views.document_version_download_view, name='document_version_download'),
     path('documents/version/<int:version_id>/view/', document_views.document_version_preview_view, name='document_version_preview'),
+    path('documents/version/<int:version_id>/embed/', document_views.document_version_embed_view, name='document_version_embed'),
     path('documents/version/<int:version_id>/raw/', document_views.document_version_raw_view, name='document_version_raw'),
 
     path('projects/<int:project_id>/submit-review/', project_views.project_submit_review_view, name='project_submit_review'),

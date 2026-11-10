@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xem trước: {{ doc.title }} (v{{ version_number }})</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="h-full bg-slate-100 flex flex-col overflow-hidden text-slate-800 antialiased font-sans">
+
+    <!-- Top mini-bar inside embed -->
+    <div class="px-4 py-2.5 bg-white border-b border-slate-200 flex items-center justify-between shrink-0 shadow-2xs">
+        <div class="flex items-center space-x-2 min-w-0">
+            {% if is_pdf %}
+            <i class="fa-solid fa-file-pdf text-rose-600 text-sm"></i>
+            {% elif is_word %}
+            <i class="fa-solid fa-file-word text-blue-600 text-sm"></i>
+            {% elif is_excel %}
+            <i class="fa-solid fa-file-excel text-emerald-600 text-sm"></i>
+            {% elif is_image %}
+            <i class="fa-solid fa-image text-purple-600 text-sm"></i>
+            {% elif is_text %}
+            <i class="fa-solid fa-code text-indigo-600 text-sm"></i>
+            {% elif is_zip %}
+            <i class="fa-solid fa-file-zipper text-amber-600 text-sm"></i>
+            {% else %}
+            <i class="fa-solid fa-file text-slate-600 text-sm"></i>
+            {% endif %}
+            <span class="font-bold text-xs text-slate-900 truncate">{{ doc.title }}</span>
+            <span class="px-1.5 py-0.2 bg-emerald-50 text-emerald-700 font-mono font-bold text-[10px] rounded border border-emerald-200">v{{ version_number }}</span>
+            <span class="text-[10px] text-slate-400 uppercase font-mono">.{{ file_extension }}</span>
+        </div>
+        <div class="flex items-center space-x-2 shrink-0">
+            <a href="{{ full_preview_url }}" target="_blank" class="px-2.5 py-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg text-xs font-semibold transition inline-flex items-center gap-1" title="Mở trang đầy đủ trong tab mới">
+                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                <span class="hidden sm:inline">Toàn trang</span>
+            </a>
+            <a href="{{ download_file_url }}" class="px-2.5 py-1 bg-[#163B65] hover:bg-[#0f2643] text-white rounded-lg text-xs font-bold transition inline-flex items-center gap-1 shadow-2xs" title="Tải file về máy">
+                <i class="fa-solid fa-download text-amber-400 text-[10px]"></i>
+                <span>Tải về</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 overflow-hidden relative">
+
+        {% if is_pdf %}
+        <!-- PDF Viewer: uses object + iframe embed with inline disposition -->
+        <div class="w-full h-full bg-slate-900 flex flex-col">
+            <object data="{{ raw_file_url }}" type="application/pdf" class="w-full h-full border-0">
+                <iframe src="{{ raw_file_url }}" class="w-full h-full border-0">
+                    <div class="h-full flex flex-col items-center justify-center p-6 text-center bg-white text-slate-700 space-y-3">
+                        <i class="fa-solid fa-file-pdf text-5xl text-rose-600"></i>
+                        <p class="font-bold text-sm">Trình duyệt không hỗ trợ hiển thị trực tiếp tệp PDF trong khung này.</p>
+                        <a href="{{ raw_file_url }}" target="_blank" class="px-4 py-2 bg-[#163B65] text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-sm">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Mở PDF trong tab mới
+                        </a>
+                    </div>
+                </iframe>
+            </object>
+        </div>
+
+        {% elif is_image %}
+        <!-- Image Viewer -->
+        <div class="w-full h-full flex items-center justify-center p-4 bg-slate-950/5 overflow-auto">
+            <img src="{{ raw_file_url }}" alt="{{ doc.title }}" class="max-h-full max-w-full object-contain rounded-xl shadow-lg border border-slate-300 bg-white">
+        </div>
+
+        {% elif is_text %}
+        <!-- Code / Text Viewer -->
+        <div class="w-full h-full overflow-auto bg-slate-900 text-slate-100 p-5 font-mono text-xs shadow-inner">
+            <pre class="whitespace-pre-wrap break-words leading-relaxed font-mono"><code>{{ text_content }}</code></pre>
+        </div>
+
+        {% elif is_word %}
+        <!-- Word Document (.docx / .doc) Viewer -->
+        <div class="w-full h-full overflow-y-auto p-4 sm:p-6 bg-slate-100 flex justify-center">
+            <div class="bg-white max-w-3xl w-full min-h-[450px] p-8 sm:p-12 rounded-2xl shadow-md border border-slate-200 space-y-4 text-slate-800 my-auto">
+                <div class="border-b border-slate-200 pb-4 mb-4 flex items-center justify-between">
+                    <div>
+                        <span class="px-2 py-0.5 bg-blue-50 text-blue-800 text-[10px] font-bold rounded border border-blue-200 uppercase">Tài liệu Word (DOCX)</span>
+                        <h1 class="text-lg font-bold text-slate-900 mt-2">{{ doc.title }}</h1>
+                    </div>
+                    <span class="text-xs text-slate-400 font-mono">v{{ version_number }}</span>
+                </div>
+                {% if word_paragraphs %}
+                    <div class="space-y-3.5 text-xs sm:text-sm text-slate-700 leading-relaxed">
+                        {% for p in word_paragraphs %}
+                        <p class="text-justify">{{ p }}</p>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="py-12 text-center space-y-3">
+                        <i class="fa-solid fa-file-word text-4xl text-blue-600"></i>
+                        <p class="text-xs text-slate-600 font-semibold">Tài liệu Word này có định dạng bố cục đặc thù hoặc chứa hình ảnh phức tạp.</p>
+                        <p class="text-[11px] text-slate-400">Bạn có thể bấm nút Tải về bên dưới để mở bằng Microsoft Word.</p>
+                        <a href="{{ download_file_url }}" class="mt-2 px-4 py-2 bg-[#163B65] text-white text-xs font-bold rounded-xl inline-flex items-center gap-1.5 shadow-sm">
+                            <i class="fa-solid fa-download text-amber-400"></i> Tải về máy để xem đầy đủ
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% elif is_excel %}
+        <!-- Excel Spreadsheet Viewer -->
+        <div class="w-full h-full flex flex-col bg-white overflow-hidden" x-data="{ activeSheet: 0 }">
+            {% if excel_sheets %}
+                <div class="flex items-center space-x-1 border-b border-slate-200 bg-slate-50 px-3 py-1.5 overflow-x-auto shrink-0">
+                    <span class="text-xs font-bold text-slate-500 mr-2 flex items-center gap-1">
+                        <i class="fa-solid fa-file-excel text-emerald-600"></i> Sheets:
+                    </span>
+                    {% for sheet in excel_sheets %}
+                    <button type="button" @click="activeSheet = {{ forloop.counter0 }}" :class="activeSheet === {{ forloop.counter0 }} ? 'bg-white text-emerald-700 shadow-2xs border-emerald-500 font-bold' : 'text-slate-600 hover:bg-slate-200 border-transparent'" class="px-3 py-1 text-xs rounded-lg border transition">
+                        {{ sheet.name }}
+                    </button>
+                    {% endfor %}
+                </div>
+                <div class="flex-1 overflow-auto p-4">
+                    {% for sheet in excel_sheets %}
+                    <div x-show="activeSheet === {{ forloop.counter0 }}">
+                        <table class="w-full text-xs text-slate-800 border-collapse border border-slate-200">
+                            <tbody>
+                                {% for row in sheet.rows %}
+                                <tr class="{% if forloop.first %}bg-slate-100 font-bold border-b-2 border-slate-300{% else %}hover:bg-slate-50 border-b border-slate-100{% endif %}">
+                                    <td class="p-1.5 bg-slate-50 text-[10px] text-slate-400 font-mono text-center border-r border-slate-200 select-none w-8">{{ forloop.counter }}</td>
+                                    {% for cell in row %}
+                                    <td class="p-2 border-r border-slate-200 truncate max-w-[200px]" title="{{ cell }}">{{ cell }}</td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="h-full flex flex-col items-center justify-center p-8 text-center space-y-3">
+                    <i class="fa-solid fa-file-excel text-5xl text-emerald-600"></i>
+                    <p class="text-sm font-bold text-slate-800">Bảng tính Excel</p>
+                    <p class="text-xs text-slate-500">Bảng tính có cấu trúc dữ liệu đặc thù. Bạn vui lòng tải về để mở bằng Microsoft Excel.</p>
+                    <a href="{{ download_file_url }}" class="px-4 py-2 bg-[#163B65] text-white text-xs font-bold rounded-xl inline-flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-download text-amber-400"></i> Tải về máy
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        {% elif is_zip %}
+        <!-- Zip Archive Explorer -->
+        <div class="w-full h-full bg-white flex flex-col overflow-hidden">
+            <div class="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600">
+                <span class="font-bold flex items-center gap-1.5 text-slate-800">
+                    <i class="fa-solid fa-folder-tree text-amber-500"></i> Danh sách tệp trong file nén ({{ zip_entries|length }} mục)
+                </span>
+            </div>
+            <div class="flex-1 overflow-auto p-4">
+                <div class="space-y-1">
+                    {% for entry in zip_entries %}
+                    <div class="flex items-center justify-between p-2 hover:bg-slate-50 rounded-lg text-xs font-mono text-slate-700 border border-transparent hover:border-slate-200 transition">
+                        <div class="flex items-center space-x-2 truncate">
+                            {% if entry.is_dir %}
+                            <i class="fa-solid fa-folder text-amber-400"></i>
+                            {% else %}
+                            <i class="fa-regular fa-file text-slate-400"></i>
+                            {% endif %}
+                            <span class="truncate">{{ entry.name }}</span>
+                        </div>
+                        <span class="text-[11px] text-slate-400 shrink-0">{{ entry.size }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-xs text-slate-400 text-center py-8">Tệp nén trống hoặc không thể đọc cấu trúc.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Fallback Other Document Card -->
+        <div class="h-full flex flex-col items-center justify-center p-8 text-center space-y-4 bg-slate-50">
+            <div class="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-[#163B65] text-2xl shadow-sm">
+                <i class="fa-solid fa-file-arrow-down"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-base font-bold text-slate-900">{{ doc.title }}</h3>
+                <p class="text-xs text-slate-500">Định dạng tệp: <span class="font-bold uppercase font-mono">{{ file_extension }}</span> • Dung lượng: {{ doc.file_size }}</p>
+            </div>
+            <a href="{{ download_file_url }}" class="px-5 py-2.5 bg-[#163B65] hover:bg-[#0f2643] text-white text-xs font-bold rounded-xl inline-flex items-center gap-2 shadow-sm uppercase tracking-wider transition">
+                <i class="fa-solid fa-download text-amber-400"></i>
+                <span>Tải tệp về máy</span>
+            </a>
+        </div>
+        {% endif %}
+
+    </div>
+
+</body>
+</html>

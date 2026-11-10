@@ -30,6 +30,17 @@ MINIMAL_PDF_BYTES = (
 )
 TINY_PNG_BYTES = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15c4\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82'
 
+def _create_minimal_docx(title='Document'):
+    import zipfile, io
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as z:
+        z.writestr('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>')
+        z.writestr('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>')
+        safe_title = str(title).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+        doc_xml = f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:rPr><w:b/></w:rPr><w:t>ProjectHub AI - Tài liệu Word</w:t></w:r></w:p><w:p><w:r><w:t>{safe_title}</w:t></w:r></w:p><w:p><w:r><w:t>Tài liệu này được lưu trữ và quản lý trực tuyến trên hệ thống ProjectHub AI.</w:t></w:r></w:p></w:body></w:document>'
+        z.writestr('word/document.xml', doc_xml)
+    return buf.getvalue()
+
 def _ensure_file_on_disk(file_field, default_title='Document', ext='pdf'):
     """
     Guarantees that a valid file exists on disk for file_field.
@@ -48,6 +59,8 @@ def _ensure_file_on_disk(file_field, default_title='Document', ext='pdf'):
             content = MINIMAL_PDF_BYTES
         elif clean_ext in {'png', 'jpg', 'jpeg'}:
             content = TINY_PNG_BYTES
+        elif clean_ext in {'docx', 'doc'}:
+            content = _create_minimal_docx(default_title)
         else:
             content = f"Tài liệu: {default_title}\nLưu trữ trên ProjectHub AI.\nThời gian: {timezone.now().strftime('%d/%m/%Y %H:%M')}".encode('utf-8')
         with open(path, 'wb') as f:
@@ -55,6 +68,106 @@ def _ensure_file_on_disk(file_field, default_title='Document', ext='pdf'):
         return True
     except Exception:
         return False
+
+def _extract_document_preview_data(file_field, ext):
+    ext = ext.lower().strip('.')
+    data = {
+        'is_pdf': ext == 'pdf',
+        'is_image': ext in {'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'},
+        'is_text': ext in {'txt', 'md', 'py', 'js', 'json', 'cpp', 'java', 'css', 'xml', 'sql', 'sh', 'yml', 'yaml', 'html', 'htm'},
+        'is_word': ext in {'docx', 'doc'},
+        'is_excel': ext in {'xlsx', 'xls', 'csv'},
+        'is_zip': ext in {'zip', 'rar'},
+        'is_other': ext not in {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'txt', 'md', 'py', 'js', 'json', 'cpp', 'java', 'css', 'xml', 'sql', 'sh', 'yml', 'yaml', 'html', 'htm', 'docx', 'doc', 'xlsx', 'xls', 'csv', 'zip', 'rar'},
+        'text_content': '',
+        'word_paragraphs': [],
+        'excel_sheets': [],
+        'zip_entries': [],
+    }
+
+    if not file_field:
+        return data
+
+    if data['is_text']:
+        try:
+            with file_field.open('rb') as f:
+                data['text_content'] = f.read(60000).decode('utf-8', errors='ignore')
+        except Exception:
+            data['text_content'] = "Không thể đọc nội dung văn bản của tập tin này."
+
+    elif data['is_word']:
+        paragraphs = []
+        try:
+            import docx
+            d = docx.Document(file_field.path)
+            for p in d.paragraphs:
+                t = p.text.strip()
+                if t:
+                    paragraphs.append(t)
+            for t in d.tables:
+                for row in t.rows:
+                    row_text = "  |  ".join(c.text.strip() for c in row.cells if c.text.strip())
+                    if row_text:
+                        paragraphs.append(row_text)
+        except Exception:
+            try:
+                import zipfile
+                import xml.etree.ElementTree as ET
+                with zipfile.ZipFile(file_field.path) as z:
+                    tree = ET.fromstring(z.read('word/document.xml'))
+                    ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+                    for p in tree.iterfind('.//w:p', ns):
+                        t = ''.join(node.text for node in p.iterfind('.//w:t', ns) if node.text).strip()
+                        if t:
+                            paragraphs.append(t)
+            except Exception:
+                pass
+        data['word_paragraphs'] = paragraphs
+
+    elif data['is_excel']:
+        if ext == 'csv':
+            try:
+                import csv
+                with file_field.open('r') as f:
+                    reader = csv.reader(f)
+                    rows = [row[:15] for i, row in enumerate(reader) if i < 50]
+                    if rows:
+                        data['excel_sheets'] = [{'name': 'Dữ liệu CSV', 'rows': rows}]
+            except Exception:
+                pass
+        else:
+            try:
+                import openpyxl
+                wb = openpyxl.load_workbook(file_field.path, data_only=True, read_only=True)
+                sheets = []
+                for sname in wb.sheetnames[:4]:
+                    ws = wb[sname]
+                    rows = []
+                    for r in ws.iter_rows(max_row=50, values_only=True):
+                        if any(c is not None for c in r):
+                            rows.append([str(c) if c is not None else "" for c in r[:15]])
+                    if rows:
+                        sheets.append({'name': sname, 'rows': rows})
+                data['excel_sheets'] = sheets
+            except Exception:
+                pass
+
+    elif data['is_zip'] and ext == 'zip':
+        try:
+            import zipfile
+            with zipfile.ZipFile(file_field.path) as z:
+                entries = []
+                for info in z.infolist()[:100]:
+                    entries.append({
+                        'name': info.filename,
+                        'size': f"{round(info.file_size / 1024, 1)} KB" if info.file_size > 1024 else f"{info.file_size} B",
+                        'is_dir': info.is_dir()
+                    })
+                data['zip_entries'] = entries
+        except Exception:
+            pass
+
+    return data
 
 def validate_uploaded_file(file_obj):
     if not file_obj:
@@ -336,39 +449,52 @@ def document_preview_view(request, document_id):
     ext = doc.file.name.split('.')[-1].lower() if doc.file and '.' in doc.file.name else 'pdf'
     _ensure_file_on_disk(doc.file, doc.title, ext)
 
-    is_pdf = ext == 'pdf'
-    is_image = ext in {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-    is_text = ext in {'txt', 'md', 'py', 'js', 'json', 'cpp', 'java', 'css', 'xml', 'sql', 'sh', 'yml', 'yaml'}
-    is_office = ext in {'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'}
-
-    text_content = ""
-    if doc.file and is_text:
-        try:
-            with doc.file.open('rb') as f:
-                text_content = f.read(50000).decode('utf-8', errors='ignore')
-        except Exception:
-            text_content = "Không thể đọc nội dung văn bản của tập tin này."
-
+    preview_data = _extract_document_preview_data(doc.file, ext)
     raw_file_url = f"/documents/{doc.id}/raw/"
     download_file_url = f"/documents/{doc.id}/download/"
+    embed_file_url = f"/documents/{doc.id}/embed/"
     all_versions = doc.versions.all().order_by('-version_number')
     latest_version = all_versions.filter(version_number=doc.current_version).first() or all_versions.first()
 
-    return render(request, 'documents/document_preview.html', {
+    context = {
         'doc': doc,
         'version': latest_version,
         'is_current': True,
         'file_extension': ext,
-        'is_pdf': is_pdf,
-        'is_image': is_image,
-        'is_text': is_text,
-        'is_office': is_office,
-        'text_content': text_content,
         'raw_file_url': raw_file_url,
         'download_file_url': download_file_url,
+        'embed_file_url': embed_file_url,
         'all_versions': all_versions,
         'categories': FileCategory.choices,
-    })
+        **preview_data,
+    }
+    return render(request, 'documents/document_preview.html', context)
+
+@login_required
+@xframe_options_sameorigin
+def document_embed_view(request, document_id):
+    doc = get_object_or_404(Document, id=document_id)
+    if not can(request.user, 'document.view', doc):
+        return render(request, 'errors/403.html', status=403)
+
+    ext = doc.file.name.split('.')[-1].lower() if doc.file and '.' in doc.file.name else 'pdf'
+    _ensure_file_on_disk(doc.file, doc.title, ext)
+
+    preview_data = _extract_document_preview_data(doc.file, ext)
+    raw_file_url = f"/documents/{doc.id}/raw/"
+    download_file_url = f"/documents/{doc.id}/download/"
+    full_preview_url = f"/documents/{doc.id}/view/"
+
+    context = {
+        'doc': doc,
+        'version_number': doc.current_version,
+        'file_extension': ext,
+        'raw_file_url': raw_file_url,
+        'download_file_url': download_file_url,
+        'full_preview_url': full_preview_url,
+        **preview_data,
+    }
+    return render(request, 'documents/document_embed.html', context)
 
 @login_required
 @xframe_options_sameorigin
@@ -394,6 +520,7 @@ def document_raw_view(request, document_id):
     try:
         f = doc.file.open('rb')
         response = FileResponse(f, as_attachment=False, content_type=content_type)
+        response['Content-Disposition'] = 'inline'
         response['X-Content-Type-Options'] = 'nosniff'
         return response
     except Exception:
@@ -430,39 +557,54 @@ def document_version_preview_view(request, version_id):
     ext = version.file.name.split('.')[-1].lower() if version.file and '.' in version.file.name else 'pdf'
     _ensure_file_on_disk(version.file, version.document.title, ext)
 
-    is_pdf = ext == 'pdf'
-    is_image = ext in {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-    is_text = ext in {'txt', 'md', 'py', 'js', 'json', 'cpp', 'java', 'css', 'xml', 'sql', 'sh', 'yml', 'yaml'}
-    is_office = ext in {'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'}
-
-    text_content = ""
-    if version.file and is_text:
-        try:
-            with version.file.open('rb') as f:
-                text_content = f.read(50000).decode('utf-8', errors='ignore')
-        except Exception:
-            text_content = "Không thể đọc nội dung văn bản của tập tin này."
-
+    preview_data = _extract_document_preview_data(version.file, ext)
     raw_file_url = f"/documents/version/{version.id}/raw/"
     download_file_url = f"/documents/version/{version.id}/download/"
+    embed_file_url = f"/documents/version/{version.id}/embed/"
     all_versions = doc.versions.all().order_by('-version_number')
     is_current = (version.version_number == doc.current_version)
 
-    return render(request, 'documents/document_preview.html', {
+    context = {
         'doc': doc,
         'version': version,
         'is_current': is_current,
         'file_extension': ext,
-        'is_pdf': is_pdf,
-        'is_image': is_image,
-        'is_text': is_text,
-        'is_office': is_office,
-        'text_content': text_content,
         'raw_file_url': raw_file_url,
         'download_file_url': download_file_url,
+        'embed_file_url': embed_file_url,
         'all_versions': all_versions,
         'categories': FileCategory.choices,
-    })
+        **preview_data,
+    }
+    return render(request, 'documents/document_preview.html', context)
+
+@login_required
+@xframe_options_sameorigin
+def document_version_embed_view(request, version_id):
+    version = get_object_or_404(DocumentVersion, id=version_id)
+    doc = version.document
+    if not can(request.user, 'document.view', doc):
+        return render(request, 'errors/403.html', status=403)
+
+    ext = version.file.name.split('.')[-1].lower() if version.file and '.' in version.file.name else 'pdf'
+    _ensure_file_on_disk(version.file, doc.title, ext)
+
+    preview_data = _extract_document_preview_data(version.file, ext)
+    raw_file_url = f"/documents/version/{version.id}/raw/"
+    download_file_url = f"/documents/version/{version.id}/download/"
+    full_preview_url = f"/documents/version/{version.id}/view/"
+
+    context = {
+        'doc': doc,
+        'version': version,
+        'version_number': version.version_number,
+        'file_extension': ext,
+        'raw_file_url': raw_file_url,
+        'download_file_url': download_file_url,
+        'full_preview_url': full_preview_url,
+        **preview_data,
+    }
+    return render(request, 'documents/document_embed.html', context)
 
 @login_required
 @xframe_options_sameorigin
@@ -487,6 +629,7 @@ def document_version_raw_view(request, version_id):
     try:
         f = version.file.open('rb')
         response = FileResponse(f, as_attachment=False, content_type=content_type)
+        response['Content-Disposition'] = 'inline'
         response['X-Content-Type-Options'] = 'nosniff'
         return response
     except Exception:

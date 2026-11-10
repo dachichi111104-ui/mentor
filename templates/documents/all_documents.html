@@ -90,7 +90,7 @@
                         <td class="p-3.5 text-slate-500 font-mono">{{ doc.created_at|date:"d/m/Y H:i" }}</td>
                         <td class="p-3.5 pr-5 text-right whitespace-nowrap space-x-1.5">
                             {% if doc.file %}
-                            <button type="button" @click="openPreview('{{ doc.title|escapejs }}', '{% url 'document_raw' doc.id %}', '{% url 'document_preview' doc.id %}', '{% url 'document_download' doc.id %}', '{{ doc.current_version }}')" class="px-2.5 py-1.5 bg-slate-100 text-slate-800 font-bold text-[11px] rounded-xl border border-slate-200 hover:bg-slate-200 transition inline-flex items-center gap-1" title="Xem trước tài liệu">
+                            <button type="button" @click="openPreview('{{ doc.title|escapejs }}', '{% url 'document_embed' doc.id %}', '{% url 'document_preview' doc.id %}', '{% url 'document_download' doc.id %}', '{{ doc.current_version }}')" class="px-2.5 py-1.5 bg-slate-100 text-slate-800 font-bold text-[11px] rounded-xl border border-slate-200 hover:bg-slate-200 transition inline-flex items-center gap-1" title="Xem trước tài liệu">
                                 <i class="fa-solid fa-eye text-[#163B65]"></i> Xem
                             </button>
                             <a href="{% url 'document_download' doc.id %}" class="px-2.5 py-1.5 bg-[#163B65] text-white font-bold text-[11px] rounded-xl hover:bg-[#0f2643] transition inline-flex items-center gap-1 shadow-xs" title="Tải về máy">
@@ -199,7 +199,7 @@
                 <div class="p-3.5 {% if ver.version_number == doc.current_version %}bg-emerald-50/50 border-emerald-300 ring-1 ring-emerald-300{% else %}bg-slate-50 border-slate-200{% endif %} border rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all">
                     <div class="space-y-1">
                         <div class="flex items-center space-x-2">
-                            <button type="button" @click="historyModalDocId = null; openPreview('{{ doc.title|escapejs }} (v{{ ver.version_number }})', '{% url 'document_version_raw' ver.id %}', '{% url 'document_version_preview' ver.id %}', '{% url 'document_version_download' ver.id %}', '{{ ver.version_number }}')" class="px-2 py-0.5 {% if ver.version_number == doc.current_version %}bg-emerald-700 text-white{% else %}bg-slate-700 text-white{% endif %} font-mono font-bold text-[11px] rounded-md hover:opacity-85 transition cursor-pointer" title="Bấm để xem trước phiên bản này ngay">
+                            <button type="button" @click="historyModalDocId = null; openPreview('{{ doc.title|escapejs }} (v{{ ver.version_number }})', '{% url 'document_version_embed' ver.id %}', '{% url 'document_version_preview' ver.id %}', '{% url 'document_version_download' ver.id %}', '{{ ver.version_number }}')" class="px-2 py-0.5 {% if ver.version_number == doc.current_version %}bg-emerald-700 text-white{% else %}bg-slate-700 text-white{% endif %} font-mono font-bold text-[11px] rounded-md hover:opacity-85 transition cursor-pointer" title="Bấm để xem trước phiên bản này ngay">
                                 v{{ ver.version_number }}
                             </button>
                             {% if ver.version_number == doc.current_version %}
@@ -213,7 +213,7 @@
                         <p class="text-xs text-slate-600 pl-1">{{ ver.change_log|default:"Không có ghi chú thay đổi." }}</p>
                     </div>
                     <div class="flex items-center space-x-1.5 self-end sm:self-auto shrink-0">
-                        <button type="button" @click="historyModalDocId = null; openPreview('{{ doc.title|escapejs }} (v{{ ver.version_number }})', '{% url 'document_version_raw' ver.id %}', '{% url 'document_version_preview' ver.id %}', '{% url 'document_version_download' ver.id %}', '{{ ver.version_number }}')" class="px-2.5 py-1.5 bg-white border border-slate-200 text-slate-700 font-bold text-[11px] rounded-xl hover:bg-slate-100 transition inline-flex items-center gap-1 shadow-2xs" title="Xem trước tài liệu">
+                        <button type="button" @click="historyModalDocId = null; openPreview('{{ doc.title|escapejs }} (v{{ ver.version_number }})', '{% url 'document_version_embed' ver.id %}', '{% url 'document_version_preview' ver.id %}', '{% url 'document_version_download' ver.id %}', '{{ ver.version_number }}')" class="px-2.5 py-1.5 bg-white border border-slate-200 text-slate-700 font-bold text-[11px] rounded-xl hover:bg-slate-100 transition inline-flex items-center gap-1 shadow-2xs" title="Xem trước tài liệu">
                             <i class="fa-solid fa-eye text-[#163B65]"></i> Xem trước
                         </button>
                         <a href="{% url 'document_version_preview' ver.id %}" target="_blank" class="px-2 py-1.5 text-slate-400 hover:text-slate-700 font-bold text-[11px] rounded-xl hover:bg-slate-100 transition inline-flex items-center" title="Mở trang đầy đủ trong tab mới">
