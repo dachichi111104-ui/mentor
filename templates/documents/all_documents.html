@@ -222,7 +222,7 @@
                         <a href="{% url 'document_version_download' ver.id %}" class="px-2.5 py-1.5 bg-[#163B65] text-white font-bold text-[11px] rounded-xl hover:bg-[#0f2643] transition inline-flex items-center gap-1 shadow-xs" title="Tải file phiên bản này về máy">
                             <i class="fa-solid fa-download text-amber-400"></i> Tải về
                         </a>
-                        {% if ver.version_number != doc.current_version and request.user.is_admin_user or ver.version_number != doc.current_version and doc.created_by == request.user or ver.version_number != doc.current_version and request.user == doc.project.created_by %}
+                        {% if ver.version_number != doc.current_version %}
                         <form method="post" action="{% url 'document_rollback' doc.id ver.id %}" class="inline">
                             {% csrf_token %}
                             <input type="hidden" name="next" value="{{ request.get_full_path }}">

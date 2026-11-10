@@ -98,10 +98,10 @@
                             </button>
 
                             <!-- Sửa thông tin tài liệu -->
-                            {% if doc.uploaded_by == request.user or doc.project.mentor == request.user or request.user.is_admin_user %}
                             <button type="button" @click="editModalDocId = {{ doc.id }}" class="px-2.5 py-1.5 bg-amber-50 text-amber-800 hover:bg-amber-100 rounded-lg text-[11px] font-bold border border-amber-200 transition inline-flex items-center gap-1" title="Sửa thông tin tài liệu">
                                 <i class="fa-solid fa-pen-to-square text-amber-600"></i> Sửa
                             </button>
+                            {% if doc.uploaded_by == request.user or doc.project.mentor == request.user or request.user.is_admin_user %}
                             <button type="button" @click="$dispatch('open-confirm-modal', { title: 'Xóa tài liệu', message: 'Bạn có chắc muốn xóa tài liệu {{ doc.title|escapejs }}?', url: '{% url "document_delete" doc.id %}' })" class="px-2.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg text-[11px] font-bold border border-rose-200 transition" title="Xóa tài liệu">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
@@ -215,7 +215,7 @@
                         <a href="{% url 'document_version_download' ver.id %}" class="px-2.5 py-1.5 bg-[#163B65] text-white font-bold text-[11px] rounded-xl hover:bg-[#0f2643] transition inline-flex items-center gap-1 shadow-xs" title="Tải file phiên bản này về máy">
                             <i class="fa-solid fa-download text-amber-400"></i> Tải về
                         </a>
-                        {% if ver.version_number != doc.current_version and request.user.is_admin_user or ver.version_number != doc.current_version and doc.created_by == request.user or ver.version_number != doc.current_version and request.user == doc.project.created_by %}
+                        {% if ver.version_number != doc.current_version %}
                         <form method="post" action="{% url 'document_rollback' doc.id ver.id %}" class="inline">
                             {% csrf_token %}
                             <input type="hidden" name="next" value="{{ request.get_full_path }}">
