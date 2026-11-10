@@ -286,8 +286,8 @@ PERMISSION_MATRIX = {
         'label': 'Cập nhật phiên bản tài liệu'
     },
     'document.edit_meta': {
-        'roles': {'ADMIN', 'LEADER', 'MEMBER'},
-        'rule': lambda u, o, c: (get_project_role(u, getattr(o, 'project', None)) in ['ADMIN', 'LEADER']) or _rule_document_delete(u, o, c),
+        'roles': {'ADMIN', 'LEADER', 'MEMBER', 'MENTOR'},
+        'rule': lambda u, o, c: (get_project_role(u, getattr(o, 'project', None)) in ['ADMIN', 'LEADER', 'MENTOR']) or _rule_document_delete(u, o, c),
         'label': 'Chỉnh sửa thông tin tài liệu'
     },
     'document.rollback': {

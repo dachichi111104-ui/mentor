@@ -173,10 +173,16 @@ def document_version_upload_view(request, document_id):
 
     file_obj = request.FILES.get('file')
     change_log = request.POST.get('change_log', '').strip()
+    title = request.POST.get('title', '').strip()
+    description = request.POST.get('description', '').strip()
+
+    next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
 
     is_valid, err_msg = validate_uploaded_file(file_obj)
     if not is_valid:
         messages.error(request, err_msg)
+        if next_url and ('/documents/' in next_url or '/projects/' in next_url):
+            return redirect(next_url)
         return redirect('project_documents', project_id=doc.project.id)
 
     new_version_num = doc.current_version + 1
@@ -186,8 +192,17 @@ def document_version_upload_view(request, document_id):
     doc.file_size = f"{size_mb} MB" if size_mb > 0.1 else f"{round(file_obj.size/1024, 1)} KB"
     doc.current_version = new_version_num
     doc.updated_at = timezone.now()
+    if title:
+        doc.title = title
+    if description:
+        doc.description = description
+
+    ext = file_obj.name.split('.')[-1].lower() if '.' in file_obj.name else ''
+    if ext:
+        doc.file_type = _deduce_category(ext)
     doc.save()
 
+    file_obj.seek(0)
     DocumentVersion.objects.create(
         document=doc,
         file=file_obj,
@@ -206,6 +221,46 @@ def document_version_upload_view(request, document_id):
         request=request
     )
     messages.success(request, f'Đã cập nhật tài liệu "{doc.title}" lên phiên bản v{new_version_num}!')
+    if next_url and ('/documents/' in next_url or '/projects/' in next_url):
+        return redirect(next_url)
+    return redirect('project_documents', project_id=doc.project.id)
+
+@login_required
+@require_POST
+def document_edit_view(request, document_id):
+    doc = get_object_or_404(Document, id=document_id)
+    if not can(request.user, 'document.edit_meta', doc):
+        return render(request, 'errors/403.html', status=403)
+
+    title = request.POST.get('title', '').strip()
+    description = request.POST.get('description', '').strip()
+    file_type = request.POST.get('file_type', '').strip()
+
+    next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
+
+    if not title:
+        messages.error(request, 'Tên tài liệu không được để trống.')
+    else:
+        doc.title = title
+        doc.description = description
+        if file_type and file_type in FileCategory.values:
+            doc.file_type = file_type
+        doc.updated_at = timezone.now()
+        doc.save()
+
+        log_action(
+            user=request.user,
+            action=ActionType.UPDATE_PROJECT,
+            entity_type='Document',
+            entity_id=doc.id,
+            description=f'Chỉnh sửa thông tin tài liệu "{doc.title}"',
+            project=doc.project,
+            request=request
+        )
+        messages.success(request, f'Đã cập nhật thông tin tài liệu "{doc.title}" thành công!')
+
+    if next_url and ('/documents/' in next_url or '/projects/' in next_url):
+        return redirect(next_url)
     return redirect('project_documents', project_id=doc.project.id)
 
 @login_required
@@ -269,17 +324,24 @@ def document_preview_view(request, document_id):
         except Exception:
             text_content = "Không thể đọc nội dung văn bản của tập tin này."
 
-    raw_url = request.build_absolute_uri(f"/documents/{doc.id}/raw/")
+    raw_file_url = f"/documents/{doc.id}/raw/"
+    download_file_url = f"/documents/{doc.id}/download/"
+    all_versions = doc.versions.all().order_by('-version_number')
+    latest_version = all_versions.filter(version_number=doc.current_version).first() or all_versions.first()
 
     return render(request, 'documents/document_preview.html', {
         'doc': doc,
+        'version': latest_version,
+        'is_current': True,
         'file_extension': ext,
         'is_pdf': is_pdf,
         'is_image': is_image,
         'is_text': is_text,
         'is_office': is_office,
         'text_content': text_content,
-        'raw_url': raw_url,
+        'raw_file_url': raw_file_url,
+        'download_file_url': download_file_url,
+        'all_versions': all_versions,
     })
 
 @login_required
@@ -326,14 +388,74 @@ def document_version_download_view(request, version_id):
         return render(request, 'errors/410.html', {'message': 'Phiên bản tệp không tồn tại trên đĩa.'}, status=410)
 
 @login_required
+@xframe_options_sameorigin
 def document_version_preview_view(request, version_id):
     version = get_object_or_404(DocumentVersion, id=version_id)
-    return document_preview_view(request, version.document.id)
+    doc = version.document
+    if not can(request.user, 'document.view', doc):
+        return render(request, 'errors/403.html', status=403)
+
+    request.breadcrumb_obj = doc
+
+    ext = version.file.name.split('.')[-1].lower() if version.file and '.' in version.file.name else 'pdf'
+    is_pdf = ext == 'pdf'
+    is_image = ext in {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    is_text = ext in {'txt', 'md', 'py', 'js', 'json', 'cpp', 'java', 'css', 'xml', 'sql', 'sh', 'yml', 'yaml'}
+    is_office = ext in {'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'}
+
+    text_content = ""
+    if version.file and is_text:
+        try:
+            with version.file.open('rb') as f:
+                text_content = f.read(50000).decode('utf-8', errors='ignore')
+        except Exception:
+            text_content = "Không thể đọc nội dung văn bản của tập tin này."
+
+    raw_file_url = f"/documents/version/{version.id}/raw/"
+    download_file_url = f"/documents/version/{version.id}/download/"
+    all_versions = doc.versions.all().order_by('-version_number')
+    is_current = (version.version_number == doc.current_version)
+
+    return render(request, 'documents/document_preview.html', {
+        'doc': doc,
+        'version': version,
+        'is_current': is_current,
+        'file_extension': ext,
+        'is_pdf': is_pdf,
+        'is_image': is_image,
+        'is_text': is_text,
+        'is_office': is_office,
+        'text_content': text_content,
+        'raw_file_url': raw_file_url,
+        'download_file_url': download_file_url,
+        'all_versions': all_versions,
+    })
 
 @login_required
+@xframe_options_sameorigin
 def document_version_raw_view(request, version_id):
     version = get_object_or_404(DocumentVersion, id=version_id)
-    return document_raw_view(request, version.document.id)
+    if not can(request.user, 'document.view', version.document):
+        return render(request, 'errors/403.html', status=403)
+
+    if not version.file:
+        return render(request, 'errors/410.html', {'message': 'Phiên bản tệp không tồn tại.'}, status=410)
+
+    filename = version.file.name
+    content_type, _ = mimetypes.guess_type(filename)
+    content_type = content_type or 'application/octet-stream'
+
+    ext = filename.split('.')[-1].lower() if '.' in filename else ''
+    if ext in {'html', 'htm', 'js', 'svg'}:
+        content_type = 'text/plain; charset=utf-8'
+
+    try:
+        f = version.file.open('rb')
+        response = FileResponse(f, as_attachment=False, content_type=content_type)
+        response['X-Content-Type-Options'] = 'nosniff'
+        return response
+    except Exception:
+        return render(request, 'errors/410.html', {'message': 'Tệp tin không thể mở từ đĩa.'}, status=410)
 
 @login_required
 @require_POST
@@ -345,6 +467,10 @@ def document_rollback_view(request, document_id, version_id):
     target_version = get_object_or_404(DocumentVersion, id=version_id, document=doc)
     doc.file = target_version.file
     doc.current_version = target_version.version_number
+    ext = target_version.file.name.split('.')[-1].lower() if target_version.file and '.' in target_version.file.name else ''
+    if ext:
+        doc.file_type = _deduce_category(ext)
+    doc.updated_at = timezone.now()
     doc.save()
 
     log_action(
@@ -357,4 +483,7 @@ def document_rollback_view(request, document_id, version_id):
         request=request
     )
     messages.success(request, f'Đã khôi phục tài liệu "{doc.title}" về phiên bản v{target_version.version_number}.')
+    next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
+    if next_url and ('/documents/' in next_url or '/projects/' in next_url):
+        return redirect(next_url)
     return redirect('project_documents', project_id=doc.project.id)

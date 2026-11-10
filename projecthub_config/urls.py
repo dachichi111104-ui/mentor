@@ -116,6 +116,7 @@ urlpatterns = [
     path('documents/upload/global/', document_views.all_document_upload_view, name='all_document_upload'),
     path('projects/<int:project_id>/documents/upload/', document_views.document_upload_view, name='document_upload'),
     path('documents/<int:document_id>/version/upload/', document_views.document_version_upload_view, name='document_version_upload'),
+    path('documents/<int:document_id>/edit/', document_views.document_edit_view, name='document_edit'),
     path('documents/<int:document_id>/rollback/<int:version_id>/', document_views.document_rollback_view, name='document_rollback'),
     path('documents/<int:document_id>/delete/', document_views.document_delete_view, name='document_delete'),
     path('documents/<int:document_id>/download/', document_views.document_download_view, name='document_download'),

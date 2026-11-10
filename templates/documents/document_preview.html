@@ -1,93 +1,139 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Xem Tài liệu: {{ doc.title }} - ProjectHub{% endblock %}
+{% block title %}Xem Tài liệu: {{ doc.title }} (v{{ version.version_number|default:doc.current_version }}) - ProjectHub{% endblock %}
 
 {% block content %}
 <div class="space-y-5">
 
     <!-- Document Header Info Strip -->
-    <div class="bg-white rounded p-5 border border-[#D9DEE8] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div class="space-y-1">
-            <div class="flex items-center space-x-2">
+    <div class="bg-white rounded-2xl p-5 border border-[#D9DEE8] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+        <div class="space-y-1.5">
+            <div class="flex items-center space-x-2 flex-wrap gap-y-1">
                 <span class="px-2 py-0.5 bg-[#163B65] text-white font-mono font-bold text-[10px] rounded">{{ doc.project.code }}</span>
-                <span class="px-2 py-0.5 bg-slate-100 text-[#172033] font-mono font-bold text-[10px] rounded border border-slate-200">v{{ doc.current_version }}</span>
-                <span class="px-2 py-0.5 bg-blue-50 text-[#163B65] font-semibold text-[10px] rounded border border-blue-200">{{ doc.get_file_type_display }}</span>
+                <span class="px-2.5 py-0.5 {% if is_current %}bg-emerald-100 text-emerald-800 border-emerald-300{% else %}bg-amber-100 text-amber-900 border-amber-300{% endif %} font-mono font-bold text-[11px] rounded-md border flex items-center gap-1">
+                    <i class="fa-solid fa-code-commit text-[10px]"></i>
+                    v{{ version.version_number|default:doc.current_version }}
+                    {% if is_current %}(Bản mới nhất){% else %}(Bản lịch sử){% endif %}
+                </span>
+                <span class="px-2 py-0.5 bg-blue-50 text-[#163B65] font-semibold text-[10px] rounded border border-blue-200 uppercase">{{ file_extension }}</span>
             </div>
             <h1 class="text-lg font-bold text-[#172033] tracking-tight">{{ doc.title }}</h1>
             <p class="text-xs text-[#667085]">
-                Tải lên bởi <span class="font-semibold text-[#172033]">{{ doc.uploaded_by.display_name }}</span> lúc {{ doc.created_at|date:"d/m/Y H:i" }} • Dung lượng: {{ doc.file_size }}
+                Tải lên bởi <span class="font-semibold text-[#172033]">{{ version.uploaded_by.display_name|default:doc.uploaded_by.display_name }}</span> lúc {{ version.created_at|default:doc.created_at|date:"d/m/Y H:i" }} • Dung lượng: {{ doc.file_size }}
             </p>
+            {% if version.change_log %}
+            <div class="text-xs text-slate-700 bg-amber-50/70 border border-amber-200 rounded-xl px-3 py-1.5 flex items-center space-x-2">
+                <i class="fa-solid fa-tag text-amber-600"></i>
+                <span>Ghi chú phiên bản này: <b>{{ version.change_log }}</b></span>
+            </div>
+            {% endif %}
             {% if doc.description %}
-            <p class="text-xs text-[#172033] bg-[#F5F7FA] p-2 rounded border border-[#D9DEE8] mt-2">{{ doc.description }}</p>
+            <p class="text-xs text-[#172033] bg-[#F5F7FA] p-2.5 rounded-xl border border-[#D9DEE8] mt-1">{{ doc.description }}</p>
             {% endif %}
         </div>
 
-        <div class="flex items-center space-x-2 self-start sm:self-auto">
-            <a href="{% url 'project_documents' doc.project.id %}" class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs rounded border border-[#D9DEE8] transition-colors flex items-center space-x-1.5">
+        <div class="flex items-center space-x-2 self-start sm:self-auto shrink-0 flex-wrap gap-y-2">
+            <a href="{% url 'project_documents' doc.project.id %}" class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl border border-[#D9DEE8] transition-colors flex items-center space-x-1.5">
                 <i class="fa-solid fa-arrow-left"></i>
                 <span>Quay lại</span>
             </a>
-            <a href="{% url 'document_download' doc.id %}" class="px-4 py-2 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded uppercase tracking-wider transition-colors flex items-center space-x-1.5">
-                <i class="fa-solid fa-download"></i>
-                <span>Tải về Tệp</span>
+            <a href="{{ download_file_url }}" class="px-4 py-2 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-colors flex items-center space-x-1.5 shadow-xs">
+                <i class="fa-solid fa-download text-amber-400"></i>
+                <span>Tải về (v{{ version.version_number|default:doc.current_version }})</span>
             </a>
         </div>
     </div>
 
+    <!-- Version Switcher Bar (Lịch sử các phiên bản v1, v2, v3...) -->
+    {% if all_versions.count > 0 %}
+    <div class="bg-white rounded-2xl p-3.5 border border-[#D9DEE8] flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xs">
+        <div class="flex items-center space-x-2 overflow-x-auto py-0.5">
+            <div class="flex items-center space-x-1 text-slate-700 font-bold text-xs whitespace-nowrap mr-1">
+                <i class="fa-solid fa-clock-rotate-left text-[#163B65]"></i>
+                <span>Lịch sử phiên bản:</span>
+            </div>
+            {% for v in all_versions %}
+            <a href="{% url 'document_version_preview' v.id %}" 
+               class="px-3 py-1.5 rounded-xl font-bold font-mono text-xs transition inline-flex items-center space-x-1.5 whitespace-nowrap {% if version.id == v.id %}bg-[#163B65] text-white shadow-xs ring-2 ring-[#163B65]/20{% else %}bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200{% endif %}"
+               title="Xem phiên bản v{{ v.version_number }} ({{ v.created_at|date:'d/m/Y H:i' }})">
+                <span>v{{ v.version_number }}</span>
+                {% if v.version_number == doc.current_version %}
+                <span class="text-[9px] px-1 py-0.2 bg-emerald-500 text-white rounded font-sans font-semibold">Mới nhất</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+
+        {% if not is_current and version %}
+        <div class="shrink-0">
+            <form method="post" action="{% url 'document_rollback' doc.id version.id %}" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl transition inline-flex items-center space-x-1.5 shadow-xs">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>Khôi phục tài liệu về phiên bản v{{ version.version_number }}</span>
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <!-- Main File Content / Viewer Section -->
-    <div class="bg-white rounded border border-[#D9DEE8] p-4 min-h-[500px]">
+    <div class="bg-white rounded-2xl border border-[#D9DEE8] p-4 min-h-[500px] shadow-xs">
         {% if is_pdf %}
         <!-- PDF Viewer -->
         <div class="w-full">
             <div class="mb-3 flex items-center justify-between text-xs text-[#667085] border-b border-slate-200 pb-2">
-                <span>Chế độ Xem trực tiếp File PDF</span>
-                <a href="{% url 'document_raw' doc.id %}" target="_blank" class="text-[#163B65] font-semibold hover:underline">Mở tab mới <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1"></i></a>
+                <span class="font-semibold text-slate-700"><i class="fa-solid fa-file-pdf text-rose-600 mr-1.5"></i>Xem trước PDF (v{{ version.version_number|default:doc.current_version }})</span>
+                <a href="{{ raw_file_url }}" target="_blank" class="text-[#163B65] font-semibold hover:underline inline-flex items-center">
+                    Mở tab riêng toàn màn hình <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1.5"></i>
+                </a>
             </div>
-            <iframe src="{% url 'document_raw' doc.id %}" class="w-full h-[700px] rounded border border-[#D9DEE8]"></iframe>
+            <iframe src="{{ raw_file_url }}" class="w-full h-[750px] rounded-xl border border-[#D9DEE8]"></iframe>
         </div>
 
         {% elif is_image %}
         <!-- Image Viewer -->
         <div class="w-full space-y-3">
-            <div class="text-xs text-[#667085] border-b border-slate-200 pb-2">
-                <span>Hiển thị Hình ảnh</span>
+            <div class="text-xs text-[#667085] border-b border-slate-200 pb-2 flex items-center justify-between">
+                <span class="font-semibold text-slate-700"><i class="fa-solid fa-image text-emerald-600 mr-1.5"></i>Xem trước Hình ảnh (v{{ version.version_number|default:doc.current_version }})</span>
+                <a href="{{ raw_file_url }}" target="_blank" class="text-[#163B65] font-semibold hover:underline inline-flex items-center">
+                    Mở hình ảnh gốc <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1.5"></i>
+                </a>
             </div>
-            <div class="flex justify-center p-6 bg-[#F5F7FA] rounded border border-[#D9DEE8]">
-                <img src="{% url 'document_raw' doc.id %}" alt="{{ doc.title }}" class="max-h-[650px] object-contain rounded border border-slate-300">
+            <div class="flex justify-center p-6 bg-[#F5F7FA] rounded-2xl border border-[#D9DEE8]">
+                <img src="{{ raw_file_url }}" alt="{{ doc.title }}" class="max-h-[650px] object-contain rounded-xl border border-slate-300 shadow-sm">
             </div>
         </div>
 
         {% elif is_text %}
         <!-- Text/Code Viewer -->
         <div class="w-full space-y-3">
-            <div class="text-xs text-[#667085] border-b border-slate-200 pb-2">
-                <span>Nội dung Văn bản / Mã nguồn</span>
+            <div class="text-xs text-[#667085] border-b border-slate-200 pb-2 flex items-center justify-between">
+                <span class="font-semibold text-slate-700"><i class="fa-solid fa-code text-blue-600 mr-1.5"></i>Nội dung Văn bản / Mã nguồn (v{{ version.version_number|default:doc.current_version }})</span>
+                <a href="{{ raw_file_url }}" target="_blank" class="text-[#163B65] font-semibold hover:underline inline-flex items-center">
+                    Tải tệp mã nguồn <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1.5"></i>
+                </a>
             </div>
-            <div class="bg-slate-900 text-slate-100 p-4 rounded font-mono text-xs overflow-x-auto max-h-[600px] custom-scrollbar border border-slate-800">
+            <div class="bg-slate-900 text-slate-100 p-4 rounded-2xl font-mono text-xs overflow-x-auto max-h-[600px] custom-scrollbar border border-slate-800">
                 <pre><code>{{ text_content }}</code></pre>
             </div>
         </div>
 
         {% elif is_office %}
         <!-- Office Document Viewer (Word / Excel / PowerPoint) -->
-        <div class="w-full space-y-3" x-data="{ activeTab: 'embed' }">
+        <div class="w-full space-y-3" x-data="{ activeTab: 'download' }">
             <div class="flex items-center justify-between text-xs text-[#667085] border-b border-slate-200 pb-2">
                 <div class="flex items-center space-x-2">
-                    <button @click="activeTab = 'embed'" :class="activeTab === 'embed' ? 'bg-[#163B65] text-white' : 'bg-slate-100 text-[#172033] hover:bg-slate-200'" class="px-3 py-1 rounded font-semibold text-xs transition-colors">
-                        <i class="fa-solid fa-eye mr-1"></i> Xem trước trực tuyến
-                    </button>
-                    <button @click="activeTab = 'download'" :class="activeTab === 'download' ? 'bg-[#163B65] text-white' : 'bg-slate-100 text-[#172033] hover:bg-slate-200'" class="px-3 py-1 rounded font-semibold text-xs transition-colors">
-                        <i class="fa-solid fa-download mr-1"></i> Tải file về máy
-                    </button>
+                    <span class="font-semibold text-slate-700"><i class="fa-solid fa-file-lines text-blue-600 mr-1.5"></i>Tài liệu Office (v{{ version.version_number|default:doc.current_version }})</span>
                 </div>
-                <a href="{% url 'document_raw' doc.id %}" target="_blank" class="text-[#163B65] font-semibold hover:underline">Tải tệp gốc <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1"></i></a>
+                <a href="{{ download_file_url }}" class="text-[#163B65] font-semibold hover:underline inline-flex items-center">
+                    Tải tệp về máy <i class="fa-solid fa-download text-[10px] ml-1.5"></i>
+                </a>
             </div>
 
-            <div x-show="activeTab === 'embed'">
-                <iframe src="{{ google_viewer_url }}" class="w-full h-[700px] rounded border border-[#D9DEE8]"></iframe>
-            </div>
-
-            <div x-show="activeTab === 'download'" class="w-full max-w-2xl mx-auto py-12 text-center space-y-5">
+            <div class="w-full max-w-2xl mx-auto py-12 text-center space-y-5">
                 <div class="w-16 h-16 mx-auto rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-[#163B65] text-2xl shadow-xs">
                     {% if doc.file_type == 'WORD' %}
                     <i class="fa-solid fa-file-word text-blue-700"></i>
@@ -100,13 +146,13 @@
                     {% endif %}
                 </div>
                 <div class="space-y-1">
-                    <h3 class="text-base font-bold text-[#172033]">{{ doc.title }}</h3>
+                    <h3 class="text-base font-bold text-[#172033]">{{ doc.title }} (v{{ version.version_number|default:doc.current_version }})</h3>
                     <p class="text-xs text-[#667085]">Định dạng tệp: <span class="font-bold text-[#172033] uppercase">{{ file_extension }}</span> • Dung lượng: {{ doc.file_size }}</p>
                 </div>
                 <div class="pt-2 flex justify-center space-x-3">
-                    <a href="{% url 'document_download' doc.id %}" class="px-6 py-2.5 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-all shadow-xs flex items-center space-x-2">
-                        <i class="fa-solid fa-download"></i>
-                        <span>Tải về Tệp này ({{ doc.file_size }})</span>
+                    <a href="{{ download_file_url }}" class="px-6 py-2.5 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-all shadow-xs flex items-center space-x-2">
+                        <i class="fa-solid fa-download text-amber-400"></i>
+                        <span>Tải về Phiên bản này ({{ doc.file_size }})</span>
                     </a>
                 </div>
             </div>
@@ -120,7 +166,7 @@
             </div>
 
             <div class="space-y-1">
-                <h3 class="text-base font-bold text-[#172033]">{{ doc.title }}</h3>
+                <h3 class="text-base font-bold text-[#172033]">{{ doc.title }} (v{{ version.version_number|default:doc.current_version }})</h3>
                 <p class="text-xs text-[#667085]">Định dạng file: <span class="font-bold text-[#172033] uppercase">{{ file_extension }}</span> • Dung lượng: {{ doc.file_size }}</p>
             </div>
 
@@ -132,8 +178,8 @@
             </div>
 
             <div class="pt-2 flex justify-center space-x-3">
-                <a href="{% url 'document_download' doc.id %}" class="px-6 py-2.5 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-all shadow-xs flex items-center space-x-2">
-                    <i class="fa-solid fa-download"></i>
+                <a href="{{ download_file_url }}" class="px-6 py-2.5 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl uppercase tracking-wider transition-all shadow-xs flex items-center space-x-2">
+                    <i class="fa-solid fa-download text-amber-400"></i>
                     <span>Tải về Tệp nén ({{ doc.file_size }})</span>
                 </a>
             </div>

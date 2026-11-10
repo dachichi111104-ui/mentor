@@ -5,6 +5,9 @@
 {% block content %}
 <div class="space-y-6" x-data="{
     uploadModal: false,
+    versionModalDocId: null,
+    historyModalDocId: null,
+    editModalDocId: null,
     selectedProjectId: '{{ upload_projects.first.id|default:0 }}',
     selectedFileType: 'PDF',
     acceptTypes: {
@@ -16,13 +19,23 @@
         'IMAGE': '.png,.jpg,.jpeg,.gif,.svg,.webp,image/*',
         'OTHER': '*/*'
     },
-    previewModalDocId: null,
-    previewModalUrl: '',
-    previewModalTitle: '',
-    openPreview(docId, title) {
-        this.previewModalDocId = docId;
-        this.previewModalTitle = title;
-        this.previewModalUrl = `/documents/${docId}/raw/`;
+    previewModal: {
+        open: false,
+        title: '',
+        url: '',
+        fullUrl: '',
+        downloadUrl: '',
+        version: ''
+    },
+    openPreview(title, rawUrl, fullUrl, downloadUrl, version) {
+        this.previewModal = {
+            open: true,
+            title: title,
+            url: rawUrl,
+            fullUrl: fullUrl,
+            downloadUrl: downloadUrl,
+            version: version
+        };
     }
 }">
 
@@ -58,9 +71,12 @@
                 <tbody class="divide-y divide-slate-100 font-medium">
                     {% for doc in documents %}
                     <tr class="hover:bg-slate-50/80 transition-colors">
-                        <td class="p-3.5 pl-5 font-bold text-slate-900">
-                            {{ doc.title }}
-                            <span class="ml-1 px-2 py-0.5 bg-slate-100 text-slate-600 font-mono text-[10px] rounded-md border border-slate-200">v{{ doc.current_version }}</span>
+                        <td class="p-3.5 pl-5">
+                            <span class="font-bold text-slate-900">{{ doc.title }}</span>
+                            <button type="button" @click="historyModalDocId = {{ doc.id }}" class="ml-1.5 px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-mono font-bold text-[10px] rounded-md border border-slate-200 transition inline-flex items-center gap-1" title="Xem lịch sử các phiên bản">
+                                <i class="fa-solid fa-clock-rotate-left text-slate-400"></i>
+                                <span>v{{ doc.current_version }}</span>
+                            </button>
                         </td>
                         <td class="p-3.5 font-mono">
                             <a href="{% url 'project_documents' doc.project.id %}" class="text-[#163B65] font-bold hover:underline">
@@ -74,15 +90,26 @@
                         <td class="p-3.5 text-slate-500 font-mono">{{ doc.created_at|date:"d/m/Y H:i" }}</td>
                         <td class="p-3.5 pr-5 text-right whitespace-nowrap space-x-1.5">
                             {% if doc.file %}
-                            <button type="button" @click="openPreview({{ doc.id }}, '{{ doc.title|escapejs }}')" class="px-3 py-1.5 bg-slate-100 text-slate-800 font-bold text-[11px] rounded-xl border border-slate-200 hover:bg-slate-200 transition inline-flex items-center gap-1">
+                            <button type="button" @click="openPreview('{{ doc.title|escapejs }}', '{% url 'document_raw' doc.id %}', '{% url 'document_preview' doc.id %}', '{% url 'document_download' doc.id %}', '{{ doc.current_version }}')" class="px-2.5 py-1.5 bg-slate-100 text-slate-800 font-bold text-[11px] rounded-xl border border-slate-200 hover:bg-slate-200 transition inline-flex items-center gap-1" title="Xem trước tài liệu">
                                 <i class="fa-solid fa-eye text-[#163B65]"></i> Xem
                             </button>
-                            <a href="{% url 'document_download' doc.id %}" class="px-3 py-1.5 bg-[#163B65] text-white font-bold text-[11px] rounded-xl hover:bg-[#0f2643] transition inline-flex items-center gap-1 shadow-xs">
+                            <a href="{% url 'document_download' doc.id %}" class="px-2.5 py-1.5 bg-[#163B65] text-white font-bold text-[11px] rounded-xl hover:bg-[#0f2643] transition inline-flex items-center gap-1 shadow-xs" title="Tải về máy">
                                 <i class="fa-solid fa-download text-amber-400"></i> Tải về
                             </a>
                             {% endif %}
+                            
+                            <!-- Cập nhật phiên bản mới (v2, v3, v4...) -->
+                            <button type="button" @click="versionModalDocId = {{ doc.id }}" class="px-2.5 py-1.5 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-bold text-[11px] rounded-xl border border-emerald-200 transition inline-flex items-center gap-1" title="Cập nhật phiên bản mới (v{{ doc.current_version|add:1 }})">
+                                <i class="fa-solid fa-code-compare text-emerald-600"></i>
+                                <span>+v{{ doc.current_version|add:1 }}</span>
+                            </button>
+
+                            <!-- Sửa thông tin tài liệu -->
                             {% if doc.uploaded_by == request.user or doc.project.mentor == request.user or request.user.is_admin_user %}
-                            <button type="button" @click="$dispatch('open-confirm-modal', { title: 'Xóa tài liệu', message: 'Bạn có chắc chắn muốn xóa tài liệu {{ doc.title|escapejs }}?', url: '{% url "document_delete" doc.id %}' })" class="px-2.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-xl text-[11px] font-bold border border-rose-200 transition">
+                            <button type="button" @click="editModalDocId = {{ doc.id }}" class="px-2.5 py-1.5 bg-amber-50 text-amber-800 hover:bg-amber-100 rounded-xl text-[11px] font-bold border border-amber-200 transition inline-flex items-center gap-1" title="Sửa thông tin tài liệu">
+                                <i class="fa-solid fa-pen-to-square text-amber-600"></i> Sửa
+                            </button>
+                            <button type="button" @click="$dispatch('open-confirm-modal', { title: 'Xóa tài liệu', message: 'Bạn có chắc chắn muốn xóa tài liệu {{ doc.title|escapejs }}?', url: '{% url "document_delete" doc.id %}' })" class="px-2.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-xl text-[11px] font-bold border border-rose-200 transition" title="Xóa tài liệu">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
                             {% endif %}
@@ -98,31 +125,214 @@
         </div>
     </div>
 
-    <!-- PREVIEW MODAL POPUP -->
-    <div x-show="previewModalDocId !== null" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-4" @click.self="previewModalDocId = null">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl h-[440px] flex flex-col overflow-hidden border border-slate-700/30">
-            <div class="px-5 py-3 bg-[#0F172A] text-white flex justify-between items-center border-b border-slate-800">
-                <div class="flex items-center space-x-2.5">
-                    <div class="w-7 h-7 rounded-xl bg-slate-800 flex items-center justify-center text-amber-400 text-xs">
-                        <i class="fa-solid fa-file-contract"></i>
+    <!-- ==================== MODALS OUTSIDE TABLE ==================== -->
+    {% for doc in documents %}
+    <!-- 1. UPLOAD NEW VERSION MODAL (+v2, +v3, +v4...) -->
+    <div x-show="versionModalDocId === {{ doc.id }}" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4" @click.self="versionModalDocId = null">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-left relative animate-in fade-in zoom-in-95 duration-150">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center space-x-2.5 text-emerald-800">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-700">
+                        <i class="fa-solid fa-code-compare"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-xs text-white tracking-tight" x-text="previewModalTitle"></h3>
-                        <span class="text-[10px] text-slate-400 font-mono block">Cửa sổ xem trước tập tin</span>
+                        <h3 class="text-sm font-bold text-slate-900">Cập nhật Phiên bản Mới (v{{ doc.current_version|add:1 }})</h3>
+                        <p class="text-[11px] text-slate-500 font-medium">Tài liệu: <span class="font-bold text-[#163B65]">{{ doc.title }}</span></p>
                     </div>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <a :href="`/documents/${previewModalDocId}/view/`" target="_blank" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-[10px] rounded-lg transition inline-flex items-center gap-1">
-                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Trang đầy đủ
+                <button type="button" @click="versionModalDocId = null" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition-colors">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+            
+            <form method="post" action="{% url 'document_version_upload' doc.id %}" enctype="multipart/form-data" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                
+                <div class="p-3 bg-emerald-50/60 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-emerald-600"></i>
+                    <span>Phiên bản hiện tại là <strong>v{{ doc.current_version }}</strong>. Khi tải lên tệp mới, hệ thống sẽ tự động tăng lên <strong>v{{ doc.current_version|add:1 }}</strong> và lưu trữ phiên bản cũ vào Lịch sử.</span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Chọn Tệp Tin Phiên Bản Mới *</label>
+                    <input type="file" name="file" required class="text-xs text-slate-600 w-full file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#163B65] file:text-white hover:file:bg-[#0f2643] cursor-pointer">
+                    <p class="text-[10px] text-slate-400 mt-1">Hỗ trợ: PDF, Word, Excel, PowerPoint, ZIP, Ảnh, Mã nguồn (Tối đa 20MB)</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Ghi chú thay đổi (Change Log) *</label>
+                    <textarea name="change_log" required rows="2.5" placeholder="Ví dụ: Bổ sung sơ đồ ERD chương 3, chỉnh sửa tài liệu theo góp ý của Mentor..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-[#163B65] focus:ring-1 focus:ring-[#163B65]"></textarea>
+                </div>
+
+                <div class="flex justify-end items-center space-x-2 pt-2 border-t border-slate-100">
+                    <button type="button" @click="versionModalDocId = null" class="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition">Hủy</button>
+                    <button type="submit" class="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-sm transition inline-flex items-center gap-1.5">
+                        <i class="fa-solid fa-cloud-arrow-up text-amber-400"></i>
+                        <span>Cập nhật lên v{{ doc.current_version|add:1 }}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. HISTORY MODAL (LỊCH SỬ PHIÊN BẢN V1, V2, V3...) -->
+    <div x-show="historyModalDocId === {{ doc.id }}" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4" @click.self="historyModalDocId = null">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-left relative animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center space-x-2.5 text-[#163B65]">
+                    <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-[#163B65]">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900">Lịch sử Phiên bản</h3>
+                        <p class="text-[11px] text-slate-500 font-medium">Tài liệu: <span class="font-bold text-[#163B65]">{{ doc.title }}</span></p>
+                    </div>
+                </div>
+                <button type="button" @click="historyModalDocId = null" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition-colors">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto space-y-3 pr-1">
+                {% for ver in doc.versions.all %}
+                <div class="p-3.5 {% if ver.version_number == doc.current_version %}bg-emerald-50/50 border-emerald-300 ring-1 ring-emerald-300{% else %}bg-slate-50 border-slate-200{% endif %} border rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all">
+                    <div class="space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <button type="button" @click="historyModalDocId = null; openPreview('{{ doc.title|escapejs }} (v{{ ver.version_number }})', '{% url 'document_version_raw' ver.id %}', '{% url 'document_version_preview' ver.id %}', '{% url 'document_version_download' ver.id %}', '{{ ver.version_number }}')" class="px-2 py-0.5 {% if ver.version_number == doc.current_version %}bg-emerald-700 text-white{% else %}bg-slate-700 text-white{% endif %} font-mono font-bold text-[11px] rounded-md hover:opacity-85 transition cursor-pointer" title="Bấm để xem trước phiên bản này ngay">
+                                v{{ ver.version_number }}
+                            </button>
+                            {% if ver.version_number == doc.current_version %}
+                            <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-full border border-emerald-200">
+                                Hiện tại
+                            </span>
+                            {% endif %}
+                            <span class="font-bold text-slate-900 text-xs">{{ ver.uploaded_by.display_name }}</span>
+                            <span class="text-[10px] text-slate-400 font-mono">• {{ ver.created_at|date:"d/m/Y H:i" }}</span>
+                        </div>
+                        <p class="text-xs text-slate-600 pl-1">{{ ver.change_log|default:"Không có ghi chú thay đổi." }}</p>
+                    </div>
+                    <div class="flex items-center space-x-1.5 self-end sm:self-auto shrink-0">
+                        <button type="button" @click="historyModalDocId = null; openPreview('{{ doc.title|escapejs }} (v{{ ver.version_number }})', '{% url 'document_version_raw' ver.id %}', '{% url 'document_version_preview' ver.id %}', '{% url 'document_version_download' ver.id %}', '{{ ver.version_number }}')" class="px-2.5 py-1.5 bg-white border border-slate-200 text-slate-700 font-bold text-[11px] rounded-xl hover:bg-slate-100 transition inline-flex items-center gap-1 shadow-2xs" title="Xem trước tài liệu">
+                            <i class="fa-solid fa-eye text-[#163B65]"></i> Xem trước
+                        </button>
+                        <a href="{% url 'document_version_preview' ver.id %}" target="_blank" class="px-2 py-1.5 text-slate-400 hover:text-slate-700 font-bold text-[11px] rounded-xl hover:bg-slate-100 transition inline-flex items-center" title="Mở trang đầy đủ trong tab mới">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </a>
+                        <a href="{% url 'document_version_download' ver.id %}" class="px-2.5 py-1.5 bg-[#163B65] text-white font-bold text-[11px] rounded-xl hover:bg-[#0f2643] transition inline-flex items-center gap-1 shadow-xs" title="Tải file phiên bản này về máy">
+                            <i class="fa-solid fa-download text-amber-400"></i> Tải về
+                        </a>
+                        {% if ver.version_number != doc.current_version and request.user.is_admin_user or ver.version_number != doc.current_version and doc.created_by == request.user or ver.version_number != doc.current_version and request.user == doc.project.created_by %}
+                        <form method="post" action="{% url 'document_rollback' doc.id ver.id %}" class="inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit" class="px-2.5 py-1.5 bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 font-bold text-[11px] rounded-xl transition inline-flex items-center gap-1" title="Khôi phục tài liệu về phiên bản này">
+                                <i class="fa-solid fa-rotate-left text-amber-600"></i> Khôi phục
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-xs text-slate-400 text-center py-6">Chưa có lịch sử phiên bản nào.</p>
+                {% endfor %}
+            </div>
+
+            <div class="flex justify-between items-center pt-3 border-t border-slate-100">
+                <button type="button" @click="historyModalDocId = null; versionModalDocId = {{ doc.id }}" class="px-3 py-1.5 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-bold text-xs rounded-xl border border-emerald-200 transition inline-flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus"></i> Cập nhật phiên bản mới (+v{{ doc.current_version|add:1 }})
+                </button>
+                <button type="button" @click="historyModalDocId = null" class="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. EDIT DOCUMENT METADATA MODAL (SỬA THÔNG TIN TÀI LIỆU) -->
+    <div x-show="editModalDocId === {{ doc.id }}" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4" @click.self="editModalDocId = null">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-left relative animate-in fade-in zoom-in-95 duration-150">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center space-x-2.5 text-[#163B65]">
+                    <div class="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center text-amber-700">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900">Sửa Thông tin Tài liệu</h3>
+                        <p class="text-[11px] text-slate-500 font-medium">Phiên bản hiện tại: <span class="font-bold text-emerald-700 font-mono">v{{ doc.current_version }}</span></p>
+                    </div>
+                </div>
+                <button type="button" @click="editModalDocId = null" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition-colors">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <form method="post" action="{% url 'document_edit' doc.id %}" class="space-y-3.5">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Tên tài liệu *</label>
+                    <input type="text" name="title" value="{{ doc.title }}" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-[#163B65] focus:ring-1 focus:ring-[#163B65]">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Mô tả tài liệu</label>
+                    <textarea name="description" rows="2.5" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-[#163B65] focus:ring-1 focus:ring-[#163B65]">{{ doc.description|default:'' }}</textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Loại tệp</label>
+                    <select name="file_type" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-[#163B65]">
+                        <option value="PDF" {% if doc.file_type == 'PDF' %}selected{% endif %}>Tài liệu PDF</option>
+                        <option value="WORD" {% if doc.file_type == 'WORD' %}selected{% endif %}>Word (DOC/DOCX)</option>
+                        <option value="EXCEL" {% if doc.file_type == 'EXCEL' %}selected{% endif %}>Excel (XLS/XLSX)</option>
+                        <option value="POWERPOINT" {% if doc.file_type == 'POWERPOINT' %}selected{% endif %}>PowerPoint (PPT/PPTX)</option>
+                        <option value="ZIP" {% if doc.file_type == 'ZIP' %}selected{% endif %}>File Nén (ZIP/RAR)</option>
+                        <option value="IMAGE" {% if doc.file_type == 'IMAGE' %}selected{% endif %}>Hình ảnh (PNG/JPG)</option>
+                        <option value="CODE" {% if doc.file_type == 'CODE' %}selected{% endif %}>Mã nguồn / Text</option>
+                        <option value="OTHER" {% if doc.file_type == 'OTHER' %}selected{% endif %}>Khác</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-2 border-t border-slate-100">
+                    <button type="button" @click="editModalDocId = null" class="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition">Hủy</button>
+                    <button type="submit" class="px-5 py-2 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-xs rounded-xl shadow-sm transition">Lưu Thay Đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- PREVIEW MODAL POPUP (Xem trước Trực tiếp File & Các Phiên bản) -->
+    <div x-show="previewModal.open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-3 sm:p-5" @click.self="previewModal.open = false">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[88vh] flex flex-col overflow-hidden border border-slate-700/30 text-left animate-in fade-in zoom-in-95 duration-150">
+            <div class="px-5 py-3.5 bg-[#0F172A] text-white flex justify-between items-center border-b border-slate-800 shrink-0">
+                <div class="flex items-center space-x-2.5 min-w-0">
+                    <div class="w-8 h-8 rounded-xl bg-slate-800 flex items-center justify-center text-amber-400 text-xs shrink-0">
+                        <i class="fa-solid fa-eye"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center space-x-2">
+                            <h3 class="font-bold text-xs sm:text-sm text-white tracking-tight truncate" x-text="previewModal.title"></h3>
+                            <span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 font-mono font-bold text-[10px] rounded-md border border-emerald-500/30" x-text="'v' + previewModal.version"></span>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-mono block">Cửa sổ xem trước trực tiếp tài liệu</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2 shrink-0">
+                    <a :href="previewModal.fullUrl" target="_blank" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-[11px] rounded-xl transition inline-flex items-center gap-1.5 shadow-2xs">
+                        <i class="fa-solid fa-arrow-up-right-from-square text-amber-400"></i> <span class="hidden sm:inline">Mở trang đầy đủ</span>
                     </a>
-                    <button @click="previewModalDocId = null" class="w-7 h-7 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition">
-                        <i class="fa-solid fa-xmark text-xs"></i>
+                    <a :href="previewModal.downloadUrl" class="px-3 py-1.5 bg-[#163B65] hover:bg-[#0f2643] text-white font-bold text-[11px] rounded-xl transition inline-flex items-center gap-1.5 shadow-2xs">
+                        <i class="fa-solid fa-download text-amber-400"></i> <span class="hidden sm:inline">Tải về</span>
+                    </a>
+                    <button @click="previewModal.open = false" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark text-sm"></i>
                     </button>
                 </div>
             </div>
-            <div class="flex-1 bg-slate-100 p-2">
-                <template x-if="previewModalDocId">
-                    <iframe :src="previewModalUrl" class="w-full h-full rounded-2xl border border-slate-200 bg-white shadow-inner"></iframe>
+            <div class="flex-1 bg-slate-100 p-2 sm:p-3 overflow-hidden">
+                <template x-if="previewModal.open">
+                    <iframe :src="previewModal.url" class="w-full h-full rounded-2xl border border-slate-200 bg-white shadow-inner"></iframe>
                 </template>
             </div>
         </div>
