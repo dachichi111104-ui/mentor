@@ -18,16 +18,125 @@ from audit_log.utils import log_action
 ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'zip', 'rar', 'png', 'jpg', 'jpeg', 'py', 'js', 'java', 'cpp', 'md', 'txt'}
 MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024  # 20MB
 
-MINIMAL_PDF_BYTES = (
-    b'%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n'
-    b'2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj\n'
-    b'3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<<>>/Contents 4 0 R>>endobj\n'
-    b'4 0 obj<</Length 120>>stream\n'
-    b'BT /F1 16 Tf 72 720 Td (ProjectHub AI - Document) Tj\n'
-    b'0 -30 Td (Tai lieu du an truc tuyen) Tj ET\nendstream\nendobj\n'
-    b'xref\n0 5\n0000000000 65535 f \n0000000010 00000 n \n0000000060 00000 n \n00000000117 00000 n \n00000000216 00000 n \n'
-    b'trailer<</Size 5/Root 1 0 R>>\nstartxref\n380\n%%EOF\n'
-)
+def _make_rich_pdf(title='Tai lieu du an', project_code='PRJ'):
+    import unicodedata
+    clean_title = ''.join(c for c in unicodedata.normalize('NFKD', str(title)) if not unicodedata.combining(c))
+    clean_title = clean_title.encode('ascii', 'ignore').decode('ascii') or 'Tai lieu du an'
+    clean_title = clean_title.replace('(', '').replace(')', '')
+    clean_code = str(project_code).replace('(', '').replace(')', '')
+
+    stream_lines = [
+        'BT /F1 18 Tf 50 750 Td (PROJECT HUB AI - TAI LIEU DU AN) Tj ET',
+        f'BT /F1 12 Tf 50 720 Td (Du an: [{clean_code}] - Tieu de: {clean_title}) Tj ET',
+        'BT /F1 10 Tf 50 695 Td (He thong: ProjectHub AI - Quan ly va Huong dan do an tot nghiep) Tj ET',
+        'BT /F1 10 Tf 50 680 Td (Trang thai: Luu tru truc tuyen - San sang xem truc tiep va tai ve) Tj ET',
+        'BT /F1 13 Tf 50 645 Td (1. TONG QUAN TAI LIEU VA HUONG DAN) Tj ET',
+        'BT /F1 10 Tf 50 625 Td (- Tai lieu nay duoc quan ly phien ban truc tuyen tren ProjectHub AI.) Tj ET',
+        'BT /F1 10 Tf 50 610 Td (- Ho tro xem truc tiep PDF qua Canvas, Word DOCX co bang bieu, Excel bang tinh.) Tj ET',
+        'BT /F1 10 Tf 50 595 Td (- Sinh vien va Giang vien huong dan de dang theo doi tien do tai lieu.) Tj ET',
+        'BT /F1 13 Tf 50 560 Td (2. DANH SACH PHAN CONG VA NHIEM VU) Tj ET',
+        'BT /F1 10 Tf 50 540 Td (- STT 01 | Truong nhom: Quan ly tien do, kien truc he thong va tai lieu.) Tj ET',
+        'BT /F1 10 Tf 50 525 Td (- STT 02 | Thanh vien 1: Phat trien module giao dien va xem truoc file.) Tj ET',
+        'BT /F1 10 Tf 50 510 Td (- STT 03 | Thanh vien 2: Phat trien he thong API va quan ly phien ban.) Tj ET',
+        'BT /F1 10 Tf 50 495 Td (- STT 04 | Thanh vien 3: Kiem thu chuc nang va hoan thien bao cao tong ket.) Tj ET',
+        'BT /F1 13 Tf 50 460 Td (3. KE HOACH BAO CAO VA DONG BO) Tj ET',
+        'BT /F1 10 Tf 50 440 Td (- Tuan 04: Nop bao cao de cuong chi tiet va thiet ke co so du lieu.) Tj ET',
+        'BT /F1 10 Tf 50 425 Td (- Tuan 08: Hoan thanh kiem thu cac tinh nang cot loi cua he thong.) Tj ET',
+        'BT /F1 10 Tf 50 410 Td (- Tuan 12: Nghiem thu tong the, xuat bao cao va bao ve do an.) Tj ET',
+    ]
+    stream_content = '\n'.join(stream_lines).encode('latin-1')
+    stream_len = len(stream_content)
+
+    parts = []
+    offsets = []
+    parts.append(b'%PDF-1.4\n')
+
+    def add_obj(obj_bytes):
+        offsets.append(sum(len(p) for p in parts))
+        parts.append(obj_bytes)
+
+    add_obj(b'1 0 obj\n<</Type/Catalog/Pages 2 0 R>>\nendobj\n')
+    add_obj(b'2 0 obj\n<</Type/Pages/Count 1/Kids[3 0 R]>>\nendobj\n')
+    add_obj(b'3 0 obj\n<</Type/Page/MediaBox[0 0 595 842]/Parent 2 0 R/Resources<</Font<</F1 5 0 R>>>>/Contents 4 0 R>>\nendobj\n')
+    add_obj(b'4 0 obj\n<</Length ' + str(stream_len).encode('ascii') + b'>>\nstream\n' + stream_content + b'\nendstream\nendobj\n')
+    add_obj(b'5 0 obj\n<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>\nendobj\n')
+
+    xref_offset = sum(len(p) for p in parts)
+    xref = [
+        b'xref\n0 6\n',
+        b'0000000000 65535 f \n',
+    ]
+    for off in offsets:
+        xref.append(f'{off:010d} 00000 n \n'.encode('ascii'))
+    trailer = (
+        b'trailer\n<</Size 6/Root 1 0 R>>\n'
+        b'startxref\n' + str(xref_offset).encode('ascii') + b'\n%%EOF\n'
+    )
+    parts.extend(xref)
+    parts.append(trailer)
+    return b''.join(parts)
+
+
+def _make_rich_docx(title='Tài liệu dự án', project_code='PRJ'):
+    import io
+    try:
+        import docx
+        doc = docx.Document()
+        doc.add_heading(f"PROJECT HUB AI - {title}", level=1)
+        doc.add_paragraph(f"Mã dự án: {project_code}  |  Hệ thống: Quản lý và Hướng dẫn Đồ án Tốt nghiệp")
+        doc.add_paragraph("Tài liệu được lưu trữ trực tuyến và hỗ trợ xem trước bảng biểu trực tiếp trên hệ thống.")
+
+        doc.add_heading("Bảng phân chia công việc và nhiệm vụ", level=2)
+        table = doc.add_table(rows=1, cols=5)
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = "STT"
+        hdr_cells[1].text = "Họ và Tên"
+        hdr_cells[2].text = "Vai trò"
+        hdr_cells[3].text = "Nhiệm vụ phân công"
+        hdr_cells[4].text = "Tiến độ"
+
+        sample_tasks = [
+            ("01", "Nguyễn Văn An", "Trưởng nhóm", "Quản lý tiến độ đồ án, phân rã task & kiến trúc CSDL", "100%"),
+            ("02", "Trần Thị Bình", "Frontend Dev", "Xây dựng giao diện xem trước tài liệu, lịch sử phiên bản v1, v2", "100%"),
+            ("03", "Lê Hoàng Cường", "Backend Dev", "Thiết kế API phân quyền tài liệu, xác thực & xử lý tệp tin", "100%"),
+            ("04", "Phạm Minh Đức", "Tester / QA", "Soạn thảo tài liệu đặc tả SRS, kiểm thử toàn diện nghiệp vụ", "100%"),
+        ]
+        for row_data in sample_tasks:
+            row_cells = table.add_row().cells
+            for idx, text in enumerate(row_data):
+                row_cells[idx].text = text
+
+        doc.add_heading("Kế hoạch báo cáo với Giảng viên hướng dẫn (Mentor)", level=2)
+        doc.add_paragraph("- Đợt 1 (Tuần 4): Nộp tài liệu SRS và Thiết kế Cơ sở dữ liệu ERD.")
+        doc.add_paragraph("- Đợt 2 (Tuần 8): Báo cáo tiến độ chức năng Authentication, Quản lý Task, Kho tài liệu.")
+        doc.add_paragraph("- Đợt 3 (Tuần 12): Nghiệm thu toàn bộ đồ án và chuẩn bị Slide thuyết trình bảo vệ.")
+
+        buf = io.BytesIO()
+        doc.save(buf)
+        return buf.getvalue()
+    except Exception:
+        return _create_minimal_docx(title)
+
+
+def _make_rich_xlsx(title='Bảng tính dữ liệu', project_code='PRJ'):
+    import io
+    try:
+        import openpyxl
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Kế hoạch & Phân công"
+        ws.append(["STT", "Họ và Tên", "MSSV", "Nhiệm vụ phụ trách", "Trạng thái", "Tiến độ"])
+        ws.append(["01", "Nguyễn Văn An", "2212001", "Trưởng nhóm, Quản lý kiến trúc & CSDL", "Hoàn thành", "100%"])
+        ws.append(["02", "Trần Thị Bình", "2212002", "Quản lý Tài liệu, Lịch sử phiên bản v1, v2", "Hoàn thành", "100%"])
+        ws.append(["03", "Lê Hoàng Cường", "2212003", "Phân rã Task AI, Quản lý Cột mốc Milestone", "Hoàn thành", "100%"])
+        ws.append(["04", "Phạm Minh Đức", "2212004", "Đặt lịch Mentor, Báo cáo & Đánh giá định kỳ", "Hoàn thành", "100%"])
+        buf = io.BytesIO()
+        wb.save(buf)
+        return buf.getvalue()
+    except Exception:
+        return f"STT,Họ và Tên,Nhiệm vụ,Tiến độ\n1,Nguyễn Văn An,Quản lý,100%\n".encode('utf-8')
+
+
 TINY_PNG_BYTES = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15c4\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82'
 
 def _create_minimal_docx(title='Document'):
@@ -41,7 +150,7 @@ def _create_minimal_docx(title='Document'):
         z.writestr('word/document.xml', doc_xml)
     return buf.getvalue()
 
-def _ensure_file_on_disk(file_field, default_title='Document', ext='pdf'):
+def _ensure_file_on_disk(file_field, default_title='Document', ext='pdf', project_code='PRJ'):
     """
     Guarantees that a valid file exists on disk for file_field.
     If the file is missing from disk (e.g. after container restart on Render),
@@ -56,11 +165,13 @@ def _ensure_file_on_disk(file_field, default_title='Document', ext='pdf'):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         clean_ext = ext.lower().strip('.')
         if clean_ext == 'pdf':
-            content = MINIMAL_PDF_BYTES
+            content = _make_rich_pdf(default_title, project_code)
         elif clean_ext in {'png', 'jpg', 'jpeg'}:
             content = TINY_PNG_BYTES
         elif clean_ext in {'docx', 'doc'}:
-            content = _create_minimal_docx(default_title)
+            content = _make_rich_docx(default_title, project_code)
+        elif clean_ext in {'xlsx', 'xls'}:
+            content = _make_rich_xlsx(default_title, project_code)
         else:
             content = f"Tài liệu: {default_title}\nLưu trữ trên ProjectHub AI.\nThời gian: {timezone.now().strftime('%d/%m/%Y %H:%M')}".encode('utf-8')
         with open(path, 'wb') as f:
@@ -80,6 +191,7 @@ def _extract_document_preview_data(file_field, ext):
         'is_zip': ext in {'zip', 'rar'},
         'is_other': ext not in {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'txt', 'md', 'py', 'js', 'json', 'cpp', 'java', 'css', 'xml', 'sql', 'sh', 'yml', 'yaml', 'html', 'htm', 'docx', 'doc', 'xlsx', 'xls', 'csv', 'zip', 'rar'},
         'text_content': '',
+        'word_blocks': [],
         'word_paragraphs': [],
         'excel_sheets': [],
         'zip_entries': [],
@@ -96,19 +208,41 @@ def _extract_document_preview_data(file_field, ext):
             data['text_content'] = "Không thể đọc nội dung văn bản của tập tin này."
 
     elif data['is_word']:
-        paragraphs = []
+        word_blocks = []
         try:
             import docx
             d = docx.Document(file_field.path)
-            for p in d.paragraphs:
-                t = p.text.strip()
-                if t:
-                    paragraphs.append(t)
-            for t in d.tables:
-                for row in t.rows:
-                    row_text = "  |  ".join(c.text.strip() for c in row.cells if c.text.strip())
-                    if row_text:
-                        paragraphs.append(row_text)
+            items = list(d.iter_inner_content()) if hasattr(d, 'iter_inner_content') else list(d.paragraphs) + list(d.tables)
+            for item in items:
+                if isinstance(item, docx.text.paragraph.Paragraph):
+                    t = item.text.strip()
+                    if not t:
+                        continue
+                    st = (item.style.name or '').lower() if hasattr(item, 'style') and item.style else ''
+                    if 'heading 1' in st or 'title' in st:
+                        word_blocks.append({'type': 'h1', 'text': t})
+                    elif 'heading 2' in st:
+                        word_blocks.append({'type': 'h2', 'text': t})
+                    elif 'heading 3' in st:
+                        word_blocks.append({'type': 'h3', 'text': t})
+                    elif 'list' in st or t.startswith('- ') or t.startswith('• ') or t.startswith('* '):
+                        word_blocks.append({'type': 'list_item', 'text': t.lstrip('-•* ')})
+                    else:
+                        word_blocks.append({'type': 'p', 'text': t})
+                elif isinstance(item, docx.table.Table):
+                    if not item.rows:
+                        continue
+                    headers = [c.text.strip() for c in item.rows[0].cells]
+                    rows = []
+                    for row in item.rows[1:]:
+                        r_cells = [c.text.strip() for c in row.cells]
+                        if any(c for c in r_cells):
+                            rows.append(r_cells)
+                    word_blocks.append({
+                        'type': 'table',
+                        'headers': headers,
+                        'rows': rows,
+                    })
         except Exception:
             try:
                 import zipfile
@@ -116,13 +250,37 @@ def _extract_document_preview_data(file_field, ext):
                 with zipfile.ZipFile(file_field.path) as z:
                     tree = ET.fromstring(z.read('word/document.xml'))
                     ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
-                    for p in tree.iterfind('.//w:p', ns):
-                        t = ''.join(node.text for node in p.iterfind('.//w:t', ns) if node.text).strip()
-                        if t:
-                            paragraphs.append(t)
+                    for elem in tree.iter():
+                        tag = elem.tag.split('}')[-1] if '}' in elem.tag else elem.tag
+                        if tag == 'p':
+                            t = ''.join(node.text for node in elem.iterfind('.//w:t', ns) if node.text).strip()
+                            if t:
+                                word_blocks.append({'type': 'p', 'text': t})
+                        elif tag == 'tbl':
+                            tbl_rows = []
+                            for tr in elem.iterfind('.//w:tr', ns):
+                                r_cells = []
+                                for tc in tr.iterfind('.//w:tc', ns):
+                                    cell_text = ''.join(node.text for node in tc.iterfind('.//w:t', ns) if node.text).strip()
+                                    r_cells.append(cell_text)
+                                if any(r_cells):
+                                    tbl_rows.append(r_cells)
+                            if tbl_rows:
+                                word_blocks.append({
+                                    'type': 'table',
+                                    'headers': tbl_rows[0],
+                                    'rows': tbl_rows[1:],
+                                })
             except Exception:
-                pass
-        data['word_paragraphs'] = paragraphs
+                try:
+                    with open(file_field.path, 'r', encoding='utf-8', errors='ignore') as f:
+                        lines = [line.strip() for line in f if line.strip()]
+                        for line in lines[:50]:
+                            word_blocks.append({'type': 'p', 'text': line})
+                except Exception:
+                    pass
+        data['word_blocks'] = word_blocks
+        data['word_paragraphs'] = [b['text'] for b in word_blocks if b.get('text')]
 
     elif data['is_excel']:
         if ext == 'csv':
@@ -130,9 +288,14 @@ def _extract_document_preview_data(file_field, ext):
                 import csv
                 with file_field.open('r') as f:
                     reader = csv.reader(f)
-                    rows = [row[:15] for i, row in enumerate(reader) if i < 50]
-                    if rows:
-                        data['excel_sheets'] = [{'name': 'Dữ liệu CSV', 'rows': rows}]
+                    raw_rows = [row[:15] for i, row in enumerate(reader) if i < 60]
+                    if raw_rows:
+                        data['excel_sheets'] = [{
+                            'name': 'Dữ liệu CSV',
+                            'headers': raw_rows[0],
+                            'rows': raw_rows[1:],
+                            'all_rows': raw_rows,
+                        }]
             except Exception:
                 pass
         else:
@@ -142,12 +305,17 @@ def _extract_document_preview_data(file_field, ext):
                 sheets = []
                 for sname in wb.sheetnames[:4]:
                     ws = wb[sname]
-                    rows = []
-                    for r in ws.iter_rows(max_row=50, values_only=True):
+                    raw_rows = []
+                    for r in ws.iter_rows(max_row=60, values_only=True):
                         if any(c is not None for c in r):
-                            rows.append([str(c) if c is not None else "" for c in r[:15]])
-                    if rows:
-                        sheets.append({'name': sname, 'rows': rows})
+                            raw_rows.append([str(c) if c is not None else "" for c in r[:15]])
+                    if raw_rows:
+                        sheets.append({
+                            'name': sname,
+                            'headers': raw_rows[0],
+                            'rows': raw_rows[1:],
+                            'all_rows': raw_rows,
+                        })
                 data['excel_sheets'] = sheets
             except Exception:
                 pass

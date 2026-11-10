@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
@@ -17,7 +18,7 @@
 <body class="h-full bg-slate-100 flex flex-col overflow-hidden text-slate-800 antialiased font-sans">
 
     <!-- Top mini-bar inside embed -->
-    <div class="px-4 py-2.5 bg-white border-b border-slate-200 flex items-center justify-between shrink-0 shadow-2xs">
+    <div class="px-4 py-2.5 bg-white border-b border-slate-200 flex items-center justify-between shrink-0 shadow-2xs z-20">
         <div class="flex items-center space-x-2 min-w-0">
             {% if is_pdf %}
             <i class="fa-solid fa-file-pdf text-rose-600 text-sm"></i>
@@ -54,19 +55,55 @@
     <div class="flex-1 overflow-hidden relative">
 
         {% if is_pdf %}
-        <!-- PDF Viewer: uses object + iframe embed with inline disposition -->
-        <div class="w-full h-full bg-slate-900 flex flex-col">
-            <object data="{{ raw_file_url }}" type="application/pdf" class="w-full h-full border-0">
-                <iframe src="{{ raw_file_url }}" class="w-full h-full border-0">
-                    <div class="h-full flex flex-col items-center justify-center p-6 text-center bg-white text-slate-700 space-y-3">
-                        <i class="fa-solid fa-file-pdf text-5xl text-rose-600"></i>
-                        <p class="font-bold text-sm">Trình duyệt không hỗ trợ hiển thị trực tiếp tệp PDF trong khung này.</p>
-                        <a href="{{ raw_file_url }}" target="_blank" class="px-4 py-2 bg-[#163B65] text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-sm">
-                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Mở PDF trong tab mới
-                        </a>
+        <!-- PDF Viewer using PDF.js onto HTML5 Canvas -->
+        <div class="w-full h-full flex flex-col bg-slate-900 select-none overflow-hidden" x-data="pdfViewer('{{ raw_file_url }}')" x-init="init()">
+            <!-- PDF Toolbar -->
+            <div class="px-4 py-2 bg-slate-950 border-b border-slate-800 flex items-center justify-between text-white text-xs shrink-0 z-10 shadow-sm">
+                <div class="flex items-center space-x-2">
+                    <button type="button" @click="prevPage()" :disabled="pageNum <= 1" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 rounded-lg border border-slate-700 transition flex items-center gap-1 font-semibold text-xs" title="Trang trước">
+                        <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                        <span class="hidden sm:inline">Trước</span>
+                    </button>
+                    <div class="flex items-center space-x-1 px-2 py-0.5 bg-slate-900 rounded-lg border border-slate-800 font-mono text-xs">
+                        <span class="text-slate-400">Trang</span>
+                        <input type="number" min="1" :max="numPages" x-model.number="pageNum" @change="goToPage(pageNum)" class="w-10 bg-slate-950 text-center font-bold rounded border border-slate-700 py-0.5 text-xs text-amber-400 focus:outline-none focus:border-amber-400">
+                        <span class="text-slate-400">/</span>
+                        <span x-text="numPages || 1" class="font-bold text-slate-300"></span>
                     </div>
-                </iframe>
-            </object>
+                    <button type="button" @click="nextPage()" :disabled="pageNum >= numPages" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 rounded-lg border border-slate-700 transition flex items-center gap-1 font-semibold text-xs" title="Trang sau">
+                        <span class="hidden sm:inline">Sau</span>
+                        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </button>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button type="button" @click="zoomOut()" class="p-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition text-slate-300 hover:text-white" title="Thu nhỏ">
+                        <i class="fa-solid fa-magnifying-glass-minus"></i>
+                    </button>
+                    <span class="font-mono text-[11px] text-slate-300 w-12 text-center" x-text="Math.round(scale * 100) + '%'">125%</span>
+                    <button type="button" @click="zoomIn()" class="p-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition text-slate-300 hover:text-white" title="Phóng to">
+                        <i class="fa-solid fa-magnifying-glass-plus"></i>
+                    </button>
+                    <button type="button" @click="resetZoom()" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition text-[11px] text-slate-300 hover:text-white hidden sm:inline" title="Đặt lại kích thước">
+                        100%
+                    </button>
+                </div>
+            </div>
+
+            <!-- Canvas Viewport -->
+            <div id="pdf-scroll-container" class="flex-1 overflow-auto p-4 flex justify-center items-start bg-slate-900/90 relative">
+                <div x-show="loading" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/80 z-20 space-y-3">
+                    <i class="fa-solid fa-circle-notch fa-spin text-3xl text-rose-500"></i>
+                    <span class="text-xs text-slate-300 font-semibold">Đang tải và hiển thị trang PDF...</span>
+                </div>
+                <div x-show="errorMessage" class="p-6 bg-white rounded-2xl text-center space-y-3 max-w-md my-auto shadow-2xl border border-slate-200" style="display: none;">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-600 text-3xl"></i>
+                    <p class="text-xs text-slate-800 font-bold" x-text="errorMessage"></p>
+                    <a :href="url" target="_blank" class="px-4 py-2 bg-[#163B65] text-white text-xs font-bold rounded-xl inline-flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Mở PDF trong tab mới
+                    </a>
+                </div>
+                <canvas id="pdf-canvas" class="shadow-2xl rounded-lg border border-slate-700 bg-white max-w-full transition-all duration-150"></canvas>
+            </div>
         </div>
 
         {% elif is_image %}
@@ -82,17 +119,65 @@
         </div>
 
         {% elif is_word %}
-        <!-- Word Document (.docx / .doc) Viewer -->
+        <!-- Word Document (.docx / .doc) Viewer with Structured Tables and Headings -->
         <div class="w-full h-full overflow-y-auto p-4 sm:p-6 bg-slate-100 flex justify-center">
-            <div class="bg-white max-w-3xl w-full min-h-[450px] p-8 sm:p-12 rounded-2xl shadow-md border border-slate-200 space-y-4 text-slate-800 my-auto">
-                <div class="border-b border-slate-200 pb-4 mb-4 flex items-center justify-between">
+            <div class="bg-white max-w-4xl w-full min-h-[450px] p-6 sm:p-10 rounded-2xl shadow-md border border-slate-200 text-slate-800 my-auto">
+                <div class="border-b border-slate-200 pb-4 mb-5 flex items-center justify-between">
                     <div>
-                        <span class="px-2 py-0.5 bg-blue-50 text-blue-800 text-[10px] font-bold rounded border border-blue-200 uppercase">Tài liệu Word (DOCX)</span>
+                        <span class="px-2 py-0.5 bg-blue-50 text-blue-800 text-[10px] font-bold rounded border border-blue-200 uppercase tracking-wider">Tài liệu Word (DOCX)</span>
                         <h1 class="text-lg font-bold text-slate-900 mt-2">{{ doc.title }}</h1>
                     </div>
                     <span class="text-xs text-slate-400 font-mono">v{{ version_number }}</span>
                 </div>
-                {% if word_paragraphs %}
+
+                {% if word_blocks %}
+                    <div class="space-y-4 text-xs sm:text-sm text-slate-700 leading-relaxed">
+                        {% for block in word_blocks %}
+                            {% if block.type == 'h1' %}
+                                <h2 class="text-base sm:text-lg font-black text-slate-900 border-b border-slate-200 pb-2 mt-5 mb-2">{{ block.text }}</h2>
+                            {% elif block.type == 'h2' %}
+                                <h3 class="text-sm sm:text-base font-bold text-[#163B65] mt-4 mb-1 flex items-center gap-1.5">
+                                    <span class="w-1.5 h-3.5 bg-[#163B65] rounded-full inline-block"></span>
+                                    <span>{{ block.text }}</span>
+                                </h3>
+                            {% elif block.type == 'h3' %}
+                                <h4 class="text-xs sm:text-sm font-bold text-slate-800 mt-3 mb-1">{{ block.text }}</h4>
+                            {% elif block.type == 'list_item' %}
+                                <div class="flex items-start space-x-2 text-xs sm:text-sm text-slate-700 pl-2">
+                                    <span class="text-[#163B65] mt-1 text-[8px]"><i class="fa-solid fa-circle"></i></span>
+                                    <p class="leading-relaxed">{{ block.text }}</p>
+                                </div>
+                            {% elif block.type == 'table' %}
+                                <div class="my-4 overflow-x-auto rounded-xl border border-slate-200 shadow-2xs bg-white">
+                                    <table class="w-full text-xs text-slate-800 border-collapse">
+                                        <thead>
+                                            <tr class="bg-[#163B65] text-white">
+                                                {% for h in block.headers %}
+                                                <th class="p-2.5 text-left font-bold border-r border-[#244c7b] last:border-r-0 whitespace-nowrap text-[11px] uppercase tracking-wider">{{ h }}</th>
+                                                {% endfor %}
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-200">
+                                            {% for row in block.rows %}
+                                            <tr class="hover:bg-blue-50/50 transition-colors {% cycle 'bg-white' 'bg-slate-50/60' %}">
+                                                {% for cell in row %}
+                                                <td class="p-2.5 border-r border-slate-200 last:border-r-0 align-top leading-relaxed">{{ cell }}</td>
+                                                {% endfor %}
+                                            </tr>
+                                            {% empty %}
+                                            <tr>
+                                                <td colspan="{{ block.headers|length }}" class="p-3 text-center text-slate-400 italic">Bảng không có dữ liệu hàng</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-xs sm:text-sm text-slate-700 leading-relaxed text-justify">{{ block.text }}</p>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% elif word_paragraphs %}
                     <div class="space-y-3.5 text-xs sm:text-sm text-slate-700 leading-relaxed">
                         {% for p in word_paragraphs %}
                         <p class="text-justify">{{ p }}</p>
@@ -128,14 +213,26 @@
                 <div class="flex-1 overflow-auto p-4">
                     {% for sheet in excel_sheets %}
                     <div x-show="activeSheet === {{ forloop.counter0 }}">
-                        <table class="w-full text-xs text-slate-800 border-collapse border border-slate-200">
+                        <table class="w-full text-xs text-slate-800 border-collapse border border-slate-200 rounded-lg overflow-hidden shadow-2xs">
+                            <thead>
+                                <tr class="bg-[#163B65] text-white">
+                                    <th class="p-2 bg-[#102a49] text-[10px] text-slate-300 font-mono text-center border-r border-[#1a4473] select-none w-10">#</th>
+                                    {% for cell in sheet.headers %}
+                                    <th class="p-2.5 text-left font-bold border-r border-[#1a4473] last:border-r-0 whitespace-nowrap text-[11px] uppercase tracking-wider">{{ cell }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
                             <tbody>
                                 {% for row in sheet.rows %}
-                                <tr class="{% if forloop.first %}bg-slate-100 font-bold border-b-2 border-slate-300{% else %}hover:bg-slate-50 border-b border-slate-100{% endif %}">
-                                    <td class="p-1.5 bg-slate-50 text-[10px] text-slate-400 font-mono text-center border-r border-slate-200 select-none w-8">{{ forloop.counter }}</td>
+                                <tr class="hover:bg-blue-50/40 border-b border-slate-100 {% cycle 'bg-white' 'bg-slate-50/50' %}">
+                                    <td class="p-1.5 bg-slate-50 text-[10px] text-slate-400 font-mono text-center border-r border-slate-200 select-none w-10">{{ forloop.counter }}</td>
                                     {% for cell in row %}
-                                    <td class="p-2 border-r border-slate-200 truncate max-w-[200px]" title="{{ cell }}">{{ cell }}</td>
+                                    <td class="p-2 border-r border-slate-200 truncate max-w-[220px]" title="{{ cell }}">{{ cell }}</td>
                                     {% endfor %}
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="{{ sheet.headers|length|add:1 }}" class="p-4 text-center text-slate-400 italic">Bảng tính không có hàng dữ liệu</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -202,6 +299,116 @@
         {% endif %}
 
     </div>
+
+    <!-- PDF.js Helper Script -->
+    <script>
+    function pdfViewer(pdfUrl) {
+        return {
+            url: pdfUrl,
+            pdfDoc: null,
+            pageNum: 1,
+            numPages: 1,
+            scale: 1.25,
+            loading: true,
+            errorMessage: null,
+            pageRendering: false,
+            pageNumPending: null,
+
+            init() {
+                if (typeof pdfjsLib === 'undefined') {
+                    this.errorMessage = 'Thư viện hiển thị PDF chưa sẵn sàng.';
+                    this.loading = false;
+                    return;
+                }
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                const self = this;
+                pdfjsLib.getDocument(this.url).promise.then(function(pdf) {
+                    self.pdfDoc = pdf;
+                    self.numPages = pdf.numPages;
+                    self.loading = false;
+                    self.renderPage(self.pageNum);
+                }).catch(function(err) {
+                    console.error('PDF.js loading error:', err);
+                    self.errorMessage = 'Không thể kết xuất trang PDF. Bạn có thể mở trực tiếp trong tab mới.';
+                    self.loading = false;
+                });
+            },
+
+            renderPage(num) {
+                const self = this;
+                this.pageRendering = true;
+                this.pdfDoc.getPage(num).then(function(page) {
+                    const canvas = document.getElementById('pdf-canvas');
+                    if (!canvas) return;
+                    const ctx = canvas.getContext('2d');
+                    const viewport = page.getViewport({ scale: self.scale });
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    const renderContext = {
+                        canvasContext: ctx,
+                        viewport: viewport
+                    };
+                    const renderTask = page.render(renderContext);
+                    renderTask.promise.then(function() {
+                        self.pageRendering = false;
+                        if (self.pageNumPending !== null) {
+                            self.renderPage(self.pageNumPending);
+                            self.pageNumPending = null;
+                        }
+                    });
+                });
+            },
+
+            queueRenderPage(num) {
+                if (this.pageRendering) {
+                    this.pageNumPending = num;
+                } else {
+                    this.renderPage(num);
+                }
+            },
+
+            prevPage() {
+                if (this.pageNum <= 1) return;
+                this.pageNum--;
+                this.queueRenderPage(this.pageNum);
+            },
+
+            nextPage() {
+                if (this.pageNum >= this.numPages) return;
+                this.pageNum++;
+                this.queueRenderPage(this.pageNum);
+            },
+
+            goToPage(num) {
+                const n = parseInt(num, 10);
+                if (n >= 1 && n <= this.numPages) {
+                    this.pageNum = n;
+                    this.queueRenderPage(this.pageNum);
+                }
+            },
+
+            zoomIn() {
+                if (this.scale < 3.0) {
+                    this.scale = +(this.scale + 0.25).toFixed(2);
+                    this.queueRenderPage(this.pageNum);
+                }
+            },
+
+            zoomOut() {
+                if (this.scale > 0.6) {
+                    this.scale = +(this.scale - 0.25).toFixed(2);
+                    this.queueRenderPage(this.pageNum);
+                }
+            },
+
+            resetZoom() {
+                this.scale = 1.25;
+                this.queueRenderPage(this.pageNum);
+            }
+        };
+    }
+    </script>
 
 </body>
 </html>
