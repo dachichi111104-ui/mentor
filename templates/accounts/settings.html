@@ -46,10 +46,18 @@
 
                     <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
                         <div>
-                            <h4 class="font-bold text-slate-900 text-sm">Thông báo Realtime trên Đẩy (Push Notifications)</h4>
-                            <p class="text-xs text-slate-500">Hiển thị chấm đỏ và âm thanh khi có bình luận mới</p>
+                            <h4 class="font-bold text-slate-900 text-sm">Thông báo trong Ứng dụng (In-App)</h4>
+                            <p class="text-xs text-slate-500">Hiển thị chấm đỏ và chuông thông báo khi có bình luận hoặc cập nhật mới</p>
                         </div>
-                        <input type="checkbox" name="push_notifications" {% if pref.push_notifications %}checked{% endif %} class="w-5 h-5 rounded text-navy-800 border-slate-300">
+                        <input type="checkbox" name="in_app_notifications" {% if pref.in_app_notifications %}checked{% endif %} class="w-5 h-5 rounded text-navy-800 border-slate-300">
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-sm">Nhắc nhở Hạn chót (Deadline Reminders)</h4>
+                            <p class="text-xs text-slate-500">Tự động nhắc việc sắp đến hạn hoặc các cột mốc quan trọng</p>
+                        </div>
+                        <input type="checkbox" name="deadline_reminders" {% if pref.deadline_reminders %}checked{% endif %} class="w-5 h-5 rounded text-navy-800 border-slate-300">
                     </div>
 
                     <div class="pt-3 text-right">

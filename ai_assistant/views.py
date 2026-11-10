@@ -118,11 +118,23 @@ def _execute_ai_task(user, project, prompt_type: str, user_message: str = ""):
 @ratelimit(key_prefix='ai_limit', limit=20, period=3600)
 def ai_task_breakdown_ajax(request):
     project_id = request.POST.get('project_id')
+    user_prompt = request.POST.get('prompt')
+    if not project_id and request.body:
+        try:
+            body_data = json.loads(request.body.decode('utf-8'))
+            project_id = body_data.get('project_id')
+            user_prompt = body_data.get('prompt', user_prompt)
+        except Exception:
+            pass
+
+    if not project_id:
+        return JsonResponse({'status': 'error', 'message': 'Thiếu tham số project_id.'}, status=400)
+
     project = get_object_or_404(Project, id=project_id)
     if not can(request.user, 'ai.generate', project):
         return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
-    result, _ = _execute_ai_task(request.user, project, 'breakdown')
+    result, _ = _execute_ai_task(request.user, project, 'breakdown', user_message=user_prompt)
     return JsonResponse({
         'status': 'success',
         'source': result['source'],

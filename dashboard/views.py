@@ -312,12 +312,49 @@ def admin_reject_user_view(request, user_id):
 @require_can('user.manage')
 def admin_audit_log_view(request):
     logs = ActivityLog.objects.all().order_by('-created_at')[:100]
-    return render(request, 'dashboard/admin_audit_logs.html', {'logs': logs})
+    return render(request, 'dashboard/admin_audit_log.html', {'logs': logs})
 
 @login_required
 def global_search_view(request):
     q = request.GET.get('q', '').strip()
-    return render(request, 'dashboard/search_results.html', {'query': q})
+    user = request.user
+    projects = visible_projects(user)
+
+    p_matches = []
+    t_matches = []
+    m_matches = []
+    d_matches = []
+
+    if q and len(q) >= 2:
+        p_matches = list(projects.filter(Q(name__icontains=q) | Q(code__icontains=q))[:20])
+        t_matches = list(Task.objects.filter(project__in=projects).filter(Q(title__icontains=q) | Q(description__icontains=q))[:20])
+
+        visible_user_ids = set()
+        for proj in projects:
+            visible_user_ids.add(proj.created_by_id)
+            if proj.mentor_id:
+                visible_user_ids.add(proj.mentor_id)
+            for m in proj.memberships.all():
+                visible_user_ids.add(m.user_id)
+
+        m_matches = list(User.objects.filter(id__in=visible_user_ids).filter(
+            Q(first_name__icontains=q) | Q(last_name__icontains=q) | Q(student_id__icontains=q) | Q(email__icontains=q)
+        )[:20])
+
+        d_matches = list(Document.objects.filter(project__in=projects).filter(
+            Q(title__icontains=q) | Q(description__icontains=q)
+        )[:20])
+
+    total_count = len(p_matches) + len(t_matches) + len(m_matches) + len(d_matches)
+
+    return render(request, 'dashboard/search_results.html', {
+        'query': q,
+        'projects': p_matches,
+        'tasks': t_matches,
+        'members': m_matches,
+        'documents': d_matches,
+        'total_count': total_count,
+    })
 
 @login_required
 def global_search_json_view(request):

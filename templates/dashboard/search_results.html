@@ -1,0 +1,192 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Kết quả tìm kiếm: {{ query|default:"Tất cả" }} - ProjectHub{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="{ activeTab: 'all' }">
+
+    <!-- Search Header & Re-query bar -->
+    <div class="bg-white rounded-2xl p-6 border border-[#D9DEE8] shadow-xs">
+        <div class="max-w-3xl">
+            <h1 class="text-xl font-bold text-[#172033] tracking-tight">Kết quả tìm kiếm</h1>
+            <p class="text-xs text-[#667085] mt-1">
+                {% if query %}
+                Tìm thấy <span class="font-bold text-[#163B65]">{{ total_count }}</span> kết quả phù hợp với từ khóa <span class="font-bold text-[#172033]">"{{ query }}"</span>
+                {% else %}
+                Vui lòng nhập từ khóa tìm kiếm (tối thiểu 2 ký tự) để tra cứu Đồ án, Công việc, Tài liệu hoặc Thành viên.
+                {% endif %}
+            </p>
+            <form method="get" action="{% url 'global_search' %}" class="mt-4 flex gap-2">
+                <div class="relative flex-1">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                    </span>
+                    <input type="text" name="q" value="{{ query }}" placeholder="Tìm kiếm đồ án, task, tài liệu, thành viên..." class="w-full pl-9 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#163B65] focus:border-transparent transition">
+                </div>
+                <button type="submit" class="px-5 py-2.5 bg-[#163B65] hover:bg-[#0f2643] text-white text-xs font-bold rounded-xl transition shadow-xs flex items-center gap-1.5">
+                    <i class="fa-solid fa-magnifying-glass text-[11px]"></i>
+                    <span>Tìm kiếm</span>
+                </button>
+            </form>
+        </div>
+
+        {% if query %}
+        <!-- Filter Tabs -->
+        <div class="flex items-center gap-2 mt-6 pt-4 border-t border-slate-100 overflow-x-auto text-xs">
+            <button type="button" @click="activeTab = 'all'" :class="activeTab === 'all' ? 'bg-[#163B65] text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'" class="px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5">
+                <span>Tất cả</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] {% if activeTab == 'all' %}bg-white/20 text-white{% else %}bg-slate-200 text-slate-700{% endif %} font-mono">{{ total_count }}</span>
+            </button>
+            <button type="button" @click="activeTab = 'projects'" :class="activeTab === 'projects' ? 'bg-[#163B65] text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'" class="px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5">
+                <i class="fa-solid fa-folder-open text-[11px]"></i>
+                <span>Đồ án</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] {% if activeTab == 'projects' %}bg-white/20 text-white{% else %}bg-slate-200 text-slate-700{% endif %} font-mono">{{ projects|length }}</span>
+            </button>
+            <button type="button" @click="activeTab = 'tasks'" :class="activeTab === 'tasks' ? 'bg-[#163B65] text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'" class="px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5">
+                <i class="fa-solid fa-list-check text-[11px]"></i>
+                <span>Công việc</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] {% if activeTab == 'tasks' %}bg-white/20 text-white{% else %}bg-slate-200 text-slate-700{% endif %} font-mono">{{ tasks|length }}</span>
+            </button>
+            <button type="button" @click="activeTab = 'documents'" :class="activeTab === 'documents' ? 'bg-[#163B65] text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'" class="px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5">
+                <i class="fa-solid fa-file-lines text-[11px]"></i>
+                <span>Tài liệu</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] {% if activeTab == 'documents' %}bg-white/20 text-white{% else %}bg-slate-200 text-slate-700{% endif %} font-mono">{{ documents|length }}</span>
+            </button>
+            <button type="button" @click="activeTab = 'members'" :class="activeTab === 'members' ? 'bg-[#163B65] text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'" class="px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5">
+                <i class="fa-solid fa-user-group text-[11px]"></i>
+                <span>Thành viên</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] {% if activeTab == 'members' %}bg-white/20 text-white{% else %}bg-slate-200 text-slate-700{% endif %} font-mono">{{ members|length }}</span>
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if query and total_count == 0 %}
+    <!-- Empty State -->
+    <div class="bg-white rounded-2xl p-12 border border-[#D9DEE8] text-center space-y-3">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 text-2xl">
+            <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-800">Không tìm thấy kết quả phù hợp</h3>
+        <p class="text-xs text-slate-500 max-w-md mx-auto">Không có mục nào khớp với từ khóa "{{ query }}". Vui lòng kiểm tra lại chính tả hoặc thử tìm với từ khóa ngắn gọn hơn.</p>
+    </div>
+    {% endif %}
+
+    <!-- 1. PROJECTS SECTION -->
+    {% if projects %}
+    <div class="space-y-3" x-show="activeTab === 'all' || activeTab === 'projects'">
+        <div class="flex items-center justify-between text-xs font-bold text-slate-700 px-1">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-folder-open text-[#163B65]"></i> Đồ án ({{ projects|length }})</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for p in projects %}
+            <a href="{% url 'project_detail' p.id %}" class="bg-white p-5 rounded-2xl border border-[#D9DEE8] hover:border-[#163B65] hover:shadow-sm transition block space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <span class="px-2 py-0.5 bg-[#163B65] text-white font-mono font-bold text-[10px] rounded">{{ p.code }}</span>
+                    <span class="px-2 py-0.5 bg-blue-50 text-blue-700 font-semibold text-[10px] rounded uppercase">{{ p.get_status_display }}</span>
+                </div>
+                <h3 class="font-bold text-sm text-slate-900 line-clamp-1">{{ p.name }}</h3>
+                <p class="text-xs text-slate-500 line-clamp-2 leading-relaxed">{{ p.description|default:"Chưa có mô tả chi tiết." }}</p>
+                <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                    <span>Hạn nộp: {{ p.end_date|date:"d/m/Y" }}</span>
+                    <span class="font-semibold text-emerald-600 font-mono">{{ p.progress_percentage }}%</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 2. TASKS SECTION -->
+    {% if tasks %}
+    <div class="space-y-3" x-show="activeTab === 'all' || activeTab === 'tasks'">
+        <div class="flex items-center justify-between text-xs font-bold text-slate-700 px-1">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-list-check text-blue-600"></i> Công việc ({{ tasks|length }})</span>
+        </div>
+        <div class="bg-white rounded-2xl border border-[#D9DEE8] divide-y divide-slate-100 overflow-hidden shadow-xs">
+            {% for t in tasks %}
+            <a href="{% url 'project_tasks' t.project.id %}" class="p-4 hover:bg-slate-50 transition flex items-center justify-between gap-4 block">
+                <div class="space-y-1 min-w-0">
+                    <div class="flex items-center space-x-2">
+                        <span class="px-1.5 py-0.2 bg-slate-100 text-slate-700 font-mono font-bold text-[10px] rounded">{{ t.project.code }}</span>
+                        <span class="font-bold text-xs text-slate-900 truncate">{{ t.title }}</span>
+                    </div>
+                    {% if t.description %}
+                    <p class="text-xs text-slate-500 truncate">{{ t.description }}</p>
+                    {% endif %}
+                </div>
+                <div class="flex items-center space-x-2 shrink-0">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold {% if t.priority == 'HIGH' or t.priority == 'URGENT' %}bg-rose-50 text-rose-700 border border-rose-200{% else %}bg-slate-100 text-slate-600{% endif %}">
+                        {{ t.get_priority_display }}
+                    </span>
+                    <span class="px-2 py-0.5 bg-blue-50 text-blue-700 font-semibold text-[10px] rounded">
+                        {{ t.get_status_display }}
+                    </span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 3. DOCUMENTS SECTION -->
+    {% if documents %}
+    <div class="space-y-3" x-show="activeTab === 'all' || activeTab === 'documents'">
+        <div class="flex items-center justify-between text-xs font-bold text-slate-700 px-1">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-file-lines text-emerald-600"></i> Tài liệu ({{ documents|length }})</span>
+        </div>
+        <div class="bg-white rounded-2xl border border-[#D9DEE8] divide-y divide-slate-100 overflow-hidden shadow-xs">
+            {% for d in documents %}
+            <div class="p-4 hover:bg-slate-50 transition flex items-center justify-between gap-4">
+                <div class="space-y-1 min-w-0">
+                    <div class="flex items-center space-x-2">
+                        <span class="px-1.5 py-0.2 bg-slate-100 text-slate-700 font-mono font-bold text-[10px] rounded">{{ d.project.code }}</span>
+                        <span class="font-bold text-xs text-slate-900 truncate">{{ d.title }}</span>
+                        <span class="px-1.5 py-0.2 bg-blue-50 text-blue-800 text-[10px] font-mono rounded uppercase">v{{ d.current_version }}</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400">{{ d.file_type }} • {{ d.file_size }} • Tải lên lúc {{ d.created_at|date:"d/m/Y H:i" }}</p>
+                </div>
+                <div class="flex items-center space-x-2 shrink-0">
+                    <a href="{% url 'document_preview' d.id %}" class="px-3 py-1.5 bg-[#163B65] text-white hover:bg-[#0f2643] text-xs font-bold rounded-xl transition inline-flex items-center gap-1 shadow-2xs">
+                        <i class="fa-solid fa-eye text-[10px]"></i>
+                        <span>Xem trước</span>
+                    </a>
+                    <a href="{% url 'document_download' d.id %}" class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition" title="Tải về máy">
+                        <i class="fa-solid fa-download text-xs"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 4. MEMBERS SECTION -->
+    {% if members %}
+    <div class="space-y-3" x-show="activeTab === 'all' || activeTab === 'members'">
+        <div class="flex items-center justify-between text-xs font-bold text-slate-700 px-1">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-user-group text-purple-600"></i> Thành viên ({{ members|length }})</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {% for m in members %}
+            <div class="bg-white p-4 rounded-2xl border border-[#D9DEE8] flex items-center space-x-3 shadow-2xs">
+                {% if m.avatar %}
+                <img src="{{ m.avatar.url }}" alt="{{ m.display_name }}" class="w-10 h-10 rounded-full object-cover border border-slate-200">
+                {% else %}
+                <div class="w-10 h-10 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-[#163B65] font-bold text-xs uppercase">
+                    {{ m.first_name|default:m.username|slice:":2" }}
+                </div>
+                {% endif %}
+                <div class="min-w-0 flex-1">
+                    <h4 class="font-bold text-xs text-slate-900 truncate">{{ m.display_name }}</h4>
+                    <p class="text-[10px] text-slate-400 font-mono truncate">{{ m.email }}</p>
+                    <span class="inline-block mt-0.5 px-1.5 py-0.2 bg-slate-100 text-slate-700 text-[9px] rounded font-semibold uppercase">{{ m.get_role_display }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

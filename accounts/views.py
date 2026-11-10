@@ -197,8 +197,10 @@ def settings_page_view(request):
         if theme in ['NAVY', 'FOREST', 'PLUM', 'EMBER']:
             pref.theme = theme
             pref.email_notifications = request.POST.get('email_notifications') == 'on'
-            pref.push_notifications = request.POST.get('push_notifications') == 'on'
-            pref.week_start = request.POST.get('week_start', 'MONDAY')
+            pref.in_app_notifications = request.POST.get('in_app_notifications') == 'on'
+            pref.deadline_reminders = request.POST.get('deadline_reminders') == 'on'
+            ws = request.POST.get('week_start', 'MON')
+            pref.week_start = ws if ws in ['MON', 'SUN'] else 'MON'
             pref.save()
             messages.success(request, 'Đã lưu cài đặt giao diện và hệ thống thành công.')
             return redirect('settings')
@@ -212,12 +214,38 @@ def settings_page_view(request):
 
 @login_required
 def user_settings_api_view(request):
-    if request.method == 'POST':
-        pref, created = UserPreference.objects.get_or_create(user=request.user)
+    pref, created = UserPreference.objects.get_or_create(user=request.user)
+    if request.method == 'GET':
+        return JsonResponse({
+            'status': 'success',
+            'theme': pref.theme,
+            'email_notifications': pref.email_notifications,
+            'in_app_notifications': pref.in_app_notifications,
+            'deadline_reminders': pref.deadline_reminders,
+            'week_start': pref.week_start,
+        })
+    elif request.method == 'POST':
         theme = request.POST.get('theme')
         if theme in ['NAVY', 'FOREST', 'PLUM', 'EMBER']:
             pref.theme = theme
-            pref.save()
-            return JsonResponse({'status': 'success', 'theme': pref.theme})
+        if 'email_notifications' in request.POST:
+            pref.email_notifications = request.POST.get('email_notifications') in ['true', 'True', '1', 'on']
+        if 'in_app_notifications' in request.POST:
+            pref.in_app_notifications = request.POST.get('in_app_notifications') in ['true', 'True', '1', 'on']
+        if 'deadline_reminders' in request.POST:
+            pref.deadline_reminders = request.POST.get('deadline_reminders') in ['true', 'True', '1', 'on']
+        if 'week_start' in request.POST:
+            ws = request.POST.get('week_start')
+            if ws in ['MON', 'SUN']:
+                pref.week_start = ws
+        pref.save()
+        return JsonResponse({
+            'status': 'success',
+            'theme': pref.theme,
+            'email_notifications': pref.email_notifications,
+            'in_app_notifications': pref.in_app_notifications,
+            'deadline_reminders': pref.deadline_reminders,
+            'week_start': pref.week_start,
+        })
     return JsonResponse({'status': 'error', 'message': 'Yêu cầu không hợp lệ'}, status=400)
 
